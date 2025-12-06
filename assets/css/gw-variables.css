@@ -1,0 +1,32 @@
+:root {
+    /* Couleurs principales (charte) */
+    --gw-color-primary: #023047;
+    --gw-color-accent: #fb8500;
+    --gw-color-accent-soft: #fbbf77;
+
+    /* Couleurs complémentaires / UI */
+    --gw-color-surface: #f5f7fb;
+    --gw-color-surface-strong: #e0e6ed;
+    --gw-color-text: #0b1f2e;
+    --gw-color-muted: #607080;
+    --gw-color-border: #d0d7df;
+
+    /* États */
+    --gw-color-success: #2d9f6f;
+    --gw-color-warning: #f2c94c;
+    --gw-color-error: #d14343;
+
+    /* Typo */
+    --gw-font-family: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --gw-font-weight-regular: 400;
+    --gw-font-weight-medium: 600;
+    --gw-font-weight-bold: 700;
+
+    /* Dimensions */
+    --gw-header-height: 64px;
+    --gw-footer-height: 48px;
+    --gw-nav-width: 240px;
+    --gw-radius: 12px;
+    --gw-gap: 16px;
+    --gw-max-width: 1280px;
+}

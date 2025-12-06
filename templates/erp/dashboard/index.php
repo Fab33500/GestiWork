@@ -20,26 +20,35 @@
 
 declare(strict_types=1);
 
-?><!DOCTYPE html>
-<html <?php language_attributes(); ?> class="gw-gestiwork-root">
-<head>
-    <meta charset="<?php bloginfo('charset'); ?>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title><?php esc_html_e('GestiWork ERP', 'gestiwork'); ?></title>
-    <?php wp_head(); ?>
-</head>
-<body <?php body_class('gw-body gw-gestiwork-dashboard'); ?>>
-<div class="gw-app-wrapper">
-    <header class="gw-header">
-        <h1 class="gw-title"><?php esc_html_e('GestiWork ERP', 'gestiwork'); ?></h1>
-        <p class="gw-subtitle"><?php esc_html_e('Interface ERP - zone dédiée /gestiwork/', 'gestiwork'); ?></p>
-    </header>
+$is_admin = current_user_can('manage_options');
+$active_view = 'dashboard';
 
-    <main class="gw-main">
-        <p><?php esc_html_e('Le tableau de bord GestiWork est en cours de construction.', 'gestiwork'); ?></p>
-    </main>
-</div>
+if ($is_admin && isset($_GET['gw_view']) && $_GET['gw_view'] === 'settings') {
+    $active_view = 'settings';
+}
 
-<?php wp_footer(); ?>
-</body>
-</html>
+$dashboard_url = home_url('/gestiwork/');
+$settings_url = $is_admin ? add_query_arg('gw_view', 'settings', $dashboard_url) : $dashboard_url;
+
+$nav_items = [
+    [
+        'label' => __('Dashboard', 'gestiwork'),
+        'url' => $dashboard_url,
+        'active' => $active_view === 'dashboard',
+    ],
+];
+
+if ($is_admin) {
+    $nav_items[] = [
+        'label' => __('Paramètres', 'gestiwork'),
+        'url' => $settings_url,
+        'active' => $active_view === 'settings',
+    ];
+}
+
+$layout_mode = $is_admin ? 'gw-layout--with-nav' : 'gw-layout--full';
+$content_template = $active_view === 'settings' && $is_admin
+    ? GW_PLUGIN_DIR . 'templates/erp/settings/view-settings.php'
+    : GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
+
+require GW_PLUGIN_DIR . 'templates/layouts/erp-shell.php';

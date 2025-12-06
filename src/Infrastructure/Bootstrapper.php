@@ -22,13 +22,17 @@ class Bootstrapper
         );
 
         // TODO : initialiser ici les couches Domain / Infrastructure / UI
-        // Exemple futur : Router interne, enregistrement des endpoints, etc.
+        // Exemple : Router interne, enregistrement des endpoints, chargement des assets, etc.
         if (class_exists(\GestiWork\UI\Router\GestiWorkRouter::class)) {
             \GestiWork\UI\Router\GestiWorkRouter::register();
         }
 
         if (class_exists(\GestiWork\UI\Admin\AdminMenu::class)) {
             \GestiWork\UI\Admin\AdminMenu::register();
+        }
+
+        if (class_exists(\GestiWork\UI\Controller\AssetsLoader::class)) {
+            \GestiWork\UI\Controller\AssetsLoader::register();
         }
     }
 
