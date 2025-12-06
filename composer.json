@@ -1,0 +1,28 @@
+{
+    "name": "gestiwork/core",
+    "description": "ERP Organisme de Formation pour WordPress",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "GestiWork Dev",
+            "email": "dev@gestiwork.local"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "dompdf/dompdf": "^2.0",
+        "phpoffice/phpspreadsheet": "^1.29",
+        "endroid/qr-code": "^4.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "GestiWork\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true
+        }
+    }
+}
