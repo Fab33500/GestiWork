@@ -64,5 +64,6 @@ if (file_exists($gestiworkAutoload)) {
 
 // Initialisation du plugin via le Bootstrapper
 if (class_exists(\GestiWork\Infrastructure\Bootstrapper::class)) {
+    register_activation_hook(__FILE__, [\GestiWork\Infrastructure\Bootstrapper::class, 'onActivation']);
     \GestiWork\Infrastructure\Bootstrapper::init();
 }

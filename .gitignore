@@ -6,5 +6,8 @@
 .DS_Store
 Thumbs.db
 
+# Dossier interne Windsurf (ne doit pas être versionné)
+/.windsurf/
+
 # Logs
 *.log
