@@ -1,0 +1,10 @@
+# Configs d'IDE
+/.idea/
+/.vscode/
+
+# Fichiers temporaires / OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
