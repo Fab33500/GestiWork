@@ -31,15 +31,23 @@ declare(strict_types=1);
 <body <?php body_class('gw-body gw-gestiwork-dashboard'); ?>>
 <div class="gw-app-wrapper">
     <header class="gw-header">
-        <div>
+        <div class="gw-header-left">
             <h1 class="gw-title"><?php esc_html_e('GestiWork ERP', 'gestiwork'); ?></h1>
             <p class="gw-subtitle"><?php esc_html_e('Interface ERP - zone dédiée /gestiwork/', 'gestiwork'); ?></p>
         </div>
+
+        <?php if (! empty($nav_items)) : ?>
+            <button class="gw-header-toggle" type="button" aria-label="<?php esc_attr_e('Ouvrir le menu GestiWork', 'gestiwork'); ?>" aria-controls="gw-nav" aria-expanded="false">
+                <span class="gw-header-toggle-bar"></span>
+                <span class="gw-header-toggle-bar"></span>
+                <span class="gw-header-toggle-bar"></span>
+            </button>
+        <?php endif; ?>
     </header>
 
     <div class="gw-layout <?php echo isset($layout_mode) ? esc_attr($layout_mode) : ''; ?>">
         <?php if (! empty($nav_items)) : ?>
-            <nav class="gw-nav">
+            <nav id="gw-nav" class="gw-nav">
                 <ul class="gw-nav-list">
                     <?php foreach ($nav_items as $item) : ?>
                         <li class="gw-nav-item">
@@ -71,6 +79,23 @@ declare(strict_types=1);
         <span><?php esc_html_e('GestiWork ERP — Site dédié /gestiwork/', 'gestiwork'); ?></span>
     </footer>
 </div>
+
+<script>
+    (function () {
+        var button = document.querySelector('.gw-header-toggle');
+        var nav = document.getElementById('gw-nav');
+
+        if (!button || !nav) {
+            return;
+        }
+
+        button.addEventListener('click', function () {
+            var isOpen = nav.classList.toggle('gw-nav--open');
+            button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            document.documentElement.classList.toggle('gw-nav-open', isOpen);
+        });
+    })();
+</script>
 
 <?php wp_footer(); ?>
 </body>

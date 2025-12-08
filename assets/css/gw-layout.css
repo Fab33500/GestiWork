@@ -30,6 +30,36 @@
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
+.gw-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gw-header-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: transparent;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-family: "dashicons";
+    font-size: 20px;
+    line-height: 1;
+}
+
+.gw-header-toggle::before {
+    content: "\f039";
+}
+
+.gw-header-toggle-bar {
+    display: none;
+}
+
 .gw-title {
     margin: 0;
     font-size: 18px;
@@ -48,18 +78,20 @@
     display: grid;
     grid-template-columns: var(--gw-nav-width) 1fr;
     grid-template-rows: 1fr auto;
-    min-height: calc(100vh - var(--gw-header-height));
+    /* On retire du 100vh la hauteur du header ET du footer pour éviter le scroll inutile */
+    min-height: calc(100vh - var(--gw-header-height) - var(--gw-footer-height));
     background: var(--gw-color-surface);
 }
 
 .gw-layout--full {
-    grid-template-columns: 1fr;
+    /* Même structure que le layout avec nav pour garder un design identique */
+    grid-template-columns: var(--gw-nav-width) 1fr;
 }
 
 .gw-nav {
     background: #fff;
     border-right: 1px solid var(--gw-color-border);
-    padding: 20px 16px;
+    padding: 10px 5px;
 }
 
 .gw-nav-list {
@@ -72,23 +104,26 @@
 
 .gw-nav-link {
     display: block;
+    background-color: var(--gw-color-accent);
     padding: 10px 12px;
     border-radius: 10px;
     text-decoration: none;
-    color: var(--gw-color-text);
+    color: var(--gw-color-surface);
     font-weight: var(--gw-font-weight-medium);
     transition: all 0.2s ease;
-    background: transparent;
 }
 
-.gw-nav-link:hover {
-    background: var(--gw-color-surface-strong);
+.gw-nav-link:hover,
+.gw-nav-link:focus {
+    background: var(--gw-color-primary);
+    color: var(--gw-color-surface);
+    text-decoration: none;
 }
 
 .gw-nav-link--active {
-    background: var(--gw-color-accent);
-    color: #fff;
-    box-shadow: 0 6px 18px rgba(251, 133, 0, 0.25);
+    background: var(--gw-color-primary);
+    color: var(--gw-color-surface);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
 .gw-main {
@@ -98,7 +133,7 @@
 
 .gw-main-inner {
     max-width: var(--gw-max-width);
-    margin: 0 auto 48px;
+    margin: 0 auto;
     background: #fff;
     border-radius: var(--gw-radius);
     border: 1px solid var(--gw-color-border);
@@ -136,19 +171,33 @@
 
 /* Mobile / petits écrans */
 @media (max-width: 960px) {
+    .gw-header {
+        padding: 0 16px;
+    }
+
+    .gw-header-toggle {
+        display: inline-flex;
+    }
+
     .gw-layout {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr auto;
     }
 
     .gw-nav {
+        display: none;
         border-right: none;
         border-bottom: 1px solid var(--gw-color-border);
         padding: 12px 16px;
     }
 
+    .gw-nav.gw-nav--open {
+        display: block;
+    }
+
     .gw-nav-list {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        /* Items l'un sous l'autre en mobile */
+        grid-template-columns: 1fr;
     }
 
     .gw-main {

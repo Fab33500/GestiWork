@@ -37,6 +37,9 @@ class AssetsLoader
             return;
         }
 
+        // Icônes WordPress (Dashicons) pour le bouton de menu mobile
+        wp_enqueue_style('dashicons');
+
         wp_enqueue_style(
             'gestiwork-variables',
             GW_PLUGIN_URL . 'assets/css/gw-variables.css',
