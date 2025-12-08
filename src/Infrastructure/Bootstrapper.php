@@ -38,6 +38,10 @@ class Bootstrapper
 
     public static function onActivation(): void
     {
+        if (class_exists(\GestiWork\Infrastructure\Database\Installer::class)) {
+            \GestiWork\Infrastructure\Database\Installer::install();
+        }
+
         if (class_exists(\GestiWork\UI\Router\GestiWorkRouter::class)) {
             \GestiWork\UI\Router\GestiWorkRouter::registerRewriteRules();
         }
