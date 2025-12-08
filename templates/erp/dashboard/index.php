@@ -23,32 +23,50 @@ declare(strict_types=1);
 $is_admin = current_user_can('manage_options');
 $active_view = 'dashboard';
 
-if ($is_admin && isset($_GET['gw_view']) && $_GET['gw_view'] === 'settings') {
+$gw_view = get_query_var('gw_view');
+if ($gw_view === '' && isset($_GET['gw_view'])) {
+    $gw_view = (string) $_GET['gw_view'];
+}
+
+if ($gw_view === 'Aide') {
+    $active_view = 'aide';
+} elseif ($is_admin && $gw_view === 'settings') {
     $active_view = 'settings';
 }
 
 $dashboard_url = home_url('/gestiwork/');
-$settings_url = $is_admin ? add_query_arg('gw_view', 'settings', $dashboard_url) : $dashboard_url;
+$settings_url  = $is_admin ? home_url('/gestiwork/settings/general/') : $dashboard_url;
+$help_url      = home_url('/gestiwork/Aide/');
 
 $nav_items = [
     [
         'label' => __('Dashboard', 'gestiwork'),
-        'url' => $dashboard_url,
-        'active' => $active_view === 'dashboard',
+        'url'   => $dashboard_url,
+        'active'=> $active_view === 'dashboard',
+    ],
+    [
+        'label' => __('Aide', 'gestiwork'),
+        'url'   => $help_url,
+        'active'=> $active_view === 'aide',
     ],
 ];
 
 if ($is_admin) {
     $nav_items[] = [
         'label' => __('Paramètres', 'gestiwork'),
-        'url' => $settings_url,
-        'active' => $active_view === 'settings',
+        'url'   => $settings_url,
+        'active'=> $active_view === 'settings',
     ];
 }
 
 $layout_mode = $is_admin ? 'gw-layout--with-nav' : 'gw-layout--full';
-$content_template = $active_view === 'settings' && $is_admin
-    ? GW_PLUGIN_DIR . 'templates/erp/settings/view-settings.php'
-    : GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
+
+if ($active_view === 'settings' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/settings/view-settings.php';
+} elseif ($active_view === 'aide') {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/aide/view-aide.php';
+} else {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
+}
 
 require GW_PLUGIN_DIR . 'templates/layouts/erp-shell.php';

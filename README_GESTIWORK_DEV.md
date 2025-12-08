@@ -118,7 +118,7 @@ Contrairement aux plugins WordPress classiques, GestiWork fonctionne comme un **
 
 ### Checklist
 - [ ] Migration SQL générée  
-- [ ] Installation plugin  
+- [x] Installation plugin  
 - [ ] Requêtes CRUD basiques  
 - [ ] Repositories DDD  
 
@@ -143,10 +143,10 @@ Contrairement aux plugins WordPress classiques, GestiWork fonctionne comme un **
 | **Classes CSS** | `.gw-` | `.gw-modal`, `.gw-table` |
 
 ### Checklist
-- [ ] Bootstrapper  
-- [ ] Router interne  
-- [ ] Namespace organisé  
-- [ ] UI isolée du thème WP  
+- [x] Bootstrapper  
+- [x] Router interne  
+- [x] Namespace organisé  
+- [x] UI isolée du thème WP  
 
 ---
 
@@ -181,8 +181,8 @@ Contrairement aux plugins WordPress classiques, GestiWork fonctionne comme un **
 # 6. Roadmap de Développement
 
 ### 🏁 Phase 1 : Fondations
-- [ ] **1.1 Structure :** Composer, Namespaces, Arborescence.
-- [ ] **1.2 Router :** Interception URL `/gestiwork/` (bypass thème WP).
+- [x] **1.1 Structure :** Composer, Namespaces, Arborescence.
+- [x] **1.2 Router :** Interception URL `/gestiwork/` (bypass thème WP).
 - [ ] **1.3 Base :** Installateur SQL des tables de configuration (`organismes`).
 - [ ] **1.4 Mode OF / Sous-traitant :** Paramètre global et logique de contexte.
 

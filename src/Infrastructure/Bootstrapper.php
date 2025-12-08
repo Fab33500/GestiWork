@@ -34,6 +34,10 @@ class Bootstrapper
         if (class_exists(\GestiWork\UI\Controller\AssetsLoader::class)) {
             \GestiWork\UI\Controller\AssetsLoader::register();
         }
+
+        if (class_exists(\GestiWork\UI\Controller\SettingsController::class)) {
+            \GestiWork\UI\Controller\SettingsController::register();
+        }
     }
 
     public static function onActivation(): void

@@ -18,6 +18,18 @@ class GestiWorkRouter
     public static function registerRewriteRules(): void
     {
         add_rewrite_rule('^gestiwork/?$', 'index.php?' . self::QUERY_VAR . '=1', 'top');
+
+        add_rewrite_rule(
+            '^gestiwork/([^/]+)/?$',
+            'index.php?' . self::QUERY_VAR . '=1&gw_view=$matches[1]',
+            'top'
+        );
+
+        add_rewrite_rule(
+            '^gestiwork/([^/]+)/([^/]+)/?$',
+            'index.php?' . self::QUERY_VAR . '=1&gw_view=$matches[1]&gw_section=$matches[2]',
+            'top'
+        );
     }
 
     /**
@@ -27,6 +39,10 @@ class GestiWorkRouter
     public static function registerQueryVars(array $vars): array
     {
         $vars[] = self::QUERY_VAR;
+
+        $vars[] = 'gw_view';
+
+        $vars[] = 'gw_section';
 
         return $vars;
     }

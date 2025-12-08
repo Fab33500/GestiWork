@@ -13,8 +13,9 @@
 
     /* États */
     --gw-color-success: #2d9f6f;
-    --gw-color-warning: #f2c94c;
+    --gw-color-warning: #b1902d;
     --gw-color-error: #d14343;
+    --gw-color-text-obliged: rgb(155, 11, 11);
 
     /* Typo */
     --gw-font-family: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
