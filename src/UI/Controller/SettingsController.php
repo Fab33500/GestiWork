@@ -21,7 +21,12 @@ class SettingsController
         }
 
         $action = isset($_POST['gw_settings_action']) ? (string) $_POST['gw_settings_action'] : '';
-        if ($action !== 'save_of_identity' && $action !== 'save_of_description' && $action !== 'save_of_logo') {
+        if (
+            $action !== 'save_of_identity'
+            && $action !== 'save_of_description'
+            && $action !== 'save_of_logo'
+            && $action !== 'save_options'
+        ) {
             return;
         }
 
@@ -33,6 +38,78 @@ class SettingsController
 
         if (!($wpdb instanceof wpdb)) {
             return;
+        }
+
+        // Sauvegarde des options générales (onglet "Options")
+        if ($action === 'save_options') {
+            $tableOptions = $wpdb->prefix . 'gw_options';
+
+            $tableExistsOptions = $wpdb->get_var(
+                $wpdb->prepare('SHOW TABLES LIKE %s', $tableOptions)
+            );
+
+            if ($tableExistsOptions !== $tableOptions) {
+                return;
+            }
+
+            if (!isset($_POST['gw_settings_nonce_options']) || !wp_verify_nonce($_POST['gw_settings_nonce_options'], 'gw_save_options')) {
+                return;
+            }
+
+            $currentYear = (int) gmdate('Y');
+
+            $dataOptions = [
+                'first_year'                          => isset($_POST['gw_first_year']) ? max(0, (int) $_POST['gw_first_year']) : $currentYear,
+                'min_hours_between_signature_emails'  => isset($_POST['gw_min_hours_between_signature_emails']) ? max(0, (int) $_POST['gw_min_hours_between_signature_emails']) : 0,
+                'max_days_veille_alert'               => isset($_POST['gw_max_days_veille_alert']) ? max(0, (int) $_POST['gw_max_days_veille_alert']) : 0,
+                'token_validity_hours'                => isset($_POST['gw_token_validity_hours']) ? max(0, (int) $_POST['gw_token_validity_hours']) : 0,
+                'min_hourly_rate'                     => isset($_POST['gw_min_hourly_rate']) ? (float) str_replace(',', '.', (string) wp_unslash($_POST['gw_min_hourly_rate'])) : 0.0,
+                'default_deposit_percent'             => isset($_POST['gw_default_deposit_percent']) ? (float) str_replace(',', '.', (string) wp_unslash($_POST['gw_default_deposit_percent'])) : 0.0,
+                'max_log_rows'                        => isset($_POST['gw_max_log_rows']) ? max(0, (int) $_POST['gw_max_log_rows']) : 1000,
+                'attendance_sheet_lines'              => isset($_POST['gw_attendance_sheet_lines']) ? max(0, (int) $_POST['gw_attendance_sheet_lines']) : 25,
+                'enable_client_contract_number'       => isset($_POST['gw_enable_client_contract_number']) ? 1 : 0,
+                'enable_document_validity_period'     => isset($_POST['gw_enable_document_validity_period']) ? 1 : 0,
+                'enable_trainer_status_activity_code' => isset($_POST['gw_enable_trainer_status_activity_code']) ? 1 : 0,
+                'enable_free_text_duration'           => isset($_POST['gw_enable_free_text_duration']) ? 1 : 0,
+                'enable_signature_image'              => isset($_POST['gw_enable_signature_image']) ? 1 : 0,
+                'enable_impersonation_login'          => isset($_POST['gw_enable_impersonation_login']) ? 1 : 0,
+                'taxonomy_mode'                       => isset($_POST['gw_taxonomy_mode']) ? sanitize_text_field(wp_unslash($_POST['gw_taxonomy_mode'])) : 'categories',
+            ];
+
+            if ($dataOptions['taxonomy_mode'] !== 'tags') {
+                $dataOptions['taxonomy_mode'] = 'categories';
+            }
+
+            $formatsOptions = [
+                '%d', // first_year
+                '%d', // min_hours_between_signature_emails
+                '%d', // max_days_veille_alert
+                '%d', // token_validity_hours
+                '%f', // min_hourly_rate
+                '%f', // default_deposit_percent
+                '%d', // max_log_rows
+                '%d', // attendance_sheet_lines
+                '%d', // enable_client_contract_number
+                '%d', // enable_document_validity_period
+                '%d', // enable_trainer_status_activity_code
+                '%d', // enable_free_text_duration
+                '%d', // enable_signature_image
+                '%d', // enable_impersonation_login
+                '%s', // taxonomy_mode
+            ];
+
+            $existingOptionsId = $wpdb->get_var("SELECT id FROM {$tableOptions} LIMIT 1");
+
+            if ($existingOptionsId) {
+                $wpdb->update($tableOptions, $dataOptions, ['id' => (int) $existingOptionsId], $formatsOptions, ['%d']);
+            } else {
+                $wpdb->insert($tableOptions, $dataOptions, $formatsOptions);
+            }
+
+            $redirectUrl = home_url('/gestiwork/settings/options/');
+
+            wp_safe_redirect($redirectUrl);
+            exit;
         }
 
         $tableName = $wpdb->prefix . 'gw_of_identity';
@@ -75,14 +152,7 @@ class SettingsController
                 );
             }
 
-            $redirectUrl = add_query_arg(
-                [
-                    'gw_view'    => 'settings',
-                    'tab'        => 'general',
-                    'gw_updated' => '1',
-                ],
-                home_url('/gestiwork/')
-            );
+            $redirectUrl = home_url('/gestiwork/settings/general/');
 
             wp_safe_redirect($redirectUrl);
             exit;
@@ -116,11 +186,9 @@ class SettingsController
 
             $redirectUrl = add_query_arg(
                 [
-                    'gw_view'    => 'settings',
-                    'tab'        => 'general',
                     'gw_updated' => '1',
                 ],
-                home_url('/gestiwork/')
+                home_url('/gestiwork/settings/general/')
             );
 
             wp_safe_redirect($redirectUrl);
@@ -195,14 +263,7 @@ class SettingsController
             $wpdb->insert($tableName, $data, $formats);
         }
 
-        $redirectUrl = add_query_arg(
-            [
-                'gw_view'    => 'settings',
-                'tab'        => 'general',
-                'gw_updated' => '1',
-            ],
-            home_url('/gestiwork/')
-        );
+        $redirectUrl = home_url('/gestiwork/settings/general/');
 
         wp_safe_redirect($redirectUrl);
         exit;

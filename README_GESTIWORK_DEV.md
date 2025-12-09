@@ -349,3 +349,90 @@ Ainsi, le fil conducteur de développement est :
 - Concevoir le **périmètre complet** (Core + Pro) au niveau du domaine.  
 - Implémenter d’abord une version **Core** stable, en prévoyant dès le départ les points d’extension via `Capabilities`.  
 - Ajouter progressivement les fonctionnalités **Pro** derrière ces capacités, sans casser la version Core ni dupliquer la logique métier.
+
+---
+
+# 10. État actuel (v0.4.0) – UI / Router / Aide / Paramètres
+
+Cette section synthétise l'état réel de l'interface au fur et à mesure du développement, afin d'avoir un **point d'entrée unique** pour les URLs et les écrans déjà implémentés.
+
+## 10.1 Router interne & URLs propres
+
+Le router `GestiWork\UI\Router\GestiWorkRouter` intercepte désormais les URLs publiques suivantes :
+
+- `/gestiwork/`  
+  → Entrée principale du « site dans le site » GestiWork (dashboard interne).
+
+- `/gestiwork/settings/` + section  
+  → Vue **Paramètres** (admin uniquement), onglet déterminé par `gw_section` :
+  - `/gestiwork/settings/general/`  
+    → Onglet **« Général & Identité »** actif.
+  - `/gestiwork/settings/options/`  
+    → Onglet **« Options »** actif.  
+    → **C’est le prochain gros chantier de développement fonctionnel.**
+  - `/gestiwork/settings/pdf/` (et alias `gestionpdf`, `gestion-pdf`)  
+    → Onglet **« Gestion PDF »** actif.
+
+En interne, les segments sont remontés dans les query vars WordPress :
+
+- `gw_view` : `dashboard` / `settings` / `Aide` (vue principale)  
+- `gw_section` : `general`, `options`, `pdf` (et alias) pour les paramètres.
+
+## 10.2 Page d’aide GestiWork
+
+Fichier principal : `templates/erp/aide/view-aide.php` + sous-sections dans `templates/erp/aide/sections/`.
+
+Comportement :
+
+- Sommaire en haut de page avec ancres :
+  - `#gw-aide-introduction`
+  - `#gw-aide-demarrage`
+  - `#gw-aide-configuration` (visible uniquement pour les admins)
+  - `#gw-aide-quotidien`
+  - `#gw-aide-faq`
+- Les sections de contenu détaillées sont dans des fichiers dédiés :
+  - `section-introduction.php`
+  - `section-demarrage.php`
+  - `section-configuration.php` (guide détaillé de l’onglet « Général & Identité »)
+  - `section-quotidien.php`
+  - `section-faq.php`
+- Comportement UX :
+  - Les sections détaillées sont masquées par défaut.
+  - Un clic dans le sommaire affiche uniquement la section demandée.
+  - L’URL peut pointer directement sur une section via l’ancre HTML (ex. `https://audixor.fr/gestiwork/Aide/#gw-aide-faq`).
+  - **Nouveau :** support de `gw_section` pour ouvrir une section dès le chargement via une URL type :
+    - `/gestiwork/Aide/introduction/`
+    - `/gestiwork/Aide/demarrage/`
+    - `/gestiwork/Aide/configuration/`
+    - `/gestiwork/Aide/quotidien/`
+    - `/gestiwork/Aide/faq/`
+
+## 10.3 Onglet « Général & Identité » (Paramètres)
+
+Fichier : `templates/erp/settings/view-settings.php`.
+
+État fonctionnel principal :
+
+- Recap des informations d’identité, de coordonnées, de fiscalité, de numérotation, déjà **alimenté par la base** (`gw_of_identity`) via `SettingsProvider::getOfIdentity()`.
+- Modal d’édition « Général & Identité » avec :
+  - Champs obligatoires marqués d’une astérisque rouge.
+  - Règle métier : au moins **un** des deux téléphones (fixe ou portable) doit être renseigné.
+  - Vérifications côté JS au submit + messages d’erreur clairs dans la modale.
+  - Normalisation des formats (téléphone, SIRET/SIREN, IBAN, BIC).
+- Gestion spécifique du **logo GestiWork** :
+  - Utilisation de la médiathèque WordPress (`wp.media`).
+  - Prévisualisation du logo dédié à l’ERP.
+  - Soumission automatique du formulaire au choix du logo pour sauvegarde immédiate.
+
+## 10.4 Prochain focus : Onglet « Options »
+
+Prochaine étape déclarée de développement front + back :
+
+- Travailler l’onglet **« Options »** des paramètres GestiWork :
+  - URL de référence pour accéder directement à cet onglet :  
+    `https://audixor.fr/gestiwork/settings/options/`
+  - Objet :
+    - Structurer et persister les **options générales** (pages, comportements, quotas, seuils…).
+    - Faire correspondre les sections déjà décrites dans la maquette (pages d’extranet, délais, limites, taxonomies, etc.) avec un stockage réel dans la base + contrôleurs dédiés.
+
+Cette section doit être mise à jour régulièrement pour refléter l’état **réel** de l’interface au fil des commits.

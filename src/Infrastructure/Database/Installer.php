@@ -17,11 +17,12 @@ class Installer
         }
 
         $charsetCollate = $wpdb->get_charset_collate();
-        $tableName      = $wpdb->prefix . 'gw_of_identity';
+        $tableIdentity  = $wpdb->prefix . 'gw_of_identity';
+        $tableOptions   = $wpdb->prefix . 'gw_options';
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        $sql = "CREATE TABLE {$tableName} (
+        $sqlIdentity = "CREATE TABLE {$tableIdentity} (
 id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 raison_sociale VARCHAR(255) NOT NULL DEFAULT '',
 adresse TEXT NOT NULL,
@@ -53,6 +54,30 @@ updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTA
 PRIMARY KEY  (id)
 ) {$charsetCollate};";
 
-        dbDelta($sql);
+        dbDelta($sqlIdentity);
+
+        $sqlOptions = "CREATE TABLE {$tableOptions} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+first_year INT(4) UNSIGNED NOT NULL DEFAULT 0,
+min_hours_between_signature_emails INT(11) UNSIGNED NOT NULL DEFAULT 0,
+max_days_veille_alert INT(11) UNSIGNED NOT NULL DEFAULT 0,
+token_validity_hours INT(11) UNSIGNED NOT NULL DEFAULT 0,
+min_hourly_rate DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+default_deposit_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+max_log_rows INT(11) UNSIGNED NOT NULL DEFAULT 1000,
+attendance_sheet_lines INT(11) UNSIGNED NOT NULL DEFAULT 25,
+enable_client_contract_number TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+enable_document_validity_period TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+enable_trainer_status_activity_code TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+enable_free_text_duration TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+enable_signature_image TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+enable_impersonation_login TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+taxonomy_mode VARCHAR(20) NOT NULL DEFAULT '',
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id)
+) {$charsetCollate};";
+
+        dbDelta($sqlOptions);
     }
 }

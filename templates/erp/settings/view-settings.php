@@ -21,12 +21,14 @@
 declare(strict_types=1);
 
 use GestiWork\Domain\Settings\SettingsProvider;
+use GestiWork\Domain\Settings\OptionsProvider;
 
 if (function_exists('wp_enqueue_media')) {
     wp_enqueue_media();
 }
 
 $ofIdentity = SettingsProvider::getOfIdentity();
+$options    = OptionsProvider::getOptions();
 $gwLogoUrl = '';
 
 $regimeActuel = isset($ofIdentity['regime_tva']) ? (string) $ofIdentity['regime_tva'] : 'exonere';
@@ -303,12 +305,22 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             <p class="gw-section-description">
                 <?php esc_html_e('Cette section rassemblera les options avancées de fonctionnement : pages de gestion, champs additionnels, délais, limites, etc.', 'gestiwork'); ?>
             </p>
+
+            <button type="button" class="gw-button gw-button--secondary gw-button-modals" data-gw-modal-target="gw-modal-options">
+                <?php esc_html_e('Modifier les options générales', 'gestiwork'); ?>
+            </button>
+
             <div class="gw-settings-group">
-                <h4 class="gw-section-subtitle"><?php esc_html_e('2.1 Pages & URLs de gestion', 'gestiwork'); ?></h4>
+                <h4 class="gw-section-subtitle"><?php esc_html_e('2.1 Activité & URLs de gestion', 'gestiwork'); ?></h4>
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Première année d’activité gérée', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder">2024</p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $firstYear = isset($options['first_year']) ? (int) $options['first_year'] : 0;
+                            echo $firstYear > 0 ? esc_html((string) $firstYear) : '';
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Page de gestion principale', 'gestiwork'); ?></p>
@@ -338,48 +350,83 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Numéro de contrat pour les clients', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Activer un champ dédié au numéro de contrat client sur les documents.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $enabled = !empty($options['enable_client_contract_number']);
+                            if ($enabled) {
+                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('un champ dédié au numéro de contrat client est présent sur les documents.', 'gestiwork');
+                            } else {
+                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucun numéro de contrat client spécifique n’est affiché sur les documents.', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Période de validité des documents', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Permettre de définir une date de validité pour les devis à signer.', 'gestiwork'); ?></p>
-                    </div>
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Marque des formateurs', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Les formateurs peuvent mettre en avant leur propre marque sur certains documents.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $enabled = !empty($options['enable_document_validity_period']);
+                            if ($enabled) {
+                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('une date de validité peut être définie et affichée sur les devis à signer.', 'gestiwork');
+                            } else {
+                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucune date de validité spécifique n’est gérée sur les devis.', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Statut et code d’activité des formateurs', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Enregistrer le statut (salarié, indépendant, etc.) et un identifiant ou code d’activité.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $enabled = !empty($options['enable_trainer_status_activity_code']);
+                            if ($enabled) {
+                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('vous pourrez renseigner pour chaque formateur son statut (salarié, indépendant, etc.).', 'gestiwork');
+                            } else {
+                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucun statut ni code d’activité spécifique n’est demandé pour les formateurs.', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Genre des stagiaires', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Activer le champ de genre pour les besoins BPF ou statistiques.', 'gestiwork'); ?></p>
-                    </div>
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Durée textuelle des actions', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Permettre des durées libres comme "soit deux demi-journées" dans les documents.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('Durée des actions', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $enabled = !empty($options['enable_free_text_duration']);
+                            if ($enabled) {
+                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('Permet de definir le decoupage de la session (journée, 1/2journée)', 'gestiwork');
+                            } else {
+                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('Pas de decoupage sessions', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Image de signature', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Autoriser l’intégration d’une image de signature du responsable (non valide juridiquement).', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $enabled = !empty($options['enable_signature_image']);
+                            if ($enabled) {
+                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('une image de signature du responsable peut être téléversée et affichée sur certains documents.', 'gestiwork');
+                            } else {
+                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucune image de signature n’est affichée sur les documents.', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Connexion en tant que…', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Autoriser les responsables à se connecter à la place d’un autre utilisateur.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $enabled = !empty($options['enable_impersonation_login']);
+                            if ($enabled) {
+                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('les responsables autorisés peuvent se connecter à la place d’un autre utilisateur depuis l’interface.', 'gestiwork');
+                            } else {
+                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('la connexion en tant qu’un autre utilisateur est désactivée.', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Mode d’identification', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Gestion locale des comptes ou mode délégué (SSO, etc.), à définir.', 'gestiwork'); ?></p>
-                    </div>
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Droits des formateurs', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Autoriser ou non les formateurs à supprimer des formations ou sessions.', 'gestiwork'); ?></p>
-                    </div>
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Détail du tarif pédagogique', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Permettre aux formateurs de détailler animation / préparation par client.', 'gestiwork'); ?></p>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -388,31 +435,72 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Délai minimum entre deux e-mails de demande de signature', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Exemple : 4 heures', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $val = isset($options['min_hours_between_signature_emails']) ? (int) $options['min_hours_between_signature_emails'] : 0;
+                            echo $val > 0 ? esc_html($val . ' h') : '';
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Délai maximum avant alerte sur la veille personnelle', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Exemple : 30 jours', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $val = isset($options['max_days_veille_alert']) ? (int) $options['max_days_veille_alert'] : 0;
+                            echo $val > 0 ? esc_html($val . ' j') : '';
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Durée de validité du jeton de connexion', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Exemple : 24 heures (0 pour illimité)', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $val = isset($options['token_validity_hours']) ? (int) $options['token_validity_hours'] : 0;
+                            if ($val > 0) {
+                                echo esc_html($val . ' h');
+                            } elseif ($val === 0) {
+                                esc_html_e('Illimité', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Tarif horaire plancher', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Exemple : 40 € / heure (déclenche une alerte si inférieur).', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            if (isset($options['min_hourly_rate']) && (float) $options['min_hourly_rate'] > 0) {
+                                echo esc_html(number_format((float) $options['min_hourly_rate'], 2, ',', ' ')) . ' € / h';
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Pourcentage par défaut pour l’acompte', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Exemple : 30 %', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            if (isset($options['default_deposit_percent']) && (float) $options['default_deposit_percent'] > 0) {
+                                echo esc_html(number_format((float) $options['default_deposit_percent'], 2, ',', ' ')) . ' %';
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Nombre maximum de lignes de log chargées', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder">1000</p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $val = isset($options['max_log_rows']) ? (int) $options['max_log_rows'] : 0;
+                            echo $val > 0 ? esc_html((string) $val) : '';
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Nombre de lignes par feuille d’émargement', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder">25</p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $val = isset($options['attendance_sheet_lines']) ? (int) $options['attendance_sheet_lines'] : 0;
+                            echo $val > 0 ? esc_html((string) $val) : '';
+                            ?>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -422,7 +510,16 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Taxonomies pour les formations et sessions', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Choix entre catégories (arborescence) et étiquettes (classification transversale).', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $mode = isset($options['taxonomy_mode']) ? (string) $options['taxonomy_mode'] : '';
+                            if ($mode === 'tags') {
+                                esc_html_e('Étiquettes (classification transversale)', 'gestiwork');
+                            } else {
+                                esc_html_e('Catégories (arborescence)', 'gestiwork');
+                            }
+                            ?>
+                        </p>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Page de présentation du bilan de compétences', 'gestiwork'); ?></p>
@@ -694,6 +791,174 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             </form>
         </div>
     </div>
+    <div class="gw-modal-backdrop" id="gw-modal-options" aria-hidden="true">
+            <div class="gw-modal gw-modal" role="dialog" aria-modal="true" aria-labelledby="gw-modal-options-title">
+                <div class="gw-modal-header">
+                    <h3 class="gw-modal-title" id="gw-modal-options-title"><?php esc_html_e('Modifier – Options générales', 'gestiwork'); ?></h3>
+                    <button type="button" class="gw-modal-close" data-gw-modal-close="gw-modal-options" aria-label="<?php esc_attr_e('Fermer', 'gestiwork'); ?>">×</button>
+                </div>
+                <form method="post" action="">
+                    <?php wp_nonce_field('gw_save_options', 'gw_settings_nonce_options'); ?>
+                    <input type="hidden" name="gw_settings_action" value="save_options" />
+                    <div class="gw-modal-body">
+                        <p class="gw-modal-small-info">
+                            <?php esc_html_e('Les champs marqués d’une astérisque rouge (*) sont obligatoires.', 'gestiwork'); ?>
+                        </p>
+                        <div class="gw-modal-grid">
+                            <div class="gw-modal-field">
+                                <label for="gw_first_year">
+                                    <?php esc_html_e('Première année d’activité gérée', 'gestiwork'); ?>
+                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    class="gw-modal-input"
+                                    id="gw_first_year"
+                                    name="gw_first_year"
+                                    min="2000"
+                                    max="2100"
+                                    required
+                                    value="<?php echo isset($options['first_year']) ? esc_attr((string) $options['first_year']) : ''; ?>"
+                                />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_min_hours_between_signature_emails">
+                                    <?php esc_html_e('Délai minimum entre deux e-mails de demande de signature (heures)', 'gestiwork'); ?>
+                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    class="gw-modal-input"
+                                    id="gw_min_hours_between_signature_emails"
+                                    name="gw_min_hours_between_signature_emails"
+                                    required
+                                    value="<?php echo isset($options['min_hours_between_signature_emails']) ? esc_attr((string) $options['min_hours_between_signature_emails']) : ''; ?>"
+                                />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_max_days_veille_alert">
+                                    <?php esc_html_e('Délai maximum avant alerte sur la veille personnelle (jours)', 'gestiwork'); ?>
+                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    class="gw-modal-input"
+                                    id="gw_max_days_veille_alert"
+                                    name="gw_max_days_veille_alert"
+                                    required
+                                    value="<?php echo isset($options['max_days_veille_alert']) ? esc_attr((string) $options['max_days_veille_alert']) : ''; ?>"
+                                />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_token_validity_hours">
+                                    <?php esc_html_e('Durée de validité du jeton de connexion (heures, 0 pour illimité)', 'gestiwork'); ?>
+                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    class="gw-modal-input"
+                                    id="gw_token_validity_hours"
+                                    name="gw_token_validity_hours"
+                                    required
+                                    value="<?php echo isset($options['token_validity_hours']) ? esc_attr((string) $options['token_validity_hours']) : ''; ?>"
+                                />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_min_hourly_rate"><?php esc_html_e('Tarif horaire plancher (€ / heure)', 'gestiwork'); ?></label>
+                                <input type="number" min="0" step="0.01" class="gw-modal-input" id="gw_min_hourly_rate" name="gw_min_hourly_rate" value="<?php echo isset($options['min_hourly_rate']) ? esc_attr((string) $options['min_hourly_rate']) : ''; ?>" />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_default_deposit_percent"><?php esc_html_e('Pourcentage par défaut pour l’acompte (%)', 'gestiwork'); ?></label>
+                                <input type="number" min="0" max="100" step="0.01" class="gw-modal-input" id="gw_default_deposit_percent" name="gw_default_deposit_percent" value="<?php echo isset($options['default_deposit_percent']) ? esc_attr((string) $options['default_deposit_percent']) : ''; ?>" />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_max_log_rows"><?php esc_html_e('Nombre maximum de lignes de log chargées', 'gestiwork'); ?></label>
+                                <input type="number" min="0" class="gw-modal-input" id="gw_max_log_rows" name="gw_max_log_rows" value="<?php echo isset($options['max_log_rows']) ? esc_attr((string) $options['max_log_rows']) : ''; ?>" />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_attendance_sheet_lines"><?php esc_html_e('Nombre de lignes par feuille d’émargement', 'gestiwork'); ?></label>
+                                <input type="number" min="0" class="gw-modal-input" id="gw_attendance_sheet_lines" name="gw_attendance_sheet_lines" value="<?php echo isset($options['attendance_sheet_lines']) ? esc_attr((string) $options['attendance_sheet_lines']) : ''; ?>" />
+                            </div>
+                            <div class="gw-modal-field">
+                                <label for="gw_taxonomy_mode"><?php esc_html_e('Taxonomies pour les formations et sessions', 'gestiwork'); ?></label>
+                                <select class="gw-modal-input" id="gw_taxonomy_mode" name="gw_taxonomy_mode">
+                                    <option value="categories" <?php selected(isset($options['taxonomy_mode']) ? $options['taxonomy_mode'] : 'categories', 'categories'); ?>><?php esc_html_e('Catégories (arborescence)', 'gestiwork'); ?></option>
+                                    <option value="tags" <?php selected(isset($options['taxonomy_mode']) ? $options['taxonomy_mode'] : 'categories', 'tags'); ?>><?php esc_html_e('Étiquettes (classification transversale)', 'gestiwork'); ?></option>
+                                </select>
+                            </div>
+                            <div class="gw-modal-field" style="grid-column: 1 / -1;">
+                                <p><strong><?php esc_html_e('Champs additionnels et comportements', 'gestiwork'); ?></strong></p>
+                                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;align-items:flex-start;">
+                                    <div>
+                                        <label for="gw_enable_client_contract_number">
+                                            <input type="checkbox" id="gw_enable_client_contract_number" name="gw_enable_client_contract_number" value="1" <?php checked(!empty($options['enable_client_contract_number']), true); ?> />
+                                            <?php esc_html_e('Numéro de contrat pour les clients', 'gestiwork'); ?>
+                                        </label>
+                                        <small class="gw-modal-small-info">
+                                            <?php esc_html_e('Champ dédié au numéro de contrat client présent sur les documents.', 'gestiwork'); ?>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <label for="gw_enable_document_validity_period">
+                                            <input type="checkbox" id="gw_enable_document_validity_period" name="gw_enable_document_validity_period" value="1" <?php checked(!empty($options['enable_document_validity_period']), true); ?> />
+                                            <?php esc_html_e('Période de validité des documents', 'gestiwork'); ?>
+                                        </label>
+                                        <small class="gw-modal-small-info">
+                                            <?php esc_html_e('Date de validité définie et affichée sur les devis à signer.', 'gestiwork'); ?>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <label for="gw_enable_trainer_status_activity_code">
+                                            <input type="checkbox" id="gw_enable_trainer_status_activity_code" name="gw_enable_trainer_status_activity_code" value="1" <?php checked(!empty($options['enable_trainer_status_activity_code']), true); ?> />
+                                            <?php esc_html_e('Infos statut des formateurs', 'gestiwork'); ?>
+                                        </label>
+                                        <small class="gw-modal-small-info">
+                                            <?php esc_html_e('vous pourrez renseigner pour chaque formateur son statut (salarié, indépendant, etc.) et un code interne.', 'gestiwork'); ?>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <label for="gw_enable_free_text_duration">
+                                            <input type="checkbox" id="gw_enable_free_text_duration" name="gw_enable_free_text_duration" value="1" <?php checked(!empty($options['enable_free_text_duration']), true); ?> />
+                                            <?php esc_html_e('Durée des actions', 'gestiwork'); ?>
+                                        </label>
+                                        <small class="gw-modal-small-info">
+                                            <?php esc_html_e('Permet de definir le decoupage de la session (journée, 1/2journée)', 'gestiwork'); ?>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <label for="gw_enable_signature_image">
+                                            <input type="checkbox" id="gw_enable_signature_image" name="gw_enable_signature_image" value="1" <?php checked(!empty($options['enable_signature_image']), true); ?> />
+                                            <?php esc_html_e('Image de signature', 'gestiwork'); ?>
+                                        </label>
+                                        <small class="gw-modal-small-info">
+                                            <?php esc_html_e('Une image de signature du responsable pourra être téléversée et affichée sur certains documents.', 'gestiwork'); ?>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <label for="gw_enable_impersonation_login">
+                                            <input type="checkbox" id="gw_enable_impersonation_login" name="gw_enable_impersonation_login" value="1" <?php checked(!empty($options['enable_impersonation_login']), true); ?> />
+                                            <?php esc_html_e('Connexion en tant que…', 'gestiwork'); ?>
+                                        </label>
+                                        <small class="gw-modal-small-info">
+                                            <?php esc_html_e('les responsables autorisés pourront se connecter à la place d’un autre utilisateur depuis l’interface.', 'gestiwork'); ?>
+                                        </small>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gw-modal-footer">
+                        <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-options"><?php esc_html_e('Annuler', 'gestiwork'); ?></button>
+                        <button type="submit" class="gw-button gw-button--primary"><?php esc_html_e('Enregistrer', 'gestiwork'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </section>
 
 <script>
@@ -702,6 +967,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
         var panels = document.querySelectorAll('.gw-settings-panel');
         var modalTriggers = document.querySelectorAll('[data-gw-modal-target]');
         var modalCloseButtons = document.querySelectorAll('[data-gw-modal-close]');
+        var allModals = document.querySelectorAll('.gw-modal-backdrop');
 
         if (tabs.length && panels.length) {
             tabs.forEach(function (tab) {
@@ -757,10 +1023,27 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 if (!targetId) {
                     return;
                 }
+
+                // Ferme d'abord toutes les autres modales éventuellemen	 ouvertes
+                if (allModals && allModals.length) {
+                    allModals.forEach(function (backdrop) {
+                        backdrop.classList.remove('gw-modal-backdrop--open');
+                        backdrop.setAttribute('aria-hidden', 'true');
+                    });
+                }
+
                 var modal = document.getElementById(targetId);
                 if (modal) {
                     modal.classList.add('gw-modal-backdrop--open');
                     modal.setAttribute('aria-hidden', 'false');
+
+                    if (typeof modal.scrollIntoView === 'function') {
+                        try {
+                            modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
                 }
             });
         });

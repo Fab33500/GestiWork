@@ -234,6 +234,7 @@
     border: 1px solid var(--gw-color-border);
     padding: 10px 12px;
     background: #fdfdfd;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
 .gw-settings-label {
