@@ -237,6 +237,100 @@
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
+/* === PDF layout (section 3.2 Mise en forme PDF) === */
+
+.gw-settings-group--pdf-layout {
+    margin-top: 16px;
+}
+
+.gw-settings-group--pdf-layout .gw-section-subtitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gw-pdf-layout-grid {
+    grid-template-columns: 0.9fr 1.6fr 1.3fr;
+}
+
+.gw-pdf-layout-block {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dimensions : labels + inputs alignés en colonnes */
+.gw-pdf-layout-block--dimensions .gw-settings-label {
+    margin-bottom: 6px;
+}
+
+.gw-pdf-layout-block--dimensions .gw-settings-placeholder {
+    margin-bottom: 4px;
+}
+
+.gw-pdf-layout-block--dimensions p {
+    margin: 2px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.gw-pdf-layout-block--dimensions label {
+    min-width: 60px;
+}
+
+.gw-pdf-layout-block--dimensions input[type="number"] {
+    max-width: 90px;
+}
+
+/* Typographie : labels à gauche, champs alignés à droite dans la card */
+.gw-pdf-layout-block--typo > div > p {
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.gw-pdf-layout-block--typo > div > p label {
+    flex: 0 0 210px;   /* colonne fixe pour les libellés */
+    max-width: 210px;
+}
+
+.gw-pdf-layout-block--typo > div > p select,
+.gw-pdf-layout-block--typo > div > p input[type="text"] {
+    margin-left: auto; /* pousse le champ à droite de la card */
+}
+
+.gw-pdf-layout-block--typo-title{
+    margin-top: 5px;
+}
+
+/* Responsif : repasser en colonnes complètes sur petits écrans */
+@media (max-width: 960px) {
+    .gw-pdf-layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .gw-pdf-layout-block--dimensions p {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .gw-pdf-layout-block--dimensions label {
+        min-width: auto;
+    }
+    .gw-pdf-layout-block--typo > div > p {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .gw-pdf-layout-block--typo > div > p label {
+        min-width: auto;
+    }
+}
+
 .gw-settings-label {
     font-size: 13px;
     font-weight: var(--gw-font-weight-medium);

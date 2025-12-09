@@ -368,8 +368,7 @@ Le router `GestiWork\UI\Router\GestiWorkRouter` intercepte désormais les URLs p
   - `/gestiwork/settings/general/`  
     → Onglet **« Général & Identité »** actif.
   - `/gestiwork/settings/options/`  
-    → Onglet **« Options »** actif.  
-    → **C’est le prochain gros chantier de développement fonctionnel.**
+    → Onglet **« Options »** actif, avec stockage des options dans la table `gw_options` et redirections propres sans paramètres `gw_updated`.
   - `/gestiwork/settings/pdf/` (et alias `gestionpdf`, `gestion-pdf`)  
     → Onglet **« Gestion PDF »** actif.
 
@@ -388,12 +387,13 @@ Comportement :
   - `#gw-aide-introduction`
   - `#gw-aide-demarrage`
   - `#gw-aide-configuration` (visible uniquement pour les admins)
+  - `#gw-aide-options` (section dédiée à l’onglet « Options » des paramètres, visible uniquement pour les admins)
   - `#gw-aide-quotidien`
   - `#gw-aide-faq`
 - Les sections de contenu détaillées sont dans des fichiers dédiés :
   - `section-introduction.php`
   - `section-demarrage.php`
-  - `section-configuration.php` (guide détaillé de l’onglet « Général & Identité »)
+  - `section-configuration.php` (guide détaillé de l’onglet « Général & Identité » **et** de l’onglet « Options » via la sous-section `#gw-aide-options`)
   - `section-quotidien.php`
   - `section-faq.php`
 - Comportement UX :
@@ -404,6 +404,7 @@ Comportement :
     - `/gestiwork/Aide/introduction/`
     - `/gestiwork/Aide/demarrage/`
     - `/gestiwork/Aide/configuration/`
+    - `/gestiwork/Aide/options/`
     - `/gestiwork/Aide/quotidien/`
     - `/gestiwork/Aide/faq/`
 
@@ -424,15 +425,20 @@ Fichier : `templates/erp/settings/view-settings.php`.
   - Prévisualisation du logo dédié à l’ERP.
   - Soumission automatique du formulaire au choix du logo pour sauvegarde immédiate.
 
-## 10.4 Prochain focus : Onglet « Options »
+## 10.4 Onglet « Options » – État actuel
 
-Prochaine étape déclarée de développement front + back :
+L’onglet **« Options »** des paramètres GestiWork est désormais partiellement implémenté :
 
-- Travailler l’onglet **« Options »** des paramètres GestiWork :
-  - URL de référence pour accéder directement à cet onglet :  
-    `https://audixor.fr/gestiwork/settings/options/`
-  - Objet :
-    - Structurer et persister les **options générales** (pages, comportements, quotas, seuils…).
-    - Faire correspondre les sections déjà décrites dans la maquette (pages d’extranet, délais, limites, taxonomies, etc.) avec un stockage réel dans la base + contrôleurs dédiés.
+- **URL de référence** pour accéder directement à cet onglet :  
+  `https://audixor.fr/gestiwork/settings/options/`
+- **Stockage** : les options techniques sont centralisées dans la table `gw_options`, exposées côté code via `OptionsProvider` et gérées en écriture par `SettingsController::handlePost()` (action `save_options`).
+- **UI** :
+  - Bloc 2.1 « Activité & URLs de gestion » (année de début d’activité, URLs cibles pour l’extranet GestiWork).
+  - Bloc 2.2 « Champs additionnels et comportements » (cases à cocher permettant d’activer ou non des champs et comportements spécifiques : numéro de contrat client, date de validité, statut formateur, durée des actions, image de signature, impersonation, etc.).
+  - Blocs 2.3 et 2.4 pour les délais, seuils et taxonomies (affichage déjà en place, raffinements à prévoir côté domaine/contrôleurs si besoin).
+- **Redirections après sauvegarde** :
+  - Lors de la validation de la modale de l’onglet Options, l’utilisateur reste bien sur l’URL propre `/gestiwork/settings/options/` **sans** ajout de paramètres de type `gw_updated`.
+  - Même logique pour l’onglet Général (`/gestiwork/settings/general/`).
+- **Aide intégrée** : la page `/gestiwork/Aide/` dispose d’une section dédiée `#gw-aide-options` (sommaire + ancre) décrivant le fonctionnement de l’onglet Options pour un utilisateur non technique.
 
-Cette section doit être mise à jour régulièrement pour refléter l’état **réel** de l’interface au fil des commits.
+Cette section du README doit continuer à être mise à jour au fil des itérations (ajout de nouvelles options, comportements, validations, etc.) afin de rester alignée sur l’état réel de l’interface.

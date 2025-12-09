@@ -133,4 +133,93 @@
             sur <strong>« Enregistrer »</strong>.
         </p>
     </div>
+
+    <div class="gw-settings-group gw-aide-section" id="gw-aide-options">
+        <h4 class="gw-section-subtitle"><span>8.</span> Utiliser l’onglet « Options »</h4>
+        <p class="gw-section-description">
+            L’onglet <strong>« Options »</strong> permet d’affiner le comportement de GestiWork : année de début
+            d’activité, champs additionnels sur les documents, durées et seuils techniques, ainsi que quelques
+            réglages de taxonomie. Ces paramètres influencent la façon dont l’outil présente certaines informations
+            à vos clients, stagiaires et formateurs.
+        </p>
+
+        <h4 class="gw-section-subtitle"><span>8.1</span> Accéder aux options et ouvrir la fenêtre d’édition</h4>
+        <ul class="gw-list">
+            <li>Depuis le menu <strong>Paramètres</strong> de GestiWork, sélectionnez l’onglet <strong>« Options »</strong>.</li>
+            <li>La page présente plusieurs blocs récapitulatifs numérotés (2.1, 2.2, 2.3, 2.4).
+                Ils affichent en lecture seule l’état actuel de vos réglages.</li>
+            <li>Pour modifier ces réglages, cliquez sur le bouton <strong>« Modifier les options de cet onglet »</strong>.
+                Une fenêtre d’édition s’ouvre avec l’ensemble des champs disponibles.</li>
+        </ul>
+
+        <h4 class="gw-section-subtitle"><span>8.2</span> Bloc 2.1 « Activité &amp; URLs de gestion »</h4>
+        <ul class="gw-list">
+            <li><strong>Année de début d’activité</strong><br />
+                Indiquez l’année de création ou de démarrage de votre activité de formation (par exemple <code>2015</code>).
+                Cette information est notamment utilisée pour certaines présentations et peut servir de repère dans vos
+                rapports ou exports.
+            </li>
+            <li><strong>URLs de gestion (extranet, comptes, aide, exports)</strong><br />
+                Ces liens représentent l’architecture cible de votre extranet (page de gestion principale, espace clients
+                &amp; stagiaires, page d’aide centralisée, page d’exports, etc.).
+                Ils servent de <em>référence fonctionnelle</em> pour la mise en place de GestiWork avec votre équipe technique
+                ou votre prestataire web.
+            </li>
+        </ul>
+
+        <h4 class="gw-section-subtitle"><span>8.3</span> Bloc 2.2 « Champs additionnels et comportements »</h4>
+        <p class="gw-section-description">
+            Ce bloc regroupe des <strong>cases à cocher</strong> qui activent ou désactivent des champs
+            supplémentaires et certains comportements dans l’application. Selon vos besoins, vous pouvez
+            garder un fonctionnement simple ou activer des options plus avancées.
+        </p>
+        <ul class="gw-list">
+            <li><strong>Numéro de contrat pour les clients</strong><br />
+                Lorsque cette option est activée, un champ spécifique permet de renseigner un numéro de contrat
+                client. Ce numéro peut ensuite apparaître sur vos documents (devis, conventions, factures), ce qui
+                facilite l’identification des dossiers pour vos clients et pour votre service administratif.
+            </li>
+            <li><strong>Période de validité des documents</strong><br />
+                En activant cette option, vous pouvez définir et afficher une date de validité sur vos devis
+                et documents à signer. Cela clarifie pour vos clients jusqu’à quelle date la proposition est valable.
+            </li>
+            <li><strong>Statut et code d’activité des formateurs</strong><br />
+                Cette option ajoute des informations complémentaires sur les formateurs (statut, code d’activité).
+                Elle est utile si vous devez distinguer différents types de statuts (salarié, indépendant, etc.) ou
+                produire des synthèses plus fines pour vos bilans.
+            </li>
+            <li><strong>Durée des actions</strong><br />
+                Permet de détailler la durée des sessions (par journée, demi-journée, etc.) au-delà du simple nombre d’heures.
+                Cette option est utile si vous souhaitez un suivi plus précis du découpage des actions de formation.
+            </li>
+            <li><strong>Image de signature</strong><br />
+                Lorsque l’option est activée, vous pouvez téléverser une image de signature (par exemple celle du responsable
+                de l’organisme) qui pourra être intégrée sur certains documents PDF.
+            </li>
+            <li><strong>Connexion en tant que…</strong><br />
+                Cette fonction permet à un administrateur autorisé de se connecter temporairement à la place d’un autre utilisateur.
+                Elle est particulièrement utile pour tester une configuration ou assister un utilisateur en cas de difficultés.
+                Pour des raisons de sécurité, n’activez cette option que si vous en avez réellement besoin.
+            </li>
+        </ul>
+
+        <h4 class="gw-section-subtitle"><span>8.4</span> Blocs 2.3 et 2.4 : délais, seuils et taxonomies</h4>
+        <ul class="gw-list">
+            <li><strong>Délais et seuils</strong><br />
+                Vous pouvez définir des durées (en heures ou en jours) utilisées par GestiWork pour certains automatismes :
+                délai minimum entre deux demandes de signature, délai avant alerte sur la veille personnelle, durée de validité
+                des liens de connexion, etc. Ces valeurs permettent d’adapter le fonctionnement de l’outil à vos pratiques internes.
+            </li>
+            <li><strong>Seuils financiers</strong><br />
+                Des champs comme le tarif horaire plancher ou le pourcentage par défaut de l’acompte vous aident à cadrer vos
+                propositions commerciales et à harmoniser les pratiques de facturation au sein de l’équipe.
+            </li>
+            <li><strong>Taxonomies et bilans</strong><br />
+                Les taxonomies (catégories ou étiquettes) structurent vos formations et vos sessions. Choisissez le mode qui
+                correspond le mieux à votre façon de classer vos actions (arborescence classique ou classification plus
+                transversale). Une URL de page de présentation de bilan de compétences peut également servir de référence
+                pour vos communications.
+            </li>
+        </ul>
+    </div>
 <?php endif; ?>

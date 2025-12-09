@@ -534,38 +534,197 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             <p class="gw-section-description">
                 <?php esc_html_e('Cette section sera dédiée à la mise en forme des documents PDF générés par GestiWork (propositions, conventions, convocations, attestations, etc.).', 'gestiwork'); ?>
             </p>
+
+            <button type="button" class="gw-button gw-button--secondary" style="margin-bottom: 16px;">
+                <?php esc_html_e('Voir un aperçu PDF', 'gestiwork'); ?>
+            </button>
+
             <div class="gw-settings-group">
-                <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 En-tête & pied de page', 'gestiwork'); ?></h4>
-                <div class="gw-settings-grid">
+                <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 Nom du modèle PDF', 'gestiwork'); ?></h4>
+                <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('En-tête commun', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Zone éditable (TinyMCE) pour l’en-tête commun à tous les PDF.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF en cours', 'gestiwork'); ?></p>
+                        <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" />
                     </div>
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Pied de page commun', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Zone éditable (TinyMCE) pour le pied de page commun à tous les PDF.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('Modèles existants', 'gestiwork'); ?></p>
+                        <ul class="gw-pdf-templates-list">
+                            <li>
+                                <span>Modèle standard</span>
+                                <span style="margin-left: 8px;">
+                                    <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                    <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                                </span>
+                            </li>
+                            <li>
+                                <span>Modèle convention</span>
+                                <span style="margin-left: 8px;">
+                                    <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                    <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                                </span>
+                            </li>
+                        </ul>
                     </div>
+                </div>
+            </div>
+
+            <div class="gw-settings-group gw-settings-group--pdf-layout">
+                <h4 class="gw-section-subtitle"><?php esc_html_e('3.2 Mise en forme PDF', 'gestiwork'); ?></h4>
+                <button type="button" class="gw-button gw-button--secondary" id="gw-toggle-pdf-layout" style="margin-bottom: 8px;">
+                    <?php esc_html_e('Afficher / masquer les réglages de mise en forme', 'gestiwork'); ?>
+                </button>
+                <div class="gw-settings-grid gw-pdf-layout-grid" id="gw-pdf-layout-body" style="display:none;">
+                    <div class="gw-settings-field gw-pdf-layout-block gw-pdf-layout-block--dimensions">
+                        <p class="gw-settings-label"><?php esc_html_e('Dimensions et marges', 'gestiwork'); ?></p>
+                        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+                            <div>
+                                <p class="gw-settings-placeholder"><?php esc_html_e('Marges (en millimètres)', 'gestiwork'); ?></p>
+                                <p><label for="gw_pdf_margin_top"><?php esc_html_e('Haut', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_top" value="5" style="width:80px;" /></p>
+                                <p><label for="gw_pdf_margin_bottom"><?php esc_html_e('Bas', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_bottom" value="5" style="width:80px;" /></p>
+                                <p><label for="gw_pdf_margin_left"><?php esc_html_e('Gauche', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_left" value="10" style="width:80px;" /></p>
+                                <p><label for="gw_pdf_margin_right"><?php esc_html_e('Droite', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_right" value="10" style="width:80px;" /></p>
+                            </div>
+                            <div>
+                                <p class="gw-settings-placeholder"><?php esc_html_e('Hauteurs (en millimètres)', 'gestiwork'); ?></p>
+                                <p><label for="gw_pdf_header_height"><?php esc_html_e('En-tête', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_header_height" value="20" style="width:80px;" /></p>
+                                <p><label for="gw_pdf_footer_height"><?php esc_html_e('Pied de page', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_footer_height" value="15" style="width:80px;" /></p>
+                                <p class="gw-settings-placeholder" style="margin-top:8px;">
+                                    <?php esc_html_e('Hauteur du corps calculée à partir du format de page et des marges.', 'gestiwork'); ?>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gw-settings-field gw-pdf-layout-block gw-pdf-layout-block--typo">
+                        <p class="gw-settings-label"><?php esc_html_e('Typographie et couleurs', 'gestiwork'); ?></p>
+                        <div class="gw-pdf-layout-block--typo-title">
+                            <p>
+                                <label for="gw_pdf_font_title" class="top"><?php esc_html_e('Police des titres', 'gestiwork'); ?></label>
+                                <select id="gw_pdf_font_title" style="max-width:260px;">
+                                    <option value="sans-serif" selected="selected">sans-serif</option>
+                                    <option value="times">times</option>
+                                    <option value="courier">courier</option>
+                                    <option value="helvetica">helvetica</option>
+                                    <option value="serif">serif</option>
+                                    <option value="monospace">monospace</option>
+                                </select>
+                            </p>
+                            <p>
+                                <label for="gw_pdf_font_body" class="top"><?php esc_html_e('Police du texte courant', 'gestiwork'); ?></label>
+                                <select id="gw_pdf_font_body" style="max-width:260px;">
+                                    <option value="sans-serif" selected="selected">sans-serif</option>
+                                    <option value="times">times</option>
+                                    <option value="courier">courier</option>
+                                    <option value="helvetica">helvetica</option>
+                                    <option value="serif">serif</option>
+                                    <option value="monospace">monospace</option>
+                                </select>
+                            </p>
+                            <p>
+                                <label for="gw_pdf_color_title" class="top"><?php esc_html_e('Couleur des titres de document', 'gestiwork'); ?></label>
+                                <input type="text" id="gw_pdf_color_title" value="#023047" style="width:120px;" />
+                            </p>
+                            <p>
+                                <label for="gw_pdf_color_other_titles" class="top"><?php esc_html_e('Couleur des autres titres', 'gestiwork'); ?></label>
+                                <input type="text" id="gw_pdf_color_other_titles" value="#023047" style="width:120px;" />
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Logo & coordonnées dans l’en-tête', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Sélection du logo et paramétrage des coordonnées visibles sur tous les documents.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('Feuille de style personnalisée (CSS)', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('La feuille de style s’appliquera après les réglages ci-dessus.', 'gestiwork'); ?></p>
+                        <textarea id="gw_pdf_custom_css" rows="8" style="width:100%; max-width:100%;"></textarea>
                     </div>
                 </div>
             </div>
 
             <div class="gw-settings-group">
-                <h4 class="gw-section-subtitle"><?php esc_html_e('3.2 Zone de mise en forme PDF', 'gestiwork'); ?></h4>
+                <h4 class="gw-section-subtitle"><?php esc_html_e('3.3 En-tête & pied de page', 'gestiwork'); ?></h4>
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Règles de mise en page communes', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Marges, typographie, couleurs de base pour tous les documents générés.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('En-tête commun', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('Zone éditable (TinyMCE) pour l’en-tête commun à tous les PDF.', 'gestiwork'); ?></p>
+                        <button type="button" class="gw-button gw-button--secondary" id="gw-open-pdf-header-editor">
+                            <?php esc_html_e('Modifier le gabarit d’en-tête', 'gestiwork'); ?>
+                        </button>
                     </div>
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Styles de titres, tableaux et listes', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Définition des styles pour les titres, sous-titres, tableaux et listes.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('Pied de page commun', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('Zone éditable (TinyMCE) pour le pied de page commun à tous les PDF.', 'gestiwork'); ?></p>
+                        <button type="button" class="gw-button gw-button--secondary" id="gw-open-pdf-footer-editor">
+                            <?php esc_html_e('Modifier le gabarit de pied de page', 'gestiwork'); ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gw-settings-group" id="gw-pdf-editor" style="display: none;">
+                <h4 class="gw-section-subtitle" id="gw-pdf-editor-title"><?php esc_html_e('3.x Édition du gabarit PDF (en-tête / pied de page)', 'gestiwork'); ?></h4>
+                <div class="gw-settings-grid" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
+                    <div class="gw-settings-field">
+                        <input type="hidden" id="gw_pdf_editor_context" name="gw_pdf_editor_context" value="header" />
+                        <?php
+                        if (function_exists('wp_editor')) {
+                            wp_editor(
+                                '',
+                                'gw_pdf_editor',
+                                [
+                                    'textarea_name' => 'gw_pdf_editor_content',
+                                    'textarea_rows' => 14,
+                                    'media_buttons' => false,
+                                ]
+                            );
+                        }
+                        ?>
                     </div>
                     <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Blocs de contenu réutilisables', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Préparation de clauses légales et mentions spécifiques OF / Sous-traitant.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-label"><?php esc_html_e('Mots-clés disponibles', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('Cliquez sur un mot-clé pour l’insérer dans le gabarit (structure en cours de maquette).', 'gestiwork'); ?></p>
+
+                        <div class="gw-pdf-shortcodes-group">
+                            <p><strong><?php esc_html_e('Document', 'gestiwork'); ?></strong></p>
+                            <ul>
+                                <li><code>document:titre</code></li>
+                                <li><code>document:date_debut</code></li>
+                                <li><code>document:date_fin</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="gw-pdf-shortcodes-group">
+                            <p><strong><?php esc_html_e('Client', 'gestiwork'); ?></strong></p>
+                            <ul>
+                                <li><code>client:nom</code></li>
+                                <li><code>client:prenom</code></li>
+                                <li><code>client:adresse</code></li>
+                                <li><code>client:code_postal</code></li>
+                                <li><code>client:ville</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="gw-pdf-shortcodes-group">
+                            <p><strong><?php esc_html_e('Organisme de formation', 'gestiwork'); ?></strong></p>
+                            <ul>
+                                <li><code>of:nom</code></li>
+                                <li><code>of:adresse</code></li>
+                                <li><code>of:code_postal</code></li>
+                                <li><code>of:ville</code></li>
+                                <li><code>of:siret</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gw-settings-group">
+                <div class="gw-settings-grid">
+                    <div class="gw-settings-field" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                        <button type="button" class="gw-button gw-button--secondary">
+                            <?php esc_html_e('Annuler les modifications PDF', 'gestiwork'); ?>
+                        </button>
+                        <button type="button" class="gw-button gw-button--primary">
+                            <?php esc_html_e('Enregistrer les réglages PDF', 'gestiwork'); ?>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1151,6 +1310,67 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             };
             updateTvaCard();
             regimeSelect.addEventListener('change', updateTvaCard);
+        }
+
+        // Gestion de la zone d'édition PDF (en-tête / pied de page)
+        var pdfEditorGroup = document.getElementById('gw-pdf-editor');
+        var pdfEditorTitle = document.getElementById('gw-pdf-editor-title');
+        var pdfEditorContext = document.getElementById('gw_pdf_editor_context');
+        var openPdfHeaderBtn = document.getElementById('gw-open-pdf-header-editor');
+        var openPdfFooterBtn = document.getElementById('gw-open-pdf-footer-editor');
+
+        function gwOpenPdfEditor(context) {
+            if (!pdfEditorGroup) {
+                return;
+            }
+
+            pdfEditorGroup.style.display = '';
+
+            if (pdfEditorContext) {
+                pdfEditorContext.value = context;
+            }
+
+            if (pdfEditorTitle) {
+                if (context === 'header') {
+                    pdfEditorTitle.textContent = 'Modifier l\'en-tête';
+                } else if (context === 'footer') {
+                    pdfEditorTitle.textContent = 'Modifier le pied de page';
+                }
+            }
+
+            if (typeof pdfEditorGroup.scrollIntoView === 'function') {
+                try {
+                    pdfEditorGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+
+        if (openPdfHeaderBtn) {
+            openPdfHeaderBtn.addEventListener('click', function () {
+                gwOpenPdfEditor('header');
+            });
+        }
+
+        if (openPdfFooterBtn) {
+            openPdfFooterBtn.addEventListener('click', function () {
+                gwOpenPdfEditor('footer');
+            });
+        }
+
+        // Ouverture / fermeture de la zone 3.2 Mise en forme PDF
+        var pdfLayoutToggle = document.getElementById('gw-toggle-pdf-layout');
+        var pdfLayoutBody = document.getElementById('gw-pdf-layout-body');
+        if (pdfLayoutToggle && pdfLayoutBody) {
+            pdfLayoutToggle.addEventListener('click', function () {
+                var current = pdfLayoutBody.style.display;
+                if (!current || current === 'none') {
+                    pdfLayoutBody.style.display = '';
+                } else {
+                    pdfLayoutBody.style.display = 'none';
+                }
+            });
         }
 
         // Validation du formulaire d'identité au moment de la soumission
