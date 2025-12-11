@@ -1,0 +1,104 @@
+/* GestiWork PDF - styles génériques d'impression
+ * Inspiré de learnwpof/css/pdf.css
+ */
+
+.pdf-header,
+.pdf-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    color: #444;
+    font-size: 0.9em;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.pdf-header {
+    top: 0;
+}
+
+.pdf-footer {
+    border-top: 0.1pt solid #999;
+    padding-top: 5pt;
+    font-size: 0.8em;
+    line-height: 1.05em;
+    bottom: 0;
+}
+
+.pdf-watermark {
+    position: fixed;
+    top: 35%;
+    transform: rotate(-30deg);
+    transform-origin: 50% 50%;
+    opacity: .13;
+    font-size: 200px;
+    color: black;
+    text-align: center;
+    width: 100%;
+}
+
+body {
+    text-align: justify;
+    font-size: 10pt;
+}
+
+p,
+ul,
+ol {
+    margin: 3pt 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+}
+
+h2:nth-of-type(1),
+h3:nth-of-type(1),
+h4:nth-of-type(1),
+h5:nth-of-type(1) {
+    margin-top: 0px;
+}
+
+h3 {
+    font-size: 10pt;
+    margin: 5pt 0 3pt 0;
+}
+
+h4 {
+    font-size: 8pt;
+    margin: 3pt 0 2pt 0;
+}
+
+/* Tableaux standards de convention */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 5mm 0;
+}
+
+th,
+td {
+    border: 1px solid #dee2e6;
+    padding: 2mm 3mm;
+    text-align: left;
+}
+
+th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}

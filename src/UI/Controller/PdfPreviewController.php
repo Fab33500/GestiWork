@@ -96,8 +96,17 @@ final class PdfPreviewController
         $marginBottom = (float) ($template['margin_bottom'] ?? 5);
         $marginLeft = (float) ($template['margin_left'] ?? 10);
         $marginRight = (float) ($template['margin_right'] ?? 10);
+
+        // Hauteurs fixes (en mm) pour les zones réservées à l'en-tête et au pied de page.
+        // Ces valeurs ne sont plus estimées automatiquement :
+        // l'utilisateur les règle dans le modèle en fonction de son contenu.
         $headerHeight = (float) ($template['header_height'] ?? 20);
         $footerHeight = (float) ($template['footer_height'] ?? 15);
+
+        // Marges effectives de la page en tenant compte des zones header/footer.
+        // Le contenu principal (corps) s'écoule automatiquement entre ces marges.
+        $topMarginWithHeader = $marginTop + $headerHeight;
+        $bottomMarginWithFooter = $marginBottom + $footerHeight;
 
         // Contenu de démonstration
         $bodyContent = self::getDemoContent($ofIdentity);
@@ -106,134 +115,117 @@ final class PdfPreviewController
         $h2Size = max(10, $fontTitleSize - 2);
         $h3Size = max(9, $fontTitleSize - 4);
 
+        // URL vers la feuille de style PDF générique du plugin
+        $pdfCssUrl = defined('GW_PLUGIN_URL')
+            ? GW_PLUGIN_URL . 'assets/css/gw-pdf.css'
+            : '';
+
+        $cssLinkTag = $pdfCssUrl !== ''
+            ? '<link rel="stylesheet" type="text/css" href="' . esc_url($pdfCssUrl) . '" />'
+            : '';
+
         $html = <<<HTML
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Aperçu PDF - {$template['name']}</title>
+    {$cssLinkTag}
     <style>
+        /* Marges de page : on inclut ici la marge "papier" + les bandes
+           réservées à l'en-tête et au pied. Le corps du texte restera
+           strictement entre ces marges. */
         @page {
-            margin: {$marginTop}mm {$marginRight}mm {$marginBottom}mm {$marginLeft}mm;
+            margin: {$topMarginWithHeader}mm {$marginRight}mm {$bottomMarginWithFooter}mm {$marginLeft}mm;
         }
-        
+
         body {
             font-family: {$fontBody};
             font-size: {$fontBodySize}pt;
             line-height: 1.4;
             color: #333;
-            margin: 0;
-            padding: 0;
+            margin: 35px 0 15px 0;
+            padding: 10px;
         }
-        
+
         h1, h2, h3 {
             font-family: {$fontTitle};
         }
-        
+
         h1 {
             color: {$colorTitle};
             font-size: {$fontTitleSize}pt;
             margin-bottom: 10mm;
         }
-        
+
         h2, h3, h4, h5, h6 {
             color: {$colorOtherTitles};
         }
-        
+
         h2 {
             font-size: {$h2Size}pt;
             margin-top: 8mm;
             margin-bottom: 4mm;
         }
-        
+
         h3 {
             font-size: {$h3Size}pt;
             margin-top: 6mm;
             margin-bottom: 3mm;
         }
-        
+
+        /* Bordures de debug pour bien visualiser les trois zones.
+           L'en-tête et le pied sont positionnés DANS les marges de page
+           (offset négatif) pour que le corps ne puisse pas les chevaucher).
+           La hauteur définie dans 3.2 (header_height / footer_height) est
+           une hauteur stricte : tout ce qui dépasse est coupé. */
+
         .pdf-header {
             position: fixed;
-            top: -{$marginTop}mm;
+            /* Placé dans la bande de marge haute :
+               - @page.margin-top = marge papier + headerHeight
+               - top = -headerHeight remonte l'en-tête dans cette bande */
+            top: -{$headerHeight}mm;
             left: -{$marginLeft}mm;
             right: -{$marginRight}mm;
             height: {$headerHeight}mm;
-            padding: 5mm {$marginLeft}mm;
             background: {$headerBgColor};
-            overflow: hidden;
+            padding: 3mm {$marginLeft}mm;
         }
-        
+
         .pdf-footer {
             position: fixed;
-            bottom: -{$marginBottom}mm;
+            /* Placé dans la bande de marge basse :
+               - @page.margin-bottom = marge papier + footerHeight
+               - bottom = -footerHeight descend le pied dans cette bande */
+            bottom: -{$footerHeight}mm;
             left: -{$marginLeft}mm;
             right: -{$marginRight}mm;
             height: {$footerHeight}mm;
-            padding: 3mm {$marginLeft}mm;
             background: {$footerBgColor};
             font-size: 9pt;
             color: #666;
-            overflow: hidden;
+            padding: 3mm {$marginLeft}mm;
         }
-        
+
         .pdf-content {
-            margin-top: {$headerHeight}mm;
-            margin-bottom: {$footerHeight}mm;
+            /* Zone de contenu (corps) entre l'en-tête et le pied */
         }
-        
-        .pdf-watermark {
-            position: fixed;
-            top: 35%;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 60pt;
-            font-weight: bold;
-            color: rgba(200, 200, 200, 0.25);
-            transform: rotate(-35deg);
-            z-index: -1;
-            pointer-events: none;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 5mm 0;
-        }
-        
-        th, td {
-            border: 1px solid #dee2e6;
-            padding: 2mm 3mm;
-            text-align: left;
-        }
-        
-        th {
-            background: #f8f9fa;
-            font-weight: bold;
-        }
-        
-        .text-right {
-            text-align: right;
-        }
-        
-        .text-center {
-            text-align: center;
-        }
-        
+
         {$customCss}
     </style>
 </head>
 <body>
     <div class="pdf-watermark">APERÇU</div>
-    
+
     <div class="pdf-header">
         {$headerHtml}
     </div>
-    
+
     <div class="pdf-footer">
         {$footerHtml}
     </div>
-    
+
     <div class="pdf-content">
         {$bodyContent}
     </div>
@@ -338,88 +330,10 @@ HTML;
      */
     private static function getDemoContent(array $ofIdentity): string
     {
-        $raisonSociale = $ofIdentity['raison_sociale'] ?? 'Organisme de formation';
-
         return <<<HTML
-<h1>Convention de formation professionnelle</h1>
-
-<h2>Entre les soussignés</h2>
-
-<p><strong>{$raisonSociale}</strong>, organisme de formation,<br>
-ci-après dénommé « l'Organisme de formation »,</p>
-
-<p>Et</p>
-
-<p><strong>Entreprise Exemple SARL</strong>,<br>
-123 rue de la Démonstration, 75001 Paris,<br>
-ci-après dénommé « le Client »,</p>
-
-<h2>Article 1 - Objet</h2>
-
-<p>La présente convention a pour objet la réalisation d'une action de formation intitulée :</p>
-
-<p><strong>Formation exemple</strong></p>
-
-<h2>Article 2 - Durée et dates</h2>
-
-<table>
-    <tr>
-        <th>Durée totale</th>
-        <td>21 heures</td>
-    </tr>
-    <tr>
-        <th>Date de début</th>
-        <td>À définir</td>
-    </tr>
-    <tr>
-        <th>Date de fin</th>
-        <td>À définir</td>
-    </tr>
-    <tr>
-        <th>Lieu</th>
-        <td>Paris</td>
-    </tr>
-</table>
-
-<h2>Article 3 - Coût de la formation</h2>
-
-<table>
-    <tr>
-        <th>Désignation</th>
-        <th class="text-right">Montant HT</th>
-    </tr>
-    <tr>
-        <td>Formation exemple - 21 heures</td>
-        <td class="text-right">1 500,00 €</td>
-    </tr>
-    <tr>
-        <th>Total HT</th>
-        <td class="text-right"><strong>1 500,00 €</strong></td>
-    </tr>
-</table>
-
-<h2>Article 4 - Modalités de règlement</h2>
-
-<p>Le règlement sera effectué à réception de facture, à l'issue de la formation.</p>
-
-<p style="margin-top: 20mm;">
-    <strong>Fait en deux exemplaires, à Paris, le _______________</strong>
-</p>
-
-<table style="border: none; margin-top: 10mm;">
-    <tr style="border: none;">
-        <td style="border: none; width: 50%;">
-            <p><strong>Pour l'Organisme de formation</strong></p>
-            <p style="height: 20mm;"></p>
-            <p>Signature et cachet</p>
-        </td>
-        <td style="border: none; width: 50%;">
-            <p><strong>Pour le Client</strong></p>
-            <p style="height: 20mm;"></p>
-            <p>Signature et cachet</p>
-        </td>
-    </tr>
-</table>
+<div style="border: 1px solid red; padding: 150px 20px; text-align: center; font-size: 14pt;">
+    Ici le contenu de vos documents généré automatiquement.
+</div>
 HTML;
     }
 
