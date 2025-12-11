@@ -560,58 +560,66 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <?php esc_html_e('Cette section sera dédiée à la mise en forme des documents PDF générés par GestiWork (propositions, conventions, convocations, attestations, etc.).', 'gestiwork'); ?>
             </p>
 
-            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-preview-btn" style="margin-bottom: 16px;display:inline-flex;align-items:center;gap:6px;">
-                <span class="dashicons dashicons-pdf"></span>
-                <?php esc_html_e('Voir un aperçu PDF', 'gestiwork'); ?>
-            </button>
-
             <form method="post" action="" id="gw-pdf-template-form">
                 <input type="hidden" name="gw_settings_action" value="save_pdf_template" />
                 <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_template_id" value="<?php echo $currentPdfTemplate ? (int) $currentPdfTemplate['id'] : 0; ?>" />
                 <?php wp_nonce_field('gw_save_pdf_template', 'gw_settings_nonce_pdf'); ?>
 
-            <div class="gw-settings-group">
-                <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 Nom du modèle PDF', 'gestiwork'); ?></h4>
-                <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF en cours', 'gestiwork'); ?></p>
-                        <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="<?php echo $currentPdfTemplate ? esc_attr($currentPdfTemplate['name']) : ''; ?>" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" />
-                        <?php if ($currentPdfTemplate) : ?>
-                            <p class="gw-settings-placeholder" style="margin-top:4px;">
-                                <?php printf(esc_html__('Modèle en cours d\'édition : %s (ID %d)', 'gestiwork'), esc_html($currentPdfTemplate['name']), (int) $currentPdfTemplate['id']); ?>
-                                <a href="<?php echo esc_url(home_url('/gestiwork/settings/pdf/')); ?>" style="margin-left:8px;"><?php esc_html_e('Nouveau modèle', 'gestiwork'); ?></a>
-                            </p>
-                        <?php endif; ?>
-                    </div>
-                    <div class="gw-settings-field">
-                        <p class="gw-settings-label"><?php esc_html_e('Modèles existants', 'gestiwork'); ?></p>
-                        <?php if (empty($pdfTemplates)) : ?>
-                            <p class="gw-settings-placeholder"><?php esc_html_e('Aucun modèle PDF enregistré.', 'gestiwork'); ?></p>
-                        <?php else : ?>
-                            <ul class="gw-pdf-templates-list">
-                                <?php foreach ($pdfTemplates as $tpl) : ?>
-                                    <li data-template-id="<?php echo (int) $tpl['id']; ?>">
-                                        <span><?php echo esc_html($tpl['name']); ?></span>
-                                        <?php if (!empty($tpl['is_default'])) : ?>
-                                            <span class="dashicons dashicons-star-filled" title="<?php esc_attr_e('Modèle par défaut', 'gestiwork'); ?>" style="color:#f0b429;margin-left:4px;"></span>
-                                        <?php endif; ?>
-                                        <span style="margin-left: 8px;">
-                                            <a href="<?php echo esc_url(add_query_arg('edit_pdf_template', (int) $tpl['id'], home_url('/gestiwork/settings/pdf/'))); ?>" title="<?php esc_attr_e('Modifier', 'gestiwork'); ?>">
-                                                <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                            </a>
-                                            <button type="button" class="gw-pdf-delete-template" data-template-id="<?php echo (int) $tpl['id']; ?>" data-template-name="<?php echo esc_attr($tpl['name']); ?>" title="<?php esc_attr_e('Supprimer', 'gestiwork'); ?>" style="background:none;border:none;cursor:pointer;padding:0;">
-                                                <span class="dashicons dashicons-trash" aria-hidden="true" style="color:#c0392b;"></span>
-                                            </button>
-                                        </span>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
+                <div class="gw-settings-group">
+                    <?php if ($currentPdfTemplate) : ?>
+                        <h4 class="gw-section-subtitle" style="color:#d63638;">3.1a <?php esc_html_e('Modèle en cours d\'édition', 'gestiwork'); ?></h4>
+                    <?php else : ?>
+                        <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 Nom du modèle PDF', 'gestiwork'); ?></h4>
+                    <?php endif; ?>
+                    <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
+                        <div class="gw-settings-field">
+                            <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF en cours', 'gestiwork'); ?></p>
+                            <?php if ($currentPdfTemplate) : ?>
+                                <p class="gw-settings-placeholder" style="font-weight:600;">
+                                    <?php echo esc_html($currentPdfTemplate['name']); ?>
+                                </p>
+                                <input type="hidden" name="gw_pdf_model_name" value="<?php echo esc_attr($currentPdfTemplate['name']); ?>" />
+                            <?php else : ?>
+                                <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" />
+                            <?php endif; ?>
+                        </div>
+                        <div class="gw-settings-field">
+                            <p class="gw-settings-label"><?php esc_html_e('Modèles existants', 'gestiwork'); ?></p>
+                            <?php if (empty($pdfTemplates)) : ?>
+                                <p class="gw-settings-placeholder"><?php esc_html_e('Aucun modèle PDF enregistré.', 'gestiwork'); ?></p>
+                            <?php else : ?>
+                                <ul class="gw-pdf-templates-list">
+                                    <?php foreach ($pdfTemplates as $tpl) : ?>
+                                        <li class="gw-pdf-template-item" data-template-id="<?php echo (int) $tpl['id']; ?>">
+                                            <div class="gw-pdf-template-item-main">
+                                                <span class="gw-pdf-template-name"><?php echo esc_html($tpl['name']); ?></span>
+                                                <?php if (!empty($tpl['is_default'])) : ?>
+                                                    <span class="dashicons dashicons-star-filled" title="<?php esc_attr_e('Modèle par défaut', 'gestiwork'); ?>"></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="gw-pdf-template-item-actions">
+                                                <button type="button" class="gw-pdf-preview-template" data-template-id="<?php echo (int) $tpl['id']; ?>" title="<?php esc_attr_e('Voir un aperçu PDF', 'gestiwork'); ?>">
+                                                    <span class="dashicons dashicons-pdf" aria-hidden="true"></span>
+                                                </button>
+                                                <button type="button" class="gw-pdf-duplicate-template" data-template-id="<?php echo (int) $tpl['id']; ?>" data-template-name="<?php echo esc_attr($tpl['name']); ?>" title="<?php esc_attr_e('Dupliquer le modèle', 'gestiwork'); ?>">
+                                                    <span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
+                                                </button>
+                                                <a href="<?php echo esc_url(add_query_arg('edit_pdf_template', (int) $tpl['id'], home_url('/gestiwork/settings/pdf/'))); ?>" title="<?php esc_attr_e('Modifier', 'gestiwork'); ?>" class="gw-pdf-template-edit">
+                                                    <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                                </a>
+                                                <button type="button" class="gw-pdf-delete-template" data-template-id="<?php echo (int) $tpl['id']; ?>" data-template-name="<?php echo esc_attr($tpl['name']); ?>" title="<?php esc_attr_e('Supprimer', 'gestiwork'); ?>">
+                                                    <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                                                </button>
+                                            </div>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="gw-settings-group gw-settings-group--pdf-layout">
+                <div class="gw-settings-group gw-settings-group--pdf-layout">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('3.2 Mise en forme PDF', 'gestiwork'); ?></h4>
                 <button type="button" class="gw-button gw-button--secondary" id="gw-toggle-pdf-layout" style="margin-bottom: 8px;">
                     <?php esc_html_e('Afficher / masquer les réglages de mise en forme', 'gestiwork'); ?>
@@ -819,6 +827,14 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             <form method="post" action="" id="gw-pdf-delete-form" style="display:none;">
                 <input type="hidden" name="gw_settings_action" value="delete_pdf_template" />
                 <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_delete_template_id" value="0" />
+                <?php wp_nonce_field('gw_save_pdf_template', 'gw_settings_nonce_pdf'); ?>
+            </form>
+
+            <!-- Formulaire caché pour la duplication de modèle -->
+            <form method="post" action="" id="gw-pdf-duplicate-form" style="display:none;">
+                <input type="hidden" name="gw_settings_action" value="duplicate_pdf_template" />
+                <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_duplicate_template_id" value="0" />
+                <input type="hidden" name="gw_pdf_duplicate_name" id="gw_pdf_duplicate_name" value="" />
                 <?php wp_nonce_field('gw_save_pdf_template', 'gw_settings_nonce_pdf'); ?>
             </form>
         </div>
@@ -1470,7 +1486,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
         var pdfDeleteButtons = document.querySelectorAll('.gw-pdf-delete-template');
         var pdfDeleteForm = document.getElementById('gw-pdf-delete-form');
         var pdfDeleteTemplateId = document.getElementById('gw_pdf_delete_template_id');
-        if (pdfDeleteForm && pdfDeleteTemplateId) {
+        if (pdfDeleteForm && pdfDeleteTemplateId && pdfDeleteButtons.length) {
             pdfDeleteButtons.forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var templateId = btn.getAttribute('data-template-id');
@@ -1479,6 +1495,33 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                         pdfDeleteTemplateId.value = templateId;
                         pdfDeleteForm.submit();
                     }
+                });
+            });
+        }
+
+        // Gestion de la duplication des modèles PDF
+        var pdfDuplicateButtons = document.querySelectorAll('.gw-pdf-duplicate-template');
+        var pdfDuplicateForm = document.getElementById('gw-pdf-duplicate-form');
+        var pdfDuplicateTemplateId = document.getElementById('gw_pdf_duplicate_template_id');
+        var pdfDuplicateNameInput = document.getElementById('gw_pdf_duplicate_name');
+        if (pdfDuplicateForm && pdfDuplicateTemplateId && pdfDuplicateNameInput && pdfDuplicateButtons.length) {
+            pdfDuplicateButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var templateId = btn.getAttribute('data-template-id');
+                    var templateName = btn.getAttribute('data-template-name');
+                    var defaultName = templateName ? (templateName + ' (copie)') : '';
+                    var newName = window.prompt('Nouveau nom pour le modèle dupliqué :', defaultName);
+                    if (newName === null) {
+                        return; // Annulé
+                    }
+                    newName = newName.trim();
+                    if (newName === '') {
+                        return; // On ne crée pas sans nom
+                    }
+
+                    pdfDuplicateTemplateId.value = templateId;
+                    pdfDuplicateNameInput.value = newName;
+                    pdfDuplicateForm.submit();
                 });
             });
         }
@@ -1668,25 +1711,19 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             }
         });
 
-        // Bouton "Voir un aperçu PDF"
-        var pdfPreviewBtn = document.getElementById('gw-pdf-preview-btn');
-        if (pdfPreviewBtn) {
-            pdfPreviewBtn.addEventListener('click', function () {
-                // Synchroniser TinyMCE avant l'aperçu
-                gwSyncTinyMceToHiddenField();
+        // Icônes d'aperçu PDF par modèle dans la liste "Modèles existants"
+        var pdfPreviewButtons = document.querySelectorAll('.gw-pdf-preview-template');
+        if (pdfPreviewButtons && pdfPreviewButtons.length) {
+            pdfPreviewButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var templateId = btn.getAttribute('data-template-id') || '0';
+                    if (templateId === '0' || templateId === '') {
+                        return;
+                    }
 
-                // Récupérer l'ID du template en cours
-                var templateIdInput = document.getElementById('gw_pdf_template_id');
-                var templateId = templateIdInput ? templateIdInput.value : '0';
-
-                if (templateId === '0' || templateId === '') {
-                    alert('Veuillez d\'abord créer et enregistrer un modèle PDF avant de visualiser l\'aperçu.');
-                    return;
-                }
-
-                // Ouvrir l'aperçu dans une nouvelle fenêtre
-                var previewUrl = '<?php echo esc_url(home_url('/gestiwork/pdf-preview/')); ?>?template_id=' + templateId;
-                window.open(previewUrl, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+                    var previewUrl = '<?php echo esc_url(home_url('/gestiwork/pdf-preview/')); ?>?template_id=' + templateId;
+                    window.open(previewUrl, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+                });
             });
         }
 

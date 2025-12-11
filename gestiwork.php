@@ -1,13 +1,16 @@
 <?php
 /**
  * Plugin Name: GestiWork ERP
- * Description: ERP pour Organismes de Formation (OF) sur WordPress : gestion académique, commerciale, administrative et Qualiopi/BPF.
+ * Description: ERP complet pour les organismes de formation (OF) sous WordPress. Il centralise la gestion académique, commerciale et administrative tout en assurant la conformité réglementaire avec la loi française (Qualiopi & Bilan Pédagogique et Financier). Gérez l’ensemble du cycle de formation : inscriptions, suivi des stagiaires, planification des sessions, édition automatique des documents obligatoires, et reporting BPF. Idéal pour les centres de formation souhaitant simplifier leur gestion, automatiser les tâches administratives, et garantir leur conformité Qualiopi.
+
  * Plugin URI: https://example.com/gestiwork
- * Version: 0.4.0
+ * Version: 0.5.0 branch feature/pdf-layout-option1
  * Author: LAURET Fabrice
  * Author URI: https://example.com
  * Text Domain: gestiwork
  * Domain Path: /languages
+ * Requires at least: 6.0
+ * Requires PHP: 8.1
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *

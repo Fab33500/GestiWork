@@ -1,4 +1,22 @@
 <?php
+/**
+ * GestiWork ERP - Settings Controller
+ *
+ * This file is part of GestiWork ERP.
+ *
+ * GestiWork ERP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * GestiWork ERP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with GestiWork ERP. If not, see <https://www.gnu.org/licenses/>.
+ */
 
 declare(strict_types=1);
 
@@ -28,6 +46,7 @@ class SettingsController
             && $action !== 'save_options'
             && $action !== 'save_pdf_template'
             && $action !== 'delete_pdf_template'
+            && $action !== 'duplicate_pdf_template'
         ) {
             return;
         }
@@ -297,6 +316,62 @@ class SettingsController
 
             if ($templateId > 0) {
                 $wpdb->delete($tablePdfTemplates, ['id' => $templateId], ['%d']);
+            }
+
+            wp_safe_redirect(home_url('/gestiwork/settings/pdf/'));
+            exit;
+        }
+
+        // Duplication d'un modèle PDF
+        if ($action === 'duplicate_pdf_template') {
+            $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
+
+            $tableExistsPdf = $wpdb->get_var(
+                $wpdb->prepare('SHOW TABLES LIKE %s', $tablePdfTemplates)
+            );
+
+            if ($tableExistsPdf !== $tablePdfTemplates) {
+                wp_safe_redirect(home_url('/gestiwork/settings/pdf/'));
+                exit;
+            }
+
+            if (!isset($_POST['gw_settings_nonce_pdf']) || !wp_verify_nonce($_POST['gw_settings_nonce_pdf'], 'gw_save_pdf_template')) {
+                wp_safe_redirect(home_url('/gestiwork/settings/pdf/'));
+                exit;
+            }
+
+            $templateId = isset($_POST['gw_pdf_template_id']) ? (int) $_POST['gw_pdf_template_id'] : 0;
+            $overrideName = isset($_POST['gw_pdf_duplicate_name']) ? sanitize_text_field(wp_unslash($_POST['gw_pdf_duplicate_name'])) : '';
+
+            if ($templateId > 0) {
+                $original = $wpdb->get_row(
+                    $wpdb->prepare("SELECT * FROM {$tablePdfTemplates} WHERE id = %d", $templateId),
+                    ARRAY_A
+                );
+
+                if (is_array($original) && !empty($original)) {
+                    // Préparer les données pour l'insertion (sans l'ID)
+                    if (isset($original['id'])) {
+                        unset($original['id']);
+                    }
+
+                    // Nouveau nom : celui fourni par l'utilisateur, sinon suffixe "(copie)"
+                    if (isset($original['name'])) {
+                        $baseName = (string) $original['name'];
+                        if ($overrideName !== '') {
+                            $original['name'] = $overrideName;
+                        } else {
+                            $original['name'] = $baseName . ' (copie)';
+                        }
+                    }
+
+                    // On ne duplique pas le statut "par défaut"
+                    if (isset($original['is_default'])) {
+                        $original['is_default'] = 0;
+                    }
+
+                    $wpdb->insert($tablePdfTemplates, $original);
+                }
             }
 
             wp_safe_redirect(home_url('/gestiwork/settings/pdf/'));

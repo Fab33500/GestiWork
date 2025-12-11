@@ -625,3 +625,56 @@ background-color: #f7f9fc;
     border-radius: 5px;
     padding: 5px;
 }
+
+/* === Liste des modèles PDF (onglet 3 Gestion PDF) === */
+.gw-pdf-templates-list {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+}
+
+.gw-pdf-template-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.gw-pdf-template-item:last-child {
+    border-bottom: none;
+}
+
+.gw-pdf-template-item-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gw-pdf-template-name {
+    font-size: 13px;
+}
+
+.gw-pdf-template-item-main .dashicons-star-filled {
+    color: #f0b429;
+}
+
+.gw-pdf-template-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.gw-pdf-template-item-actions button,
+.gw-pdf-template-item-actions .gw-pdf-template-edit {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+}
+
+.gw-pdf-template-item-actions .dashicons-trash {
+    color: #c0392b;
+}
