@@ -758,7 +758,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('En-tête commun', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Zone éditable (TinyMCE) pour l’en-tête commun à tous les PDF.', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('Zone éditable (TinyMCE) pour l\'en-tête commun à tous les PDF.', 'gestiwork'); ?></p>
                         <button type="button" class="gw-button gw-button--secondary" id="gw-open-pdf-header-editor">
                             <?php esc_html_e('Modifier le gabarit d’en-tête', 'gestiwork'); ?>
                         </button>
@@ -775,6 +775,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 
             <div class="gw-settings-group" id="gw-pdf-editor" style="display: none;">
                 <h4 class="gw-section-subtitle" id="gw-pdf-editor-title"><?php esc_html_e('3.x Édition du gabarit PDF (en-tête / pied de page)', 'gestiwork'); ?></h4>
+                <p class="gw-settings-placeholder" style="margin-top:4px;">
+                    <?php esc_html_e('Astuce : dans le contenu de l\'en-tête, vous pouvez utiliser les marqueurs [ZONE1], [ZONE2], [ZONE3] pour répartir le contenu dans les trois zones (gauche / centre / droite).', 'gestiwork'); ?>
+                </p>
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <input type="hidden" id="gw_pdf_editor_context" value="header" />

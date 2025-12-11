@@ -241,5 +241,106 @@ if (current_user_can('manage_options')) : ?>
                 pour vos communications.
             </li>
         </ul>
+
+    </div>
+
+    <div class="gw-settings-group gw-aide-section" id="gw-aide-pdf">
+        <h4 class="gw-section-subtitle"><span>9.</span> Utiliser l’onglet « Gestion PDF »</h4>
+        <p class="gw-section-description">
+            L’onglet <strong>« Gestion PDF »</strong> vous permet de définir l’apparence des documents générés par GestiWork
+            (propositions, conventions, convocations, attestations, etc.). Vous pouvez créer plusieurs modèles, ajuster la
+            mise en forme générale (marges, polices, couleurs) et personnaliser l’en-tête et le pied de page.
+        </p>
+
+        <h5 class="gw-section-subtitle"><span>9.1</span> Accéder à l’onglet et repérer les modèles</h5>
+        <ul class="gw-list">
+            <li>Depuis le menu <strong>Paramètres</strong> de GestiWork, sélectionnez l’onglet <strong>« Gestion PDF »</strong>.</li>
+            <li>La partie haute (section <strong>3.1</strong>) affiche :
+                <ul>
+                    <li>un champ <strong>Nom du modèle PDF</strong> pour créer un nouveau modèle ;</li>
+                    <li>la liste des <strong>modèles existants</strong>, chacun avec des icônes pour <em>apercevoir</em>,
+                        <em>dupliquer</em>, <em>modifier</em> ou <em>supprimer</em> le modèle.</li>
+                </ul>
+            </li>
+            <li>Lorsqu’un modèle est en cours de modification, son nom apparaît clairement en rouge, au centre de la zone 3.1.</li>
+        </ul>
+
+        <h5 class="gw-section-subtitle"><span>9.2</span> Créer un nouveau modèle PDF</h5>
+        <ul class="gw-list">
+            <li>Dans le champ <strong>Nom du modèle PDF</strong>, saisissez un nom explicite
+                (par exemple « Proposition commerciale standard », « Convention sous-traitant », « Programme formation »).</li>
+            <li>Cliquez sur le bouton <strong>« Créer »</strong> :
+                <ul>
+                    <li>les sections <strong>3.2 « Mise en forme PDF »</strong> et <strong>3.3 « En-tête & pied de page »</strong>
+                        s’ouvrent ;</li>
+                    <li>un bloc d’actions en bas de page affiche les boutons
+                        <strong>« Annuler les modifications PDF »</strong> et <strong>« Enregistrer les réglages PDF »</strong>.</li>
+                </ul>
+            </li>
+            <li>Le modèle n’est réellement enregistré qu’au clic sur <strong>« Enregistrer les réglages PDF »</strong>.</li>
+        </ul>
+
+        <h5 class="gw-section-subtitle"><span>9.3</span> Modifier, dupliquer ou supprimer un modèle existant</h5>
+        <ul class="gw-list">
+            <li><strong>Modifier</strong> : cliquez sur l’icône en forme de crayon. La page se recharge avec le modèle en cours
+                d’édition, les sections 3.2 et 3.3 visibles, et le nom du modèle figé (non modifiable) en haut de la zone 3.1.</li>
+            <li><strong>Dupliquer</strong> : cliquez sur l’icône de feuille. Une fenêtre vous propose un nouveau nom pour la copie
+                (par défaut « &lt;Nom du modèle&gt; (copie) »). Le nouveau modèle reprend tous les réglages du modèle d’origine.
+            </li>
+            <li><strong>Supprimer</strong> : cliquez sur l’icône de corbeille. Une confirmation est demandée avant la suppression
+                définitive du modèle.</li>
+            <li><strong>Aperçu PDF</strong> : l’icône PDF ouvre un aperçu du modèle dans une nouvelle fenêtre. Cet aperçu contient
+                un filigrane « APERÇU » et un contenu de démonstration pour visualiser la mise en page.</li>
+        </ul>
+
+        <h5 class="gw-section-subtitle"><span>9.4</span> Régler la mise en forme générale (section 3.2)</h5>
+        <ul class="gw-list">
+            <li><strong>Dimensions et marges</strong><br />
+                Ajustez les marges <em>haut / bas / gauche / droite</em> ainsi que les hauteurs d’en‑tête et de pied de page
+                (en millimètres). Ces valeurs définissent la zone dans laquelle le texte principal s’affichera.</li>
+            <li><strong>Typographie et couleurs</strong><br />
+                Choisissez la police et la taille pour les titres et le texte courant, ainsi que les couleurs de vos titres
+                et sous‑titres. Vous pouvez également définir une couleur de fond pour l’en‑tête et le pied de page.</li>
+            <li><strong>Feuille de style personnalisée (CSS)</strong><br />
+                Cette zone avancée permet aux utilisateurs à l’aise avec le CSS d’affiner la mise en page
+                (alignement du logo, colonnes dans l’en‑tête, bordures spécifiques, etc.). Le CSS saisi ici vient
+                compléter les réglages précédents.</li>
+        </ul>
+
+        <h5 class="gw-section-subtitle"><span>9.5</span> Personnaliser l’en‑tête et le pied de page (section 3.3)</h5>
+        <ul class="gw-list">
+            <li>Dans la section <strong>3.3 « En‑tête & pied de page »</strong>, utilisez les boutons
+                <strong>« Modifier le gabarit d’en‑tête »</strong> et <strong>« Modifier le gabarit de pied de page »</strong>
+                pour ouvrir l’éditeur de contenu.</li>
+            <li>Vous disposez d’un éditeur de texte enrichi (TinyMCE) pour saisir :
+                <ul>
+                    <li>le logo de l’organisme (via le shortcode <code>[of:logo]</code>) ;</li>
+                    <li>les informations d’identité (raison sociale, coordonnées, habilitations, etc.) ;</li>
+                    <li>les coordonnées de contact ou des mentions légales.</li>
+                </ul>
+            </li>
+            <li>Vous pouvez insérer des <strong>shortcodes</strong> (mots‑clés entre crochets) pour afficher automatiquement des
+                données (ex. <code>[of:raison_sociale]</code>, <code>[of:representant_legal]</code>, <code>[of:habilitation_inrs]</code>, etc.).
+                La liste complète des shortcodes disponibles est affichée à côté de l’éditeur.</li>
+            <li>Pour aller plus loin, l’en‑tête peut être découpé en <strong>3 zones logiques</strong> :
+                <ul>
+                    <li><code>[ZONE1]</code> : zone de gauche (souvent utilisée pour le logo) ;</li>
+                    <li><code>[ZONE2]</code> : zone centrale (par exemple titre du document ou programme) ;</li>
+                    <li><code>[ZONE3]</code> : zone de droite (par exemple coordonnées ou QR code).</li>
+                </ul>
+                Si vous ne mettez aucun de ces marqueurs, tout le contenu de l’en‑tête sera placé dans une seule zone par défaut.</li>
+        </ul>
+
+        <h5 class="gw-section-subtitle"><span>9.6</span> Enregistrer ou annuler vos réglages PDF</h5>
+        <ul class="gw-list">
+            <li>Après avoir ajusté la mise en forme et/ou l’en‑tête et le pied de page :
+                <ul>
+                    <li>cliquez sur <strong>« Enregistrer les réglages PDF »</strong> pour sauvegarder le modèle ;</li>
+                    <li>ou cliquez sur <strong>« Annuler les modifications PDF »</strong> pour revenir à l’état précédemment sauvegardé.</li>
+                </ul>
+            </li>
+            <li>Vous pouvez ensuite utiliser le bouton d’aperçu PDF de la liste des modèles pour vérifier le rendu
+                avant de générer de vrais documents pour vos clients et stagiaires.</li>
+        </ul>
     </div>
 <?php endif; ?>

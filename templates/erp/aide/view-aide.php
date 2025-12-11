@@ -24,7 +24,7 @@ $gw_help_section = get_query_var('gw_section');
 if ($gw_help_section === '' && isset($_GET['gw_section'])) {
     $gw_help_section = (string) $_GET['gw_section'];
 }
-if (!in_array($gw_help_section, ['introduction', 'demarrage', 'configuration', 'options', 'quotidien', 'faq'], true)) {
+if (!in_array($gw_help_section, ['introduction', 'demarrage', 'configuration', 'options', 'pdf', 'quotidien', 'faq'], true)) {
     $gw_help_section = '';
 }
 
@@ -43,6 +43,7 @@ if (!in_array($gw_help_section, ['introduction', 'demarrage', 'configuration', '
             <?php if (current_user_can('manage_options')) : ?>
                 <li><a href="#gw-aide-configuration"><?php esc_html_e('Configuration et paramétrage', 'gestiwork'); ?></a></li>
                 <li><a href="#gw-aide-options"><?php esc_html_e('Onglet Options', 'gestiwork'); ?></a></li>
+                <li><a href="#gw-aide-pdf"><?php esc_html_e('Onglet Gestion PDF', 'gestiwork'); ?></a></li>
             <?php endif; ?>
             <li><a href="#gw-aide-quotidien"><?php esc_html_e('Utilisation au quotidien', 'gestiwork'); ?></a></li>
             <li><a href="#gw-aide-faq"><?php esc_html_e('Questions fréquentes', 'gestiwork'); ?></a></li>

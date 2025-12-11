@@ -1,5 +1,5 @@
 # GestiWork ERP – Documentation Technique & Fil Conducteur Développement
-**Version :** 0.4.0  
+**Version :** 0.5.0  
 **Type :** Plugin WordPress autonome / ERP Formation  
 **Objectif :** Gestion administrative, pédagogique, commerciale et qualité d’un Organisme de Formation (OF), utilisable également en **Sous-traitance pour un autre OF**.
 
@@ -17,6 +17,7 @@
 - **7. Fichiers d’initialisation & scaffolding**
 - **8. Modèle d’en-tête de licence pour les fichiers PHP**
 - **9. Stratégie Produit : Core vs Pro & Capabilities**
+- **10. État actuel (v0.5.0) – UI / Router / Aide / Paramètres / PDF**
 
 # 0. Objectifs du document
 Ce fichier est la **référence unique** pour développer GestiWork.  
@@ -279,7 +280,7 @@ if (version_compare(PHP_VERSION, '8.0', '<')) {
  * Plugin Name: GestiWork ERP
  * Description: ERP pour Organismes de Formation (OF) sur WordPress : gestion académique, commerciale, administrative et Qualiopi/BPF.
  * Plugin URI: https://example.com/gestiwork
- * Version: 0.4.0
+ * Version: 0.5.0
  * Author: LAURET Fabrice
  * Author URI: https://example.com
  * Text Domain: gestiwork
@@ -352,7 +353,7 @@ Ainsi, le fil conducteur de développement est :
 
 ---
 
-# 10. État actuel (v0.4.0) – UI / Router / Aide / Paramètres
+# 10. État actuel (v0.5.0) – UI / Router / Aide / Paramètres / PDF
 
 Cette section synthétise l'état réel de l'interface au fur et à mesure du développement, afin d'avoir un **point d'entrée unique** pour les URLs et les écrans déjà implémentés.
 
@@ -442,3 +443,104 @@ L’onglet **« Options »** des paramètres GestiWork est désormais partiellem
 - **Aide intégrée** : la page `/gestiwork/Aide/` dispose d’une section dédiée `#gw-aide-options` (sommaire + ancre) décrivant le fonctionnement de l’onglet Options pour un utilisateur non technique.
 
 Cette section du README doit continuer à être mise à jour au fil des itérations (ajout de nouvelles options, comportements, validations, etc.) afin de rester alignée sur l’état réel de l’interface.
+
+## 10.5 Onglet « Gestion PDF » – État actuel
+
+Fichiers principaux :
+
+- `templates/erp/settings/view-settings.php` (onglet **Gestion PDF**)
+- `src/UI/Controller/PdfPreviewController.php` (aperçu PDF par modèle)
+- `src/Infrastructure/Database/Installer.php` (tables `gw_pdf_templates` et `gw_of_identity`)
+- `src/Domain/Pdf/PdfShortcodeCatalog.php` / `src/Infrastructure/Database/ShortcodeSeeder.php`
+- `assets/css/gw-pdf.css` (feuille de style générique PDF)
+- `assets/css/gw-layout.css` (layout de la liste des modèles + nom du modèle en cours d’édition)
+
+### 10.5.1 Modèles PDF & UI de gestion
+
+- Accès : `/gestiwork/settings/pdf/` (et alias `gestionpdf`, `gestion-pdf`).
+- La section **3.1 Nom du modèle PDF** permet :
+  - de créer un nouveau modèle via un champ texte `gw_pdf_model_name` accompagné de boutons **Créer / Annuler** ;
+  - de lister les **modèles existants** avec actions : aperçu, duplication, modification, suppression ;
+  - d’indiquer clairement le modèle en cours d’édition (titre 3.1a rouge + nom centré en `.gw-pdf-current-template-name`).
+- UX :
+  - par défaut (aucun modèle sélectionné), les blocs **3.2 Mise en forme PDF**, **3.3 En-tête & pied de page** et le bloc d’actions (**Annuler les modifications PDF / Enregistrer les réglages PDF**) sont **masqués** ;
+  - ils sont affichés lorsque :
+    - on clique sur **Créer** avec un nom de modèle non vide ;
+    - on clique sur l’icône **modifier** d’un modèle existant ;
+    - après duplication puis sélection du modèle dupliqué ;
+  - le bouton **Enregistrer les réglages PDF** reste le point d’entrée unique pour la sauvegarde (action `save_pdf_template`).
+
+### 10.5.2 Mise en forme PDF (3.2) – Layout option 1
+
+- La section **3.2 Mise en forme PDF** expose les champs techniques stockés dans `gw_pdf_templates` :
+  - marges (`margin_top/bottom/left/right` en mm) ;
+  - hauteurs fixes d’en-tête et de pied de page (`header_height`, `footer_height` en mm) ;
+  - familles de polices titres / corps (`font_title`, `font_body`) + tailles (`font_title_size`, `font_body_size`) ;
+  - couleurs des titres (`color_title`, `color_other_titles`) ;
+  - couleurs de fond d’en-tête et de pied (`header_bg_color`, `footer_bg_color`, avec support de `transparent`).
+- `PdfPreviewController` utilise **l’option 1 de layout** :
+  - en-tête et pied de page sont positionnés en `position:fixed` dans les marges de page, avec hauteurs strictes (tout dépassement est masqué) ;
+  - le corps du document s’écoule entre ces deux bandes via la règle `@page margin` ;
+  - la feuille `assets/css/gw-pdf.css` contient les styles génériques imprimables, puis chaque modèle injecte son CSS dynamique (marges, polices, couleurs, hauteurs) et enfin un **CSS personnalisé** libre.
+- Un champ `custom_css` (type `LONGTEXT`) est disponible et éditable via **« Feuille de style personnalisée (CSS) »** :
+  - stocké dans `gw_pdf_templates.custom_css` ;
+  - injecté tel quel en fin de `<style>` dans `buildPdfHtml()` ;
+  - permet de gérer finement la mise en page (par ex. alignement du logo, entête 3 zones, etc.).
+
+### 10.5.3 En-tête & pied de page (3.3) – Gabarits et shortcodes
+
+- La section **3.3 En-tête & pied de page** ouvre un éditeur TinyMCE (zone 3.x) piloté par :
+  - un champ caché `gw_pdf_header_html` (HTML de l’en-tête) ;
+  - un champ caché `gw_pdf_footer_html` (HTML du pied de page) ;
+  - un sélecteur de contexte (`gw_pdf_editor_context`) pour charger/sauver header ou footer.
+- `PdfPreviewController::buildPdfHtml()` :
+  - remplace les shortcodes par leurs valeurs via `replaceShortcodes()` (OF, client, session, stagiaire, formateur…) ;
+  - génère un HTML complet d’aperçu avec filigrane **« APERÇU »** et un bloc de démonstration pour le corps.
+- **Shortcodes Organisme** :
+  - `of:representant_legal` s’appuie désormais sur deux colonnes dédiées dans `gw_of_identity` : `representant_nom` + `representant_prenom` (concaténés en « Prénom Nom ») ;
+  - **nouveau** : `of:habilitation_inrs` (texte libre saisi dans l’onglet Général & Identité) est ajouté au catalogue (`PdfShortcodeCatalog`) et synchronisé en BDD (`gw_pdf_shortcodes`) ;
+  - ces shortcodes sont listés dans la section **3.3 – Mots-clés disponibles : Organisme de formation**.
+
+### 10.5.4 Entête PDF en 3 zones (ZONE1 / ZONE2 / ZONE3)
+
+- `PdfPreviewController` supporte désormais un découpage logique de l’en-tête en **3 zones** :
+  - `ZONE1` (gauche) – typiquement logo OF ;
+  - `ZONE2` (centre) – par ex. titre du document ou programme de formation ;
+  - `ZONE3` (droite) – coordonnées / bloc texte ou QR code.
+- Mécanisme :
+  - le champ brut `header_html` (saisi dans l’éditeur 3.3) peut contenir des marqueurs `[ZONE1]`, `[ZONE2]`, `[ZONE3]` ;
+  - la méthode privée `splitHeaderZones()` découpe ce contenu en 3 segments avant remplacement des shortcodes ;
+  - si **aucun** marqueur n’est présent, tout le contenu est automatiquement placé en **zone 1** (comportement rétrocompatible) ;
+  - dans le HTML généré, l’en-tête est rendu comme :
+    - `<div class="pdf-header-zone pdf-header-zone-1">…</div>`
+    - `<div class="pdf-header-zone pdf-header-zone-2">…</div>`
+    - `<div class="pdf-header-zone pdf-header-zone-3">…</div>`
+  - ce qui permet de contrôler la mise en page via `custom_css` (flex, table, positions absolues, etc.).
+
+### 10.5.5 Nouveaux champs Identité OF et stockage
+
+- La table `gw_of_identity` contient désormais, en plus des champs existants :
+  - `representant_nom` (`VARCHAR(190)`) ;
+  - `representant_prenom` (`VARCHAR(190)`) ;
+  - `habilitation_inrs` (`VARCHAR(190)`).
+- `Installer::install()` crée ces colonnes sur une nouvelle installation, et `runMigrations()` les ajoute si la table existe déjà.
+- `SettingsProvider::getOfIdentity()` expose ces valeurs avec des défauts vides et une clé virtuelle `representant_legal`.
+- `SettingsController::handlePost()` (action `save_of_identity`) lit/sauvegarde ces champs depuis la modale **Général & Identité**.
+- L’onglet **Général & Identité** affiche :
+  - une **card Représentant légal** (nom + prénom concaténés) ;
+  - une **card Habilitation INRS**.
+
+### 10.5.6 Checklist PDF (v0.5.0)
+
+- [x] Aperçu PDF par modèle via `PdfPreviewController` avec filigrane « APERÇU ».
+- [x] Layout **option 1** stabilisé (hauteurs fixes header/footer, corps entre les marges).
+- [x] Feuille de style générique `assets/css/gw-pdf.css` + CSS dynamique par modèle.
+- [x] Champ `custom_css` stocké en base et injecté après les réglages génériques.
+- [x] UI de gestion des modèles : création (Nom + Créer/Annuler), liste éditer/dupliquer/supprimer, actions regroupées.
+- [x] Masquage par défaut des sections **3.2** / **3.3** / actions, affichage en création/édition.
+- [x] Support de l’entête en **3 zones** `[ZONE1]`, `[ZONE2]`, `[ZONE3]` dans `header_html`.
+- [x] Ajout des champs `representant_nom`, `representant_prenom`, `habilitation_inrs` dans `gw_of_identity` + migration.
+- [x] Mise à jour des shortcodes OF (`of:representant_legal`, `of:habilitation_inrs`).
+- [ ] Génération PDF finale des documents métier (propositions, conventions, convocations, attestations).
+
+Cette sous-section doit continuer à être complétée au fil des itérations (nouveaux types de documents PDF, options de layout, shortcodes supplémentaires, etc.) pour rester fidèle à l’état réel de la génération PDF et de l’UI associée.
