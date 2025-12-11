@@ -573,7 +573,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     <?php endif; ?>
                     <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
                         <div class="gw-settings-field">
-                            <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF en cours', 'gestiwork'); ?></p>
+                            <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF ', 'gestiwork'); ?></p>
                             <?php if ($currentPdfTemplate) : ?>
                                 <p class="gw-settings-placeholder" style="font-weight:600;">
                                     <?php echo esc_html($currentPdfTemplate['name']); ?>

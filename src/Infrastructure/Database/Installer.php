@@ -120,8 +120,8 @@ font_title_size INT(11) UNSIGNED NOT NULL DEFAULT 14,
 font_body_size INT(11) UNSIGNED NOT NULL DEFAULT 11,
 color_title VARCHAR(9) NOT NULL DEFAULT '#000000',
 color_other_titles VARCHAR(9) NOT NULL DEFAULT '#000000',
-header_bg_color VARCHAR(9) NOT NULL DEFAULT 'transparent',
-footer_bg_color VARCHAR(9) NOT NULL DEFAULT 'transparent',
+header_bg_color VARCHAR(11) NOT NULL DEFAULT 'transparent',
+footer_bg_color VARCHAR(11) NOT NULL DEFAULT 'transparent',
 custom_css LONGTEXT NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -176,8 +176,8 @@ KEY is_active (is_active)
         $columnsToAdd = [
             'font_title_size'  => "INT(11) UNSIGNED NOT NULL DEFAULT 14 AFTER font_body",
             'font_body_size'   => "INT(11) UNSIGNED NOT NULL DEFAULT 11 AFTER font_title_size",
-            'header_bg_color'  => "VARCHAR(9) NOT NULL DEFAULT 'transparent' AFTER color_other_titles",
-            'footer_bg_color'  => "VARCHAR(9) NOT NULL DEFAULT 'transparent' AFTER header_bg_color",
+            'header_bg_color'  => "VARCHAR(11) NOT NULL DEFAULT 'transparent' AFTER color_other_titles",
+            'footer_bg_color'  => "VARCHAR(11) NOT NULL DEFAULT 'transparent' AFTER header_bg_color",
         ];
 
         // Récupérer les colonnes existantes
