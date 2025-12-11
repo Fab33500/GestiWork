@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace GestiWork\UI\Router;
 
+use GestiWork\UI\Controller\PdfPreviewController;
+
 class GestiWorkRouter
 {
     public const QUERY_VAR = 'gw_gestiwork';
@@ -51,6 +53,16 @@ class GestiWorkRouter
     {
         if (get_query_var(self::QUERY_VAR) !== '1') {
             return $template;
+        }
+
+        // Gestion de l'aperçu PDF
+        $gwView = get_query_var('gw_view');
+        if ($gwView === 'pdf-preview') {
+            $templateId = isset($_GET['template_id']) ? (int) $_GET['template_id'] : 0;
+            if ($templateId > 0) {
+                PdfPreviewController::renderPreview($templateId);
+                exit;
+            }
         }
 
         $gwTemplate = GW_PLUGIN_DIR . 'templates/erp/dashboard/index.php';

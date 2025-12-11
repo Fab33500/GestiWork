@@ -348,6 +348,74 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* === PDF Shortcodes Panel === */
+.gw-pdf-shortcodes-panel {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.gw-pdf-shortcodes-group {
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--gw-color-border, #e0e0e0);
+    padding-bottom: 8px;
+}
+
+.gw-pdf-shortcodes-group:last-child {
+    border-bottom: none;
+}
+
+.gw-pdf-shortcodes-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 4px;
+}
+
+.gw-pdf-shortcodes-group-title strong {
+    font-size: 13px;
+    color: var(--gw-color-primary);
+}
+
+.gw-pdf-shortcodes-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: var(--gw-color-muted);
+}
+
+.gw-pdf-shortcodes-toggle:hover {
+    color: var(--gw-color-primary);
+}
+
+.gw-pdf-shortcodes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 8px;
+}
+
+.gw-pdf-shortcodes-list li {
+    margin: 4px 0;
+}
+
+.gw-pdf-shortcode-insert {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--gw-color-surface, #f5f5f5);
+    border: 1px solid var(--gw-color-border, #ddd);
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.gw-pdf-shortcode-insert:hover {
+    background: var(--gw-color-primary);
+    color: #fff;
+    border-color: var(--gw-color-primary);
+}
+
 /* bouton modale paramètres */
 .gw-button-modals {
     color: var(--gw-color-primary);

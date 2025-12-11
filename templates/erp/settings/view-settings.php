@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 use GestiWork\Domain\Settings\SettingsProvider;
 use GestiWork\Domain\Settings\OptionsProvider;
+use GestiWork\Infrastructure\Database\ShortcodeSeeder;
 
 if (function_exists('wp_enqueue_media')) {
     wp_enqueue_media();
@@ -30,6 +31,30 @@ if (function_exists('wp_enqueue_media')) {
 $ofIdentity = SettingsProvider::getOfIdentity();
 $options    = OptionsProvider::getOptions();
 $gwLogoUrl = '';
+
+// Charger les modèles PDF depuis la base
+global $wpdb;
+$tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
+$pdfTemplates = [];
+$currentPdfTemplate = null;
+$editPdfTemplateId = isset($_GET['edit_pdf_template']) ? (int) $_GET['edit_pdf_template'] : 0;
+
+$tableExistsPdf = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tablePdfTemplates));
+if ($tableExistsPdf === $tablePdfTemplates) {
+    $pdfTemplates = $wpdb->get_results("SELECT * FROM {$tablePdfTemplates} ORDER BY name ASC", ARRAY_A);
+    if ($editPdfTemplateId > 0) {
+        foreach ($pdfTemplates as $tpl) {
+            if ((int) $tpl['id'] === $editPdfTemplateId) {
+                $currentPdfTemplate = $tpl;
+                break;
+            }
+        }
+    }
+}
+
+// Charger les shortcodes PDF groupés par thème
+$pdfShortcodesGrouped = ShortcodeSeeder::getActiveGrouped();
+$pdfShortcodeGroupLabels = ShortcodeSeeder::getGroupLabels();
 
 $regimeActuel = isset($ofIdentity['regime_tva']) ? (string) $ofIdentity['regime_tva'] : 'exonere';
 if ($regimeActuel !== 'assujetti' && $regimeActuel !== 'exonere') {
@@ -535,35 +560,53 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <?php esc_html_e('Cette section sera dédiée à la mise en forme des documents PDF générés par GestiWork (propositions, conventions, convocations, attestations, etc.).', 'gestiwork'); ?>
             </p>
 
-            <button type="button" class="gw-button gw-button--secondary" style="margin-bottom: 16px;">
+            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-preview-btn" style="margin-bottom: 16px;display:inline-flex;align-items:center;gap:6px;">
+                <span class="dashicons dashicons-pdf"></span>
                 <?php esc_html_e('Voir un aperçu PDF', 'gestiwork'); ?>
             </button>
+
+            <form method="post" action="" id="gw-pdf-template-form">
+                <input type="hidden" name="gw_settings_action" value="save_pdf_template" />
+                <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_template_id" value="<?php echo $currentPdfTemplate ? (int) $currentPdfTemplate['id'] : 0; ?>" />
+                <?php wp_nonce_field('gw_save_pdf_template', 'gw_settings_nonce_pdf'); ?>
 
             <div class="gw-settings-group">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 Nom du modèle PDF', 'gestiwork'); ?></h4>
                 <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF en cours', 'gestiwork'); ?></p>
-                        <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" />
+                        <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="<?php echo $currentPdfTemplate ? esc_attr($currentPdfTemplate['name']) : ''; ?>" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" />
+                        <?php if ($currentPdfTemplate) : ?>
+                            <p class="gw-settings-placeholder" style="margin-top:4px;">
+                                <?php printf(esc_html__('Modèle en cours d\'édition : %s (ID %d)', 'gestiwork'), esc_html($currentPdfTemplate['name']), (int) $currentPdfTemplate['id']); ?>
+                                <a href="<?php echo esc_url(home_url('/gestiwork/settings/pdf/')); ?>" style="margin-left:8px;"><?php esc_html_e('Nouveau modèle', 'gestiwork'); ?></a>
+                            </p>
+                        <?php endif; ?>
                     </div>
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Modèles existants', 'gestiwork'); ?></p>
-                        <ul class="gw-pdf-templates-list">
-                            <li>
-                                <span>Modèle standard</span>
-                                <span style="margin-left: 8px;">
-                                    <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    <span class="dashicons dashicons-trash" aria-hidden="true"></span>
-                                </span>
-                            </li>
-                            <li>
-                                <span>Modèle convention</span>
-                                <span style="margin-left: 8px;">
-                                    <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    <span class="dashicons dashicons-trash" aria-hidden="true"></span>
-                                </span>
-                            </li>
-                        </ul>
+                        <?php if (empty($pdfTemplates)) : ?>
+                            <p class="gw-settings-placeholder"><?php esc_html_e('Aucun modèle PDF enregistré.', 'gestiwork'); ?></p>
+                        <?php else : ?>
+                            <ul class="gw-pdf-templates-list">
+                                <?php foreach ($pdfTemplates as $tpl) : ?>
+                                    <li data-template-id="<?php echo (int) $tpl['id']; ?>">
+                                        <span><?php echo esc_html($tpl['name']); ?></span>
+                                        <?php if (!empty($tpl['is_default'])) : ?>
+                                            <span class="dashicons dashicons-star-filled" title="<?php esc_attr_e('Modèle par défaut', 'gestiwork'); ?>" style="color:#f0b429;margin-left:4px;"></span>
+                                        <?php endif; ?>
+                                        <span style="margin-left: 8px;">
+                                            <a href="<?php echo esc_url(add_query_arg('edit_pdf_template', (int) $tpl['id'], home_url('/gestiwork/settings/pdf/'))); ?>" title="<?php esc_attr_e('Modifier', 'gestiwork'); ?>">
+                                                <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                            </a>
+                                            <button type="button" class="gw-pdf-delete-template" data-template-id="<?php echo (int) $tpl['id']; ?>" data-template-name="<?php echo esc_attr($tpl['name']); ?>" title="<?php esc_attr_e('Supprimer', 'gestiwork'); ?>" style="background:none;border:none;cursor:pointer;padding:0;">
+                                                <span class="dashicons dashicons-trash" aria-hidden="true" style="color:#c0392b;"></span>
+                                            </button>
+                                        </span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -573,21 +616,43 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <button type="button" class="gw-button gw-button--secondary" id="gw-toggle-pdf-layout" style="margin-bottom: 8px;">
                     <?php esc_html_e('Afficher / masquer les réglages de mise en forme', 'gestiwork'); ?>
                 </button>
+                <?php
+                // Valeurs par défaut ou valeurs du modèle en cours
+                $pdfMarginTop = $currentPdfTemplate ? (float) $currentPdfTemplate['margin_top'] : 5;
+                $pdfMarginBottom = $currentPdfTemplate ? (float) $currentPdfTemplate['margin_bottom'] : 5;
+                $pdfMarginLeft = $currentPdfTemplate ? (float) $currentPdfTemplate['margin_left'] : 10;
+                $pdfMarginRight = $currentPdfTemplate ? (float) $currentPdfTemplate['margin_right'] : 10;
+                $pdfHeaderHeight = $currentPdfTemplate ? (float) $currentPdfTemplate['header_height'] : 20;
+                $pdfFooterHeight = $currentPdfTemplate ? (float) $currentPdfTemplate['footer_height'] : 15;
+                $pdfFontTitle = $currentPdfTemplate ? $currentPdfTemplate['font_title'] : 'sans-serif';
+                $pdfFontBody = $currentPdfTemplate ? $currentPdfTemplate['font_body'] : 'sans-serif';
+                $pdfFontTitleSize = $currentPdfTemplate && isset($currentPdfTemplate['font_title_size']) ? (int) $currentPdfTemplate['font_title_size'] : 14;
+                $pdfFontBodySize = $currentPdfTemplate && isset($currentPdfTemplate['font_body_size']) ? (int) $currentPdfTemplate['font_body_size'] : 11;
+                $pdfColorTitle = $currentPdfTemplate ? $currentPdfTemplate['color_title'] : '#023047';
+                $pdfColorOtherTitles = $currentPdfTemplate ? $currentPdfTemplate['color_other_titles'] : '#023047';
+                $pdfHeaderBgColor = $currentPdfTemplate && isset($currentPdfTemplate['header_bg_color']) ? $currentPdfTemplate['header_bg_color'] : 'transparent';
+                $pdfFooterBgColor = $currentPdfTemplate && isset($currentPdfTemplate['footer_bg_color']) ? $currentPdfTemplate['footer_bg_color'] : 'transparent';
+                $pdfCustomCss = $currentPdfTemplate ? $currentPdfTemplate['custom_css'] : '';
+                $pdfHeaderHtml = $currentPdfTemplate ? $currentPdfTemplate['header_html'] : '';
+                $pdfFooterHtml = $currentPdfTemplate ? $currentPdfTemplate['footer_html'] : '';
+                $fontOptions = ['sans-serif', 'times', 'courier', 'helvetica', 'serif', 'monospace'];
+                $fontSizeOptions = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24];
+                ?>
                 <div class="gw-settings-grid gw-pdf-layout-grid" id="gw-pdf-layout-body" style="display:none;">
                     <div class="gw-settings-field gw-pdf-layout-block gw-pdf-layout-block--dimensions">
                         <p class="gw-settings-label"><?php esc_html_e('Dimensions et marges', 'gestiwork'); ?></p>
                         <div style="display:flex; gap:24px; flex-wrap:wrap;">
                             <div>
                                 <p class="gw-settings-placeholder"><?php esc_html_e('Marges (en millimètres)', 'gestiwork'); ?></p>
-                                <p><label for="gw_pdf_margin_top"><?php esc_html_e('Haut', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_top" value="5" style="width:80px;" /></p>
-                                <p><label for="gw_pdf_margin_bottom"><?php esc_html_e('Bas', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_bottom" value="5" style="width:80px;" /></p>
-                                <p><label for="gw_pdf_margin_left"><?php esc_html_e('Gauche', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_left" value="10" style="width:80px;" /></p>
-                                <p><label for="gw_pdf_margin_right"><?php esc_html_e('Droite', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_right" value="10" style="width:80px;" /></p>
+                                <p><label for="gw_pdf_margin_top"><?php esc_html_e('Haut', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_top" name="gw_pdf_margin_top" value="<?php echo esc_attr($pdfMarginTop); ?>" style="width:80px;" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_bottom"><?php esc_html_e('Bas', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_bottom" name="gw_pdf_margin_bottom" value="<?php echo esc_attr($pdfMarginBottom); ?>" style="width:80px;" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_left"><?php esc_html_e('Gauche', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_left" name="gw_pdf_margin_left" value="<?php echo esc_attr($pdfMarginLeft); ?>" style="width:80px;" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_right"><?php esc_html_e('Droite', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_right" name="gw_pdf_margin_right" value="<?php echo esc_attr($pdfMarginRight); ?>" style="width:80px;" step="0.1" /></p>
                             </div>
                             <div>
                                 <p class="gw-settings-placeholder"><?php esc_html_e('Hauteurs (en millimètres)', 'gestiwork'); ?></p>
-                                <p><label for="gw_pdf_header_height"><?php esc_html_e('En-tête', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_header_height" value="20" style="width:80px;" /></p>
-                                <p><label for="gw_pdf_footer_height"><?php esc_html_e('Pied de page', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_footer_height" value="15" style="width:80px;" /></p>
+                                <p><label for="gw_pdf_header_height"><?php esc_html_e('En-tête', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_header_height" name="gw_pdf_header_height" value="<?php echo esc_attr($pdfHeaderHeight); ?>" style="width:80px;" step="0.1" /></p>
+                                <p><label for="gw_pdf_footer_height"><?php esc_html_e('Pied de page', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_footer_height" name="gw_pdf_footer_height" value="<?php echo esc_attr($pdfFooterHeight); ?>" style="width:80px;" step="0.1" /></p>
                                 <p class="gw-settings-placeholder" style="margin-top:8px;">
                                     <?php esc_html_e('Hauteur du corps calculée à partir du format de page et des marges.', 'gestiwork'); ?>
                                 </p>
@@ -600,41 +665,59 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                         <div class="gw-pdf-layout-block--typo-title">
                             <p>
                                 <label for="gw_pdf_font_title" class="top"><?php esc_html_e('Police des titres', 'gestiwork'); ?></label>
-                                <select id="gw_pdf_font_title" style="max-width:260px;">
-                                    <option value="sans-serif" selected="selected">sans-serif</option>
-                                    <option value="times">times</option>
-                                    <option value="courier">courier</option>
-                                    <option value="helvetica">helvetica</option>
-                                    <option value="serif">serif</option>
-                                    <option value="monospace">monospace</option>
+                                <select id="gw_pdf_font_title" name="gw_pdf_font_title" style="max-width:180px;">
+                                    <?php foreach ($fontOptions as $font) : ?>
+                                        <option value="<?php echo esc_attr($font); ?>"<?php selected($pdfFontTitle, $font); ?>><?php echo esc_html($font); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <label for="gw_pdf_font_title_size" style="margin-left:12px;"><?php esc_html_e('Taille', 'gestiwork'); ?></label>
+                                <select id="gw_pdf_font_title_size" name="gw_pdf_font_title_size" style="width:70px;">
+                                    <?php foreach ($fontSizeOptions as $size) : ?>
+                                        <option value="<?php echo esc_attr($size); ?>"<?php selected($pdfFontTitleSize, $size); ?>><?php echo esc_html($size); ?>pt</option>
+                                    <?php endforeach; ?>
                                 </select>
                             </p>
                             <p>
                                 <label for="gw_pdf_font_body" class="top"><?php esc_html_e('Police du texte courant', 'gestiwork'); ?></label>
-                                <select id="gw_pdf_font_body" style="max-width:260px;">
-                                    <option value="sans-serif" selected="selected">sans-serif</option>
-                                    <option value="times">times</option>
-                                    <option value="courier">courier</option>
-                                    <option value="helvetica">helvetica</option>
-                                    <option value="serif">serif</option>
-                                    <option value="monospace">monospace</option>
+                                <select id="gw_pdf_font_body" name="gw_pdf_font_body" style="max-width:180px;">
+                                    <?php foreach ($fontOptions as $font) : ?>
+                                        <option value="<?php echo esc_attr($font); ?>"<?php selected($pdfFontBody, $font); ?>><?php echo esc_html($font); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <label for="gw_pdf_font_body_size" style="margin-left:12px;"><?php esc_html_e('Taille', 'gestiwork'); ?></label>
+                                <select id="gw_pdf_font_body_size" name="gw_pdf_font_body_size" style="width:70px;">
+                                    <?php foreach ($fontSizeOptions as $size) : ?>
+                                        <option value="<?php echo esc_attr($size); ?>"<?php selected($pdfFontBodySize, $size); ?>><?php echo esc_html($size); ?>pt</option>
+                                    <?php endforeach; ?>
                                 </select>
                             </p>
                             <p>
                                 <label for="gw_pdf_color_title" class="top"><?php esc_html_e('Couleur des titres de document', 'gestiwork'); ?></label>
-                                <input type="text" id="gw_pdf_color_title" value="#023047" style="width:120px;" />
+                                <input type="color" id="gw_pdf_color_title" name="gw_pdf_color_title" value="<?php echo esc_attr($pdfColorTitle); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" />
+                                <input type="text" id="gw_pdf_color_title_text" value="<?php echo esc_attr($pdfColorTitle); ?>" style="width:80px;margin-left:8px;" data-color-target="gw_pdf_color_title" />
                             </p>
                             <p>
                                 <label for="gw_pdf_color_other_titles" class="top"><?php esc_html_e('Couleur des autres titres', 'gestiwork'); ?></label>
-                                <input type="text" id="gw_pdf_color_other_titles" value="#023047" style="width:120px;" />
+                                <input type="color" id="gw_pdf_color_other_titles" name="gw_pdf_color_other_titles" value="<?php echo esc_attr($pdfColorOtherTitles); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" />
+                                <input type="text" id="gw_pdf_color_other_titles_text" value="<?php echo esc_attr($pdfColorOtherTitles); ?>" style="width:80px;margin-left:8px;" data-color-target="gw_pdf_color_other_titles" />
+                            </p>
+                            <p>
+                                <label for="gw_pdf_header_bg_color" class="top"><?php esc_html_e('Fond de l\'en-tête', 'gestiwork'); ?></label>
+                                <input type="color" id="gw_pdf_header_bg_color_picker" value="<?php echo ($pdfHeaderBgColor !== 'transparent' ? esc_attr($pdfHeaderBgColor) : '#ffffff'); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" data-bg-target="gw_pdf_header_bg_color" />
+                                <input type="text" id="gw_pdf_header_bg_color" name="gw_pdf_header_bg_color" value="<?php echo esc_attr($pdfHeaderBgColor); ?>" style="width:100px;margin-left:8px;" placeholder="transparent" />
+                            </p>
+                            <p>
+                                <label for="gw_pdf_footer_bg_color" class="top"><?php esc_html_e('Fond du pied de page', 'gestiwork'); ?></label>
+                                <input type="color" id="gw_pdf_footer_bg_color_picker" value="<?php echo ($pdfFooterBgColor !== 'transparent' ? esc_attr($pdfFooterBgColor) : '#ffffff'); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" data-bg-target="gw_pdf_footer_bg_color" />
+                                <input type="text" id="gw_pdf_footer_bg_color" name="gw_pdf_footer_bg_color" value="<?php echo esc_attr($pdfFooterBgColor); ?>" style="width:100px;margin-left:8px;" placeholder="transparent" />
                             </p>
                         </div>
                     </div>
 
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Feuille de style personnalisée (CSS)', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('La feuille de style s’appliquera après les réglages ci-dessus.', 'gestiwork'); ?></p>
-                        <textarea id="gw_pdf_custom_css" rows="8" style="width:100%; max-width:100%;"></textarea>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('La feuille de style s\'appliquera après les réglages ci-dessus.', 'gestiwork'); ?></p>
+                        <textarea id="gw_pdf_custom_css" name="gw_pdf_custom_css" rows="8" style="width:100%; max-width:100%;"><?php echo esc_textarea($pdfCustomCss); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -663,11 +746,13 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 <h4 class="gw-section-subtitle" id="gw-pdf-editor-title"><?php esc_html_e('3.x Édition du gabarit PDF (en-tête / pied de page)', 'gestiwork'); ?></h4>
                 <div class="gw-settings-grid" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
                     <div class="gw-settings-field">
-                        <input type="hidden" id="gw_pdf_editor_context" name="gw_pdf_editor_context" value="header" />
+                        <input type="hidden" id="gw_pdf_editor_context" value="header" />
+                        <input type="hidden" id="gw_pdf_header_html" name="gw_pdf_header_html" value="<?php echo esc_attr($pdfHeaderHtml); ?>" />
+                        <input type="hidden" id="gw_pdf_footer_html" name="gw_pdf_footer_html" value="<?php echo esc_attr($pdfFooterHtml); ?>" />
                         <?php
                         if (function_exists('wp_editor')) {
                             wp_editor(
-                                '',
+                                $pdfHeaderHtml,
                                 'gw_pdf_editor',
                                 [
                                     'textarea_name' => 'gw_pdf_editor_content',
@@ -677,41 +762,41 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             );
                         }
                         ?>
+                        <div class="gw-pdf-editor-switch" style="margin-top: 12px;">
+                            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-switch-to-footer" style="display:inline-flex;align-items:center;gap:6px;">
+                                <span class="dashicons dashicons-arrow-down-alt"></span>
+                                <?php esc_html_e('Passer au pied de page', 'gestiwork'); ?>
+                            </button>
+                            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-switch-to-header" style="display:none;align-items:center;gap:6px;">
+                                <span class="dashicons dashicons-arrow-up-alt"></span>
+                                <?php esc_html_e('Passer à l\'en-tête', 'gestiwork'); ?>
+                            </button>
+                        </div>
                     </div>
-                    <div class="gw-settings-field">
+                    <div class="gw-settings-field gw-pdf-shortcodes-panel">
                         <p class="gw-settings-label"><?php esc_html_e('Mots-clés disponibles', 'gestiwork'); ?></p>
-                        <p class="gw-settings-placeholder"><?php esc_html_e('Cliquez sur un mot-clé pour l’insérer dans le gabarit (structure en cours de maquette).', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php esc_html_e('Cliquez sur un mot-clé pour l\'insérer dans l\'éditeur.', 'gestiwork'); ?></p>
 
-                        <div class="gw-pdf-shortcodes-group">
-                            <p><strong><?php esc_html_e('Document', 'gestiwork'); ?></strong></p>
-                            <ul>
-                                <li><code>document:titre</code></li>
-                                <li><code>document:date_debut</code></li>
-                                <li><code>document:date_fin</code></li>
-                            </ul>
-                        </div>
-
-                        <div class="gw-pdf-shortcodes-group">
-                            <p><strong><?php esc_html_e('Client', 'gestiwork'); ?></strong></p>
-                            <ul>
-                                <li><code>client:nom</code></li>
-                                <li><code>client:prenom</code></li>
-                                <li><code>client:adresse</code></li>
-                                <li><code>client:code_postal</code></li>
-                                <li><code>client:ville</code></li>
-                            </ul>
-                        </div>
-
-                        <div class="gw-pdf-shortcodes-group">
-                            <p><strong><?php esc_html_e('Organisme de formation', 'gestiwork'); ?></strong></p>
-                            <ul>
-                                <li><code>of:nom</code></li>
-                                <li><code>of:adresse</code></li>
-                                <li><code>of:code_postal</code></li>
-                                <li><code>of:ville</code></li>
-                                <li><code>of:siret</code></li>
-                            </ul>
-                        </div>
+                        <?php foreach ($pdfShortcodesGrouped as $groupKey => $shortcodes) : ?>
+                            <?php $groupLabel = isset($pdfShortcodeGroupLabels[$groupKey]) ? $pdfShortcodeGroupLabels[$groupKey] : ucfirst($groupKey); ?>
+                            <div class="gw-pdf-shortcodes-group">
+                                <p class="gw-pdf-shortcodes-group-title">
+                                    <strong><?php echo esc_html($groupLabel); ?></strong>
+                                    <button type="button" class="gw-pdf-shortcodes-toggle" data-group="<?php echo esc_attr($groupKey); ?>" title="<?php esc_attr_e('Afficher/masquer', 'gestiwork'); ?>">
+                                        <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                    </button>
+                                </p>
+                                <ul class="gw-pdf-shortcodes-list" data-group="<?php echo esc_attr($groupKey); ?>" style="display:none;">
+                                    <?php foreach ($shortcodes as $sc) : ?>
+                                        <li>
+                                            <code class="gw-pdf-shortcode-insert" data-shortcode="[<?php echo esc_attr($sc['code']); ?>]" title="<?php echo esc_attr($sc['description']); ?>">
+                                                <?php echo esc_html($sc['code']); ?>
+                                            </code>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -719,15 +804,23 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             <div class="gw-settings-group">
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                        <button type="button" class="gw-button gw-button--secondary">
+                        <a href="<?php echo esc_url(home_url('/gestiwork/settings/pdf/')); ?>" class="gw-button gw-button--secondary">
                             <?php esc_html_e('Annuler les modifications PDF', 'gestiwork'); ?>
-                        </button>
-                        <button type="button" class="gw-button gw-button--primary">
+                        </a>
+                        <button type="submit" class="gw-button gw-button--primary" id="gw-pdf-submit-btn">
                             <?php esc_html_e('Enregistrer les réglages PDF', 'gestiwork'); ?>
                         </button>
                     </div>
                 </div>
             </div>
+            </form>
+
+            <!-- Formulaire caché pour la suppression de modèle -->
+            <form method="post" action="" id="gw-pdf-delete-form" style="display:none;">
+                <input type="hidden" name="gw_settings_action" value="delete_pdf_template" />
+                <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_delete_template_id" value="0" />
+                <?php wp_nonce_field('gw_save_pdf_template', 'gw_settings_nonce_pdf'); ?>
+            </form>
         </div>
     </div>
 
@@ -1370,6 +1463,230 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 } else {
                     pdfLayoutBody.style.display = 'none';
                 }
+            });
+        }
+
+        // Gestion de la suppression des modèles PDF
+        var pdfDeleteButtons = document.querySelectorAll('.gw-pdf-delete-template');
+        var pdfDeleteForm = document.getElementById('gw-pdf-delete-form');
+        var pdfDeleteTemplateId = document.getElementById('gw_pdf_delete_template_id');
+        if (pdfDeleteForm && pdfDeleteTemplateId) {
+            pdfDeleteButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var templateId = btn.getAttribute('data-template-id');
+                    var templateName = btn.getAttribute('data-template-name');
+                    if (confirm('Êtes-vous sûr de vouloir supprimer le modèle "' + templateName + '" ?')) {
+                        pdfDeleteTemplateId.value = templateId;
+                        pdfDeleteForm.submit();
+                    }
+                });
+            });
+        }
+
+        // Synchronisation du contenu TinyMCE avec les champs cachés header/footer
+        var pdfHeaderHtmlInput = document.getElementById('gw_pdf_header_html');
+        var pdfFooterHtmlInput = document.getElementById('gw_pdf_footer_html');
+        var pdfTemplateForm = document.getElementById('gw-pdf-template-form');
+
+        function gwSyncTinyMceToHiddenField() {
+            var context = pdfEditorContext ? pdfEditorContext.value : 'header';
+            var editorContent = '';
+
+            // Récupérer le contenu de TinyMCE
+            if (typeof tinymce !== 'undefined' && tinymce.get('gw_pdf_editor')) {
+                editorContent = tinymce.get('gw_pdf_editor').getContent();
+            } else {
+                var textarea = document.getElementById('gw_pdf_editor');
+                if (textarea) {
+                    editorContent = textarea.value;
+                }
+            }
+
+            // Stocker dans le bon champ caché
+            if (context === 'header' && pdfHeaderHtmlInput) {
+                pdfHeaderHtmlInput.value = editorContent;
+            } else if (context === 'footer' && pdfFooterHtmlInput) {
+                pdfFooterHtmlInput.value = editorContent;
+            }
+        }
+
+        function gwLoadTinyMceFromHiddenField(context) {
+            var content = '';
+            if (context === 'header' && pdfHeaderHtmlInput) {
+                content = pdfHeaderHtmlInput.value;
+            } else if (context === 'footer' && pdfFooterHtmlInput) {
+                content = pdfFooterHtmlInput.value;
+            }
+
+            // Charger dans TinyMCE
+            if (typeof tinymce !== 'undefined' && tinymce.get('gw_pdf_editor')) {
+                tinymce.get('gw_pdf_editor').setContent(content);
+            } else {
+                var textarea = document.getElementById('gw_pdf_editor');
+                if (textarea) {
+                    textarea.value = content;
+                }
+            }
+        }
+
+        // Modifier gwOpenPdfEditor pour synchroniser avant de changer de contexte
+        var originalGwOpenPdfEditor = gwOpenPdfEditor;
+        gwOpenPdfEditor = function (context) {
+            // Sauvegarder le contenu actuel avant de changer de contexte
+            gwSyncTinyMceToHiddenField();
+            // Charger le nouveau contenu
+            gwLoadTinyMceFromHiddenField(context);
+            // Appeler la fonction originale
+            originalGwOpenPdfEditor(context);
+        };
+
+        // Synchroniser avant la soumission du formulaire
+        if (pdfTemplateForm) {
+            pdfTemplateForm.addEventListener('submit', function () {
+                gwSyncTinyMceToHiddenField();
+            });
+        }
+
+        // Toggle des groupes de shortcodes (afficher/masquer)
+        var shortcodeToggles = document.querySelectorAll('.gw-pdf-shortcodes-toggle');
+        shortcodeToggles.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var groupKey = btn.getAttribute('data-group');
+                var list = document.querySelector('.gw-pdf-shortcodes-list[data-group="' + groupKey + '"]');
+                var icon = btn.querySelector('.dashicons');
+                if (list) {
+                    if (list.style.display === 'none' || list.style.display === '') {
+                        list.style.display = 'block';
+                        if (icon) {
+                            icon.classList.remove('dashicons-arrow-down-alt2');
+                            icon.classList.add('dashicons-arrow-up-alt2');
+                        }
+                    } else {
+                        list.style.display = 'none';
+                        if (icon) {
+                            icon.classList.remove('dashicons-arrow-up-alt2');
+                            icon.classList.add('dashicons-arrow-down-alt2');
+                        }
+                    }
+                }
+            });
+        });
+
+        // Insertion des shortcodes dans TinyMCE au clic
+        var shortcodeInsertButtons = document.querySelectorAll('.gw-pdf-shortcode-insert');
+        shortcodeInsertButtons.forEach(function (code) {
+            code.style.cursor = 'pointer';
+            code.addEventListener('click', function () {
+                var shortcode = code.getAttribute('data-shortcode');
+                if (!shortcode) return;
+
+                // Insérer dans TinyMCE si disponible
+                if (typeof tinymce !== 'undefined' && tinymce.get('gw_pdf_editor')) {
+                    tinymce.get('gw_pdf_editor').insertContent(shortcode);
+                    tinymce.get('gw_pdf_editor').focus();
+                } else {
+                    // Fallback sur le textarea
+                    var textarea = document.getElementById('gw_pdf_editor');
+                    if (textarea) {
+                        var start = textarea.selectionStart;
+                        var end = textarea.selectionEnd;
+                        var text = textarea.value;
+                        textarea.value = text.substring(0, start) + shortcode + text.substring(end);
+                        textarea.selectionStart = textarea.selectionEnd = start + shortcode.length;
+                        textarea.focus();
+                    }
+                }
+            });
+        });
+
+        // Boutons pour basculer entre en-tête et pied de page
+        var switchToFooterBtn = document.getElementById('gw-pdf-switch-to-footer');
+        var switchToHeaderBtn = document.getElementById('gw-pdf-switch-to-header');
+
+        if (switchToFooterBtn && switchToHeaderBtn) {
+            switchToFooterBtn.addEventListener('click', function () {
+                gwOpenPdfEditor('footer');
+                switchToFooterBtn.style.display = 'none';
+                switchToHeaderBtn.style.display = 'inline-flex';
+            });
+
+            switchToHeaderBtn.addEventListener('click', function () {
+                gwOpenPdfEditor('header');
+                switchToHeaderBtn.style.display = 'none';
+                switchToFooterBtn.style.display = 'inline-flex';
+            });
+        }
+
+        // Synchronisation des color pickers avec les champs texte
+        var colorInputs = document.querySelectorAll('input[type="color"]');
+        colorInputs.forEach(function (colorInput) {
+            var textInput = document.querySelector('input[data-color-target="' + colorInput.id + '"]');
+            if (textInput) {
+                // Quand le color picker change, mettre à jour le champ texte
+                colorInput.addEventListener('input', function () {
+                    textInput.value = colorInput.value;
+                });
+
+                // Quand le champ texte change, mettre à jour le color picker
+                textInput.addEventListener('input', function () {
+                    var val = textInput.value.trim();
+                    // Valider le format hex
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        colorInput.value = val;
+                    }
+                });
+
+                // Au blur, corriger le format si nécessaire
+                textInput.addEventListener('blur', function () {
+                    var val = textInput.value.trim();
+                    if (!/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        textInput.value = colorInput.value;
+                    }
+                });
+            }
+        });
+
+        // Synchronisation des color pickers pour les fonds (supportent "transparent")
+        var bgColorPickers = document.querySelectorAll('input[data-bg-target]');
+        bgColorPickers.forEach(function (picker) {
+            var targetId = picker.getAttribute('data-bg-target');
+            var textInput = document.getElementById(targetId);
+            if (textInput) {
+                // Quand le color picker change, mettre à jour le champ texte
+                picker.addEventListener('input', function () {
+                    textInput.value = picker.value;
+                });
+
+                // Quand le champ texte change, mettre à jour le color picker si c'est un hex valide
+                textInput.addEventListener('input', function () {
+                    var val = textInput.value.trim();
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        picker.value = val;
+                    }
+                    // Si "transparent" ou vide, on laisse tel quel
+                });
+            }
+        });
+
+        // Bouton "Voir un aperçu PDF"
+        var pdfPreviewBtn = document.getElementById('gw-pdf-preview-btn');
+        if (pdfPreviewBtn) {
+            pdfPreviewBtn.addEventListener('click', function () {
+                // Synchroniser TinyMCE avant l'aperçu
+                gwSyncTinyMceToHiddenField();
+
+                // Récupérer l'ID du template en cours
+                var templateIdInput = document.getElementById('gw_pdf_template_id');
+                var templateId = templateIdInput ? templateIdInput.value : '0';
+
+                if (templateId === '0' || templateId === '') {
+                    alert('Veuillez d\'abord créer et enregistrer un modèle PDF avant de visualiser l\'aperçu.');
+                    return;
+                }
+
+                // Ouvrir l'aperçu dans une nouvelle fenêtre
+                var previewUrl = '<?php echo esc_url(home_url('/gestiwork/pdf-preview/')); ?>?template_id=' + templateId;
+                window.open(previewUrl, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
             });
         }
 

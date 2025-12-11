@@ -16,9 +16,11 @@ class Installer
             return;
         }
 
-        $charsetCollate = $wpdb->get_charset_collate();
-        $tableIdentity  = $wpdb->prefix . 'gw_of_identity';
-        $tableOptions   = $wpdb->prefix . 'gw_options';
+        $charsetCollate    = $wpdb->get_charset_collate();
+        $tableIdentity     = $wpdb->prefix . 'gw_of_identity';
+        $tableOptions      = $wpdb->prefix . 'gw_options';
+        $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
+        $tablePdfShortcodes = $wpdb->prefix . 'gw_pdf_shortcodes';
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
@@ -79,5 +81,94 @@ PRIMARY KEY  (id)
 ) {$charsetCollate};";
 
         dbDelta($sqlOptions);
+
+        $sqlPdfTemplates = "CREATE TABLE {$tablePdfTemplates} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+name VARCHAR(190) NOT NULL DEFAULT '',
+document_type VARCHAR(50) NOT NULL DEFAULT '',
+is_default TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+header_html LONGTEXT NULL,
+footer_html LONGTEXT NULL,
+page_format VARCHAR(20) NOT NULL DEFAULT 'A4',
+margin_top DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+margin_bottom DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+margin_left DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+margin_right DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+header_height DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+footer_height DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+font_title VARCHAR(50) NOT NULL DEFAULT 'sans-serif',
+font_body VARCHAR(50) NOT NULL DEFAULT 'sans-serif',
+font_title_size INT(11) UNSIGNED NOT NULL DEFAULT 14,
+font_body_size INT(11) UNSIGNED NOT NULL DEFAULT 11,
+color_title VARCHAR(9) NOT NULL DEFAULT '#000000',
+color_other_titles VARCHAR(9) NOT NULL DEFAULT '#000000',
+header_bg_color VARCHAR(9) NOT NULL DEFAULT 'transparent',
+footer_bg_color VARCHAR(9) NOT NULL DEFAULT 'transparent',
+custom_css LONGTEXT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+KEY document_type (document_type),
+KEY is_default (is_default)
+) {$charsetCollate};";
+
+        dbDelta($sqlPdfTemplates);
+
+        $sqlPdfShortcodes = "CREATE TABLE {$tablePdfShortcodes} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+code VARCHAR(100) NOT NULL DEFAULT '',
+label VARCHAR(190) NOT NULL DEFAULT '',
+group_key VARCHAR(50) NOT NULL DEFAULT '',
+description TEXT NULL,
+is_active TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY code (code),
+KEY group_key (group_key),
+KEY is_active (is_active)
+) {$charsetCollate};";
+
+        dbDelta($sqlPdfShortcodes);
+
+        // Alimenter la table des shortcodes avec le catalogue de référence
+        ShortcodeSeeder::seed();
+
+        // Migrations pour ajouter les colonnes manquantes
+        self::runMigrations($wpdb);
+    }
+
+    /**
+     * Exécute les migrations pour ajouter les colonnes manquantes.
+     */
+    private static function runMigrations(\wpdb $wpdb): void
+    {
+        $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
+
+        // Vérifier si la table existe
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tablePdfTemplates)
+        );
+
+        if ($tableExists !== $tablePdfTemplates) {
+            return;
+        }
+
+        // Liste des colonnes à ajouter si elles n'existent pas
+        $columnsToAdd = [
+            'font_title_size'  => "INT(11) UNSIGNED NOT NULL DEFAULT 14 AFTER font_body",
+            'font_body_size'   => "INT(11) UNSIGNED NOT NULL DEFAULT 11 AFTER font_title_size",
+            'header_bg_color'  => "VARCHAR(9) NOT NULL DEFAULT 'transparent' AFTER color_other_titles",
+            'footer_bg_color'  => "VARCHAR(9) NOT NULL DEFAULT 'transparent' AFTER header_bg_color",
+        ];
+
+        // Récupérer les colonnes existantes
+        $existingColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tablePdfTemplates}", 0);
+
+        foreach ($columnsToAdd as $column => $definition) {
+            if (!in_array($column, $existingColumns, true)) {
+                $wpdb->query("ALTER TABLE {$tablePdfTemplates} ADD COLUMN {$column} {$definition}");
+            }
+        }
     }
 }
