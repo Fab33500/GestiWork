@@ -69,6 +69,9 @@ iban VARCHAR(34) NOT NULL DEFAULT '',
 bic VARCHAR(11) NOT NULL DEFAULT '',
 format_numero_devis VARCHAR(190) NOT NULL DEFAULT '',
 compteur_devis INT(11) UNSIGNED NOT NULL DEFAULT 1,
+representant_nom VARCHAR(190) NOT NULL DEFAULT '',
+representant_prenom VARCHAR(190) NOT NULL DEFAULT '',
+habilitation_inrs VARCHAR(190) NOT NULL DEFAULT '',
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY  (id)
@@ -161,31 +164,53 @@ KEY is_active (is_active)
      */
     private static function runMigrations(\wpdb $wpdb): void
     {
+        // === Migrations table des modèles PDF ===
         $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
 
-        // Vérifier si la table existe
-        $tableExists = $wpdb->get_var(
+        $tableExistsPdf = $wpdb->get_var(
             $wpdb->prepare('SHOW TABLES LIKE %s', $tablePdfTemplates)
         );
 
-        if ($tableExists !== $tablePdfTemplates) {
+        if ($tableExistsPdf === $tablePdfTemplates) {
+            $columnsToAddPdf = [
+                'font_title_size'  => "INT(11) UNSIGNED NOT NULL DEFAULT 14 AFTER font_body",
+                'font_body_size'   => "INT(11) UNSIGNED NOT NULL DEFAULT 11 AFTER font_title_size",
+                'header_bg_color'  => "VARCHAR(11) NOT NULL DEFAULT 'transparent' AFTER color_other_titles",
+                'footer_bg_color'  => "VARCHAR(11) NOT NULL DEFAULT 'transparent' AFTER header_bg_color",
+                'custom_css'       => "LONGTEXT NULL AFTER footer_bg_color",
+            ];
+
+            $existingPdfColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tablePdfTemplates}", 0);
+
+            foreach ($columnsToAddPdf as $column => $definition) {
+                if (!in_array($column, $existingPdfColumns, true)) {
+                    $wpdb->query("ALTER TABLE {$tablePdfTemplates} ADD COLUMN {$column} {$definition}");
+                }
+            }
+        }
+
+        // === Migrations table identité OF ===
+        $tableIdentity = $wpdb->prefix . 'gw_of_identity';
+
+        $tableExistsIdentity = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableIdentity)
+        );
+
+        if ($tableExistsIdentity !== $tableIdentity) {
             return;
         }
 
-        // Liste des colonnes à ajouter si elles n'existent pas
-        $columnsToAdd = [
-            'font_title_size'  => "INT(11) UNSIGNED NOT NULL DEFAULT 14 AFTER font_body",
-            'font_body_size'   => "INT(11) UNSIGNED NOT NULL DEFAULT 11 AFTER font_title_size",
-            'header_bg_color'  => "VARCHAR(11) NOT NULL DEFAULT 'transparent' AFTER color_other_titles",
-            'footer_bg_color'  => "VARCHAR(11) NOT NULL DEFAULT 'transparent' AFTER header_bg_color",
+        $columnsToAddIdentity = [
+            'representant_nom'    => "VARCHAR(190) NOT NULL DEFAULT '' AFTER compteur_devis",
+            'representant_prenom' => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_nom",
+            'habilitation_inrs'   => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_prenom",
         ];
 
-        // Récupérer les colonnes existantes
-        $existingColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tablePdfTemplates}", 0);
+        $existingIdentityColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tableIdentity}", 0);
 
-        foreach ($columnsToAdd as $column => $definition) {
-            if (!in_array($column, $existingColumns, true)) {
-                $wpdb->query("ALTER TABLE {$tablePdfTemplates} ADD COLUMN {$column} {$definition}");
+        foreach ($columnsToAddIdentity as $column => $definition) {
+            if (!in_array($column, $existingIdentityColumns, true)) {
+                $wpdb->query("ALTER TABLE {$tableIdentity} ADD COLUMN {$column} {$definition}");
             }
         }
     }

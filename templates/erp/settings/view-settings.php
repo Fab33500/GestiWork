@@ -151,6 +151,21 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                         <p class="gw-settings-placeholder"><?php echo isset($ofIdentity['site_internet']) ? esc_html($ofIdentity['site_internet']) : ''; ?></p>
                     </div>
                     <div class="gw-settings-field">
+                        <p class="gw-settings-label"><?php esc_html_e('Représentant légal', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder">
+                            <?php
+                            $repNom = isset($ofIdentity['representant_nom']) ? (string) $ofIdentity['representant_nom'] : '';
+                            $repPrenom = isset($ofIdentity['representant_prenom']) ? (string) $ofIdentity['representant_prenom'] : '';
+                            $repFull = trim($repPrenom . ' ' . $repNom);
+                            echo $repFull !== '' ? esc_html($repFull) : '';
+                            ?>
+                        </p>
+                    </div>
+                    <div class="gw-settings-field">
+                        <p class="gw-settings-label"><?php esc_html_e('Habilitation INRS', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php echo isset($ofIdentity['habilitation_inrs']) ? esc_html($ofIdentity['habilitation_inrs']) : ''; ?></p>
+                    </div>
+                    <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Description (présentation OF)', 'gestiwork'); ?></p>
                         <p class="gw-settings-placeholder">
                             <?php
@@ -567,20 +582,28 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 
                 <div class="gw-settings-group">
                     <?php if ($currentPdfTemplate) : ?>
-                        <h4 class="gw-section-subtitle" style="color:#d63638;">3.1a <?php esc_html_e('Modèle en cours d\'édition', 'gestiwork'); ?></h4>
+                        <h4 class="gw-section-subtitle" style="color:#d63638;">3.1a <?php esc_html_e(' : vous etes en train de modifier : ', 'gestiwork'); ?></h4>
                     <?php else : ?>
                         <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 Nom du modèle PDF', 'gestiwork'); ?></h4>
                     <?php endif; ?>
                     <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
                         <div class="gw-settings-field">
-                            <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF ', 'gestiwork'); ?></p>
                             <?php if ($currentPdfTemplate) : ?>
-                                <p class="gw-settings-placeholder" style="font-weight:600;">
+                                <p class="gw-pdf-current-template-name">
                                     <?php echo esc_html($currentPdfTemplate['name']); ?>
                                 </p>
                                 <input type="hidden" name="gw_pdf_model_name" value="<?php echo esc_attr($currentPdfTemplate['name']); ?>" />
                             <?php else : ?>
-                                <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" />
+                                <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF ', 'gestiwork'); ?></p>
+                                <div class="gw-pdf-model-name-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
+                                    <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" style="max-width:260px;" />
+                                    <button type="button" class="gw-button gw-button--secondary" id="gw_pdf_create_btn">
+                                        <?php esc_html_e('Créer', 'gestiwork'); ?>
+                                    </button>
+                                    <button type="button" class="gw-button gw-button--link" id="gw_pdf_cancel_btn">
+                                        <?php esc_html_e('Annuler', 'gestiwork'); ?>
+                                    </button>
+                                </div>
                             <?php endif; ?>
                         </div>
                         <div class="gw-settings-field">
@@ -619,7 +642,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     </div>
                 </div>
 
-                <div class="gw-settings-group gw-settings-group--pdf-layout">
+                <div class="gw-settings-group gw-settings-group--pdf-layout" id="gw-pdf-layout-group" style="<?php echo $currentPdfTemplate ? '' : 'display:none;'; ?>">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('3.2 Mise en forme PDF', 'gestiwork'); ?></h4>
                 <button type="button" class="gw-button gw-button--secondary" id="gw-toggle-pdf-layout" style="margin-bottom: 8px;">
                     <?php esc_html_e('Afficher / masquer les réglages de mise en forme', 'gestiwork'); ?>
@@ -730,7 +753,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 </div>
             </div>
 
-            <div class="gw-settings-group">
+            <div class="gw-settings-group" id="gw-pdf-header-footer-group" style="<?php echo $currentPdfTemplate ? '' : 'display:none;'; ?>">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('3.3 En-tête & pied de page', 'gestiwork'); ?></h4>
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
@@ -752,7 +775,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 
             <div class="gw-settings-group" id="gw-pdf-editor" style="display: none;">
                 <h4 class="gw-section-subtitle" id="gw-pdf-editor-title"><?php esc_html_e('3.x Édition du gabarit PDF (en-tête / pied de page)', 'gestiwork'); ?></h4>
-                <div class="gw-settings-grid" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
+                <div class="gw-settings-grid">
                     <div class="gw-settings-field">
                         <input type="hidden" id="gw_pdf_editor_context" value="header" />
                         <input type="hidden" id="gw_pdf_header_html" name="gw_pdf_header_html" value="<?php echo esc_attr($pdfHeaderHtml); ?>" />
@@ -809,7 +832,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 </div>
             </div>
 
-            <div class="gw-settings-group">
+            <div class="gw-settings-group" id="gw-pdf-actions-group" style="<?php echo $currentPdfTemplate ? '' : 'display:none;'; ?>">
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
                         <a href="<?php echo esc_url(home_url('/gestiwork/settings/pdf/')); ?>" class="gw-button gw-button--secondary">
@@ -859,8 +882,16 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <input type="text" class="gw-modal-input" id="gw_raison_sociale" name="gw_raison_sociale" value="<?php echo isset($ofIdentity['raison_sociale']) ? esc_attr($ofIdentity['raison_sociale']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
+                            <label for="gw_representant_nom"><?php esc_html_e('Nom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <input type="text" class="gw-modal-input" id="gw_representant_nom" name="gw_representant_nom" value="<?php echo isset($ofIdentity['representant_nom']) ? esc_attr($ofIdentity['representant_nom']) : ''; ?>" required />
+                        </div>
+                        <div class="gw-modal-field">
                             <label for="gw_email_contact"><?php esc_html_e('E-mail de contact', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
                             <input type="email" class="gw-modal-input" id="gw_email_contact" name="gw_email_contact" value="<?php echo isset($ofIdentity['email_contact']) ? esc_attr($ofIdentity['email_contact']) : ''; ?>" required />
+                        </div>
+                        <div class="gw-modal-field">
+                            <label for="gw_representant_prenom"><?php esc_html_e('Prénom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <input type="text" class="gw-modal-input" id="gw_representant_prenom" name="gw_representant_prenom" value="<?php echo isset($ofIdentity['representant_prenom']) ? esc_attr($ofIdentity['representant_prenom']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
                             <label for="gw_site_internet"><?php esc_html_e('Site Internet', 'gestiwork'); ?></label>
@@ -953,6 +984,16 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                 name="gw_datadock"
                                 placeholder="<?php esc_attr_e('Référence Datadock', 'gestiwork'); ?>"
                                 value="<?php echo isset($ofIdentity['datadock']) ? esc_attr($ofIdentity['datadock']) : ''; ?>"
+                            />
+                        </div>
+                        <div class="gw-modal-field">
+                            <label for="gw_habilitation_inrs"><?php esc_html_e('Habilitation INRS', 'gestiwork'); ?></label>
+                            <input
+                                type="text"
+                                class="gw-modal-input"
+                                id="gw_habilitation_inrs"
+                                name="gw_habilitation_inrs"
+                                value="<?php echo isset($ofIdentity['habilitation_inrs']) ? esc_attr($ofIdentity['habilitation_inrs']) : ''; ?>"
                             />
                         </div>
                         <div class="gw-modal-field">
@@ -1479,6 +1520,45 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 } else {
                     pdfLayoutBody.style.display = 'none';
                 }
+            });
+        }
+
+        // Affichage conditionnel des groupes avancés PDF (3.2 / 3.3)
+        var pdfLayoutGroup = document.getElementById('gw-pdf-layout-group');
+        var pdfHeaderFooterGroup = document.getElementById('gw-pdf-header-footer-group');
+        var pdfActionsGroup = document.getElementById('gw-pdf-actions-group');
+        var pdfCreateBtn = document.getElementById('gw_pdf_create_btn');
+        var pdfCancelBtn = document.getElementById('gw_pdf_cancel_btn');
+        var pdfModelNameInput = document.getElementById('gw_pdf_model_name');
+
+        if (pdfCreateBtn && pdfLayoutGroup && pdfHeaderFooterGroup && pdfActionsGroup && pdfModelNameInput) {
+            pdfCreateBtn.addEventListener('click', function () {
+                var name = pdfModelNameInput.value ? pdfModelNameInput.value.trim() : '';
+                if (name === '') {
+                    window.alert('<?php echo esc_js(__('Veuillez saisir un nom de modèle avant de continuer.', 'gestiwork')); ?>');
+                    pdfModelNameInput.focus();
+                    return;
+                }
+
+                // Afficher les groupes de réglages avancés pour permettre de configurer le modèle
+                pdfLayoutGroup.style.display = '';
+                pdfHeaderFooterGroup.style.display = '';
+                pdfActionsGroup.style.display = '';
+
+                // Ouvrir par défaut le bloc 3.2 si l'utilisateur ne l'a jamais ouvert
+                if (pdfLayoutBody && (!pdfLayoutBody.style.display || pdfLayoutBody.style.display === 'none')) {
+                    pdfLayoutBody.style.display = '';
+                }
+            });
+        }
+
+        if (pdfCancelBtn && pdfLayoutGroup && pdfHeaderFooterGroup && pdfActionsGroup && pdfModelNameInput) {
+            pdfCancelBtn.addEventListener('click', function () {
+                // Réinitialiser simplement le nom et masquer les groupes avancés.
+                pdfModelNameInput.value = '';
+                pdfLayoutGroup.style.display = 'none';
+                pdfHeaderFooterGroup.style.display = 'none';
+                pdfActionsGroup.style.display = 'none';
             });
         }
 

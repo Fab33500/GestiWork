@@ -79,7 +79,17 @@ final class PdfPreviewController
      */
     private static function buildPdfHtml(array $template, array $ofIdentity): string
     {
-        $headerHtml = self::replaceShortcodes($template['header_html'] ?? '', $ofIdentity);
+        $rawHeaderHtml = isset($template['header_html']) ? (string) $template['header_html'] : '';
+
+        // Découper le contenu brut de l'en-tête en 3 zones optionnelles.
+        // Si aucun marqueur [ZONE1]/[ZONE2]/[ZONE3] n'est présent, tout le
+        // contenu reste en zone 1 (comportement identique à l'existant).
+        [$headerRawZone1, $headerRawZone2, $headerRawZone3] = self::splitHeaderZones($rawHeaderHtml);
+
+        $headerHtmlZone1 = self::replaceShortcodes($headerRawZone1, $ofIdentity);
+        $headerHtmlZone2 = self::replaceShortcodes($headerRawZone2, $ofIdentity);
+        $headerHtmlZone3 = self::replaceShortcodes($headerRawZone3, $ofIdentity);
+
         $footerHtml = self::replaceShortcodes($template['footer_html'] ?? '', $ofIdentity);
 
         $fontTitle = $template['font_title'] ?? 'sans-serif';
@@ -219,7 +229,15 @@ final class PdfPreviewController
     <div class="pdf-watermark">APERÇU</div>
 
     <div class="pdf-header">
-        {$headerHtml}
+        <div class="pdf-header-zone pdf-header-zone-1">
+            {$headerHtmlZone1}
+        </div>
+        <div class="pdf-header-zone pdf-header-zone-2">
+            {$headerHtmlZone2}
+        </div>
+        <div class="pdf-header-zone pdf-header-zone-3">
+            {$headerHtmlZone3}
+        </div>
     </div>
 
     <div class="pdf-footer">
@@ -246,21 +264,26 @@ HTML;
     private static function replaceShortcodes(string $content, array $ofIdentity): string
     {
         // Shortcodes Organisme de formation
+        $repNom = $ofIdentity['representant_nom'] ?? '';
+        $repPrenom = $ofIdentity['representant_prenom'] ?? '';
+        $repFull = trim($repPrenom . ' ' . $repNom);
+
         $replacements = [
-            '[of:raison_sociale]'     => $ofIdentity['raison_sociale'] ?? '',
-            '[of:nom_commercial]'     => $ofIdentity['nom_commercial'] ?? '',
-            '[of:adresse]'            => $ofIdentity['adresse'] ?? '',
-            '[of:code_postal]'        => $ofIdentity['code_postal'] ?? '',
-            '[of:ville]'              => $ofIdentity['ville'] ?? '',
-            '[of:telephone_fixe]'     => $ofIdentity['telephone_fixe'] ?? '',
-            '[of:telephone_portable]' => $ofIdentity['telephone_portable'] ?? '',
-            '[of:email_contact]'      => $ofIdentity['email_contact'] ?? '',
-            '[of:site_web]'           => $ofIdentity['site_internet'] ?? '',
-            '[of:siret]'              => $ofIdentity['siret'] ?? '',
-            '[of:code_ape]'           => $ofIdentity['code_ape'] ?? '',
-            '[of:nda]'                => $ofIdentity['nda'] ?? '',
-            '[of:tva_intra]'          => $ofIdentity['tva_intracom'] ?? '',
-            '[of:representant_legal]' => $ofIdentity['representant_legal'] ?? '',
+            '[of:raison_sociale]'       => $ofIdentity['raison_sociale'] ?? '',
+            '[of:nom_commercial]'       => $ofIdentity['nom_commercial'] ?? '',
+            '[of:adresse]'              => $ofIdentity['adresse'] ?? '',
+            '[of:code_postal]'          => $ofIdentity['code_postal'] ?? '',
+            '[of:ville]'                => $ofIdentity['ville'] ?? '',
+            '[of:telephone_fixe]'       => $ofIdentity['telephone_fixe'] ?? '',
+            '[of:telephone_portable]'   => $ofIdentity['telephone_portable'] ?? '',
+            '[of:email_contact]'        => $ofIdentity['email_contact'] ?? '',
+            '[of:site_web]'             => $ofIdentity['site_internet'] ?? '',
+            '[of:siret]'                => $ofIdentity['siret'] ?? '',
+            '[of:code_ape]'             => $ofIdentity['code_ape'] ?? '',
+            '[of:nda]'                  => $ofIdentity['nda'] ?? '',
+            '[of:tva_intra]'            => $ofIdentity['tva_intracom'] ?? '',
+            '[of:representant_legal]'   => $repFull !== '' ? $repFull : ($ofIdentity['representant_legal'] ?? ''),
+            '[of:habilitation_inrs]'    => $ofIdentity['habilitation_inrs'] ?? '',
         ];
 
         // Logo
@@ -320,6 +343,54 @@ HTML;
         $replacements['[formateur:telephone]'] = '06 98 76 54 32';
 
         return str_replace(array_keys($replacements), array_values($replacements), $content);
+    }
+
+    private static function splitHeaderZones(string $raw): array
+    {
+        if ($raw === '') {
+            return ['', '', ''];
+        }
+
+        $hasZone1 = strpos($raw, '[ZONE1]') !== false;
+        $hasZone2 = strpos($raw, '[ZONE2]') !== false;
+        $hasZone3 = strpos($raw, '[ZONE3]') !== false;
+
+        if (!$hasZone1 && !$hasZone2 && !$hasZone3) {
+            return [$raw, '', ''];
+        }
+
+        $pattern = '/\[ZONE([123])]/';
+        $parts = preg_split($pattern, $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        if ($parts === false || count($parts) === 0) {
+            return [$raw, '', ''];
+        }
+
+        $zones = [
+            1 => '',
+            2 => '',
+            3 => '',
+        ];
+
+        $zones[1] .= (string) $parts[0];
+
+        $count = count($parts);
+        for ($i = 1; $i + 1 < $count; $i += 2) {
+            $zoneIndex = (int) $parts[$i];
+            $text = (string) $parts[$i + 1];
+
+            if ($zoneIndex >= 1 && $zoneIndex <= 3) {
+                $zones[$zoneIndex] .= $text;
+            } else {
+                $zones[1] .= $text;
+            }
+        }
+
+        return [
+            trim($zones[1]),
+            trim($zones[2]),
+            trim($zones[3]),
+        ];
     }
 
     /**

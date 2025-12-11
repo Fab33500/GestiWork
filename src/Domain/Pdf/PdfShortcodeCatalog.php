@@ -144,6 +144,12 @@ final class PdfShortcodeCatalog
                 'description' => 'Nom du représentant légal',
             ],
             [
+                'code'        => 'of:habilitation_inrs',
+                'label'       => 'Habilitation INRS',
+                'group_key'   => 'organisme',
+                'description' => 'Texte d\'habilitation INRS de l\'organisme',
+            ],
+            [
                 'code'        => 'of:logo',
                 'label'       => 'Logo',
                 'group_key'   => 'organisme',

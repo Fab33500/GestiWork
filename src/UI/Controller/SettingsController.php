@@ -493,6 +493,9 @@ class SettingsController
             'bic'                 => isset($_POST['gw_bic']) ? sanitize_text_field(wp_unslash($_POST['gw_bic'])) : '',
             'format_numero_devis' => isset($_POST['gw_format_numero_devis']) ? sanitize_text_field(wp_unslash($_POST['gw_format_numero_devis'])) : '',
             'compteur_devis'      => isset($_POST['gw_compteur_devis']) ? (int) $_POST['gw_compteur_devis'] : 1,
+            'representant_nom'    => isset($_POST['gw_representant_nom']) ? sanitize_text_field(wp_unslash($_POST['gw_representant_nom'])) : '',
+            'representant_prenom' => isset($_POST['gw_representant_prenom']) ? sanitize_text_field(wp_unslash($_POST['gw_representant_prenom'])) : '',
+            'habilitation_inrs'   => isset($_POST['gw_habilitation_inrs']) ? sanitize_text_field(wp_unslash($_POST['gw_habilitation_inrs'])) : '',
         ];
 
         $formats = [
@@ -519,6 +522,9 @@ class SettingsController
             '%s', // bic
             '%s', // format_numero_devis
             '%d', // compteur_devis
+            '%s', // representant_nom
+            '%s', // representant_prenom
+            '%s', // habilitation_inrs
         ];
 
         $existingId = $wpdb->get_var("SELECT id FROM {$tableName} LIMIT 1");

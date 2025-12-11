@@ -67,6 +67,10 @@ class SettingsProvider
             'bic'                 => '',
             'format_numero_devis' => '',
             'compteur_devis'      => 0,
+            'representant_nom'    => '',
+            'representant_prenom' => '',
+            'habilitation_inrs'   => '',
+            'representant_legal'  => '',
         ];
 
         if (!($wpdb instanceof wpdb)) {
