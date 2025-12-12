@@ -158,6 +158,32 @@
     line-height: 1.5;
 }
 
+/* Tables génériques (ex. onglet Tiers) */
+.gw-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.gw-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.gw-table th,
+.gw-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--gw-color-border);
+    white-space: nowrap;
+}
+
+.gw-table th {
+    text-align: left;
+    background: #f0f4fa;
+    font-weight: var(--gw-font-weight-medium);
+}
+
 /* === Settings: styles génériques (titres, listes, tabs) === */
 .gw-section-subtitle {
     margin: 18px 0 6px;
@@ -629,6 +655,23 @@
 
     .gw-main-inner {
         margin-bottom: 32px;
+    }
+
+    .gw-section {
+        padding: 16px;
+    }
+
+    /* Sur tablette et en dessous, simplifier le tableau des tiers
+       pour n'afficher que "Nom / Raison sociale", "Type" et les Actions */
+    .gw-table--tiers th:nth-child(3),
+    .gw-table--tiers th:nth-child(4),
+    .gw-table--tiers th:nth-child(5),
+    .gw-table--tiers th:nth-child(6),
+    .gw-table--tiers td:nth-child(3),
+    .gw-table--tiers td:nth-child(4),
+    .gw-table--tiers td:nth-child(5),
+    .gw-table--tiers td:nth-child(6) {
+        display: none;
     }
 }
 
