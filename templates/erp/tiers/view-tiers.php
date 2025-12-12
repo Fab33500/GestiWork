@@ -2,10 +2,20 @@
 /**
  * GestiWork ERP - Vue Tiers (clients / financeurs / OF donneur d'ordre)
  *
- * Modèle de page "en dur" pour l'onglet Tiers.
- * Cette vue présente une maquette fonctionnelle : sections, texte d'aide
- * et tableau de tiers fictifs, afin de poser l'UX avant le branchement
- * sur la base de données.
+ * This file is part of GestiWork ERP.
+ *
+ * GestiWork ERP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * GestiWork ERP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with GestiWork ERP. If not, see <https://www.gnu.org/licenses/>.
  */
 
 declare(strict_types=1);
@@ -17,7 +27,7 @@ if (! current_user_can('manage_options')) {
 ?>
 
 <section class="gw-section gw-section-dashboard">
-    <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises, clients particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
+    <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
     <p class="gw-section-description">
         <?php esc_html_e(
             'Cet écran regroupera à terme tous vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
@@ -34,9 +44,9 @@ if (! current_user_can('manage_options')) {
             ); ?>
         </p>
 
-        <button type="button" class="gw-button gw-button--secondary gw-button-modals" data-gw-modal-target="gw-modal-tiers">
+        <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
             <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
-        </button>
+        </a>
     </div>
 
     <div class="gw-settings-group">
@@ -49,7 +59,42 @@ if (! current_user_can('manage_options')) {
         </p>
 
         <div class="gw-settings-grid">
-            <div class="gw-settings-field">
+            <div class="gw-settings-field" style="grid-column: 1 / -1;">
+                <p class="gw-settings-label"><?php esc_html_e('Recherche avancée', 'gestiwork'); ?></p>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; align-items: end;">
+                    <div>
+                        <label class="gw-settings-placeholder" for="gw_tiers_search_query"><?php esc_html_e('Recherche (nom, e-mail, téléphone...)', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_tiers_search_query" class="gw-modal-input" placeholder="Entreprise, Dupont..." />
+                    </div>
+                    <div>
+                        <label class="gw-settings-placeholder" for="gw_tiers_search_type"><?php esc_html_e('Type de tiers', 'gestiwork'); ?></label>
+                        <select id="gw_tiers_search_type" class="gw-modal-input">
+                            <option value=""><?php esc_html_e('Tous', 'gestiwork'); ?></option>
+                            <option value="client_particulier"><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
+                            <option value="entreprise"><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
+                            <option value="financeur"><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
+                            <option value="of_donneur_ordre"><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="gw-settings-placeholder" for="gw_tiers_search_status"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
+                        <select id="gw_tiers_search_status" class="gw-modal-input">
+                            <option value=""><?php esc_html_e('Tous', 'gestiwork'); ?></option>
+                            <option value="prospect"><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
+                            <option value="client"><?php esc_html_e('Client', 'gestiwork'); ?></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="gw-settings-placeholder" for="gw_tiers_search_city"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_tiers_search_city" class="gw-modal-input" placeholder="Paris" />
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                        <button type="button" class="gw-button gw-button--secondary"><?php esc_html_e('Réinitialiser', 'gestiwork'); ?></button>
+                        <button type="button" class="gw-button gw-button--primary"><?php esc_html_e('Rechercher', 'gestiwork'); ?></button>
+                    </div>
+                </div>
+            </div>
+            <div class="gw-settings-field" style="grid-column: 1 / -1;">
                 <p class="gw-settings-label"><?php esc_html_e('Tiers récents (exemple fictif)', 'gestiwork'); ?></p>
                 <div class="gw-table-wrapper">
                     <table class="gw-table gw-table--tiers">
@@ -66,51 +111,83 @@ if (! current_user_can('manage_options')) {
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Entreprise Exemple SARL</td>
+                                <td>
+                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 1], home_url('/gestiwork/'))); ?>">
+                                        Entreprise Exemple SARL
+                                    </a>
+                                </td>
                                 <td><?php esc_html_e('Client', 'gestiwork'); ?></td>
                                 <td>Jean Dupont</td>
                                 <td><a href="mailto:contact@exemple-client.fr">contact@exemple-client.fr</a></td>
                                 <td>01 23 45 67 89</td>
                                 <td>Paris</td>
                                 <td>
-                                    <button type="button" class="gw-button gw-button--secondary" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 1], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
                                         <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </button>
-                                    <button type="button" class="gw-button gw-button--secondary" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
+                                    </a>
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 1, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
                                         <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </button>
+                                    </a>
                                 </td>
                             </tr>
                             <tr>
-                                <td>OPCO Démo</td>
+                                <td>
+                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 2], home_url('/gestiwork/'))); ?>">
+                                        OPCO Démo
+                                    </a>
+                                </td>
                                 <td><?php esc_html_e('Financeur', 'gestiwork'); ?></td>
                                 <td>Service Financement</td>
                                 <td><a href="mailto:financement@opco-demo.fr">financement@opco-demo.fr</a></td>
                                 <td>04 56 78 90 12</td>
                                 <td>Lyon</td>
                                 <td>
-                                    <button type="button" class="gw-button gw-button--secondary" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 2], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
                                         <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </button>
-                                    <button type="button" class="gw-button gw-button--secondary" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
+                                    </a>
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 2, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
                                         <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </button>
+                                    </a>
                                 </td>
                             </tr>
                             <tr>
-                                <td>OF Donneur d’ordre Alpha</td>
+                                <td>
+                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 3], home_url('/gestiwork/'))); ?>">
+                                        OF Donneur d’ordre Alpha
+                                    </a>
+                                </td>
                                 <td><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></td>
                                 <td>Marie Martin</td>
                                 <td><a href="mailto:contact@of-alpha.fr">contact@of-alpha.fr</a></td>
                                 <td>05 11 22 33 44</td>
                                 <td>Bordeaux</td>
                                 <td>
-                                    <button type="button" class="gw-button gw-button--secondary" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 3], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
                                         <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </button>
-                                    <button type="button" class="gw-button gw-button--secondary" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
+                                    </a>
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 3, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
                                         <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </button>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 4], home_url('/gestiwork/'))); ?>">
+                                        Camille Leroy
+                                    </a>
+                                </td>
+                                <td><?php esc_html_e('Particulier', 'gestiwork'); ?></td>
+                                <td>Camille Leroy</td>
+                                <td><a href="mailto:camille.leroy@example.com">camille.leroy@example.com</a></td>
+                                <td>06 22 33 44 55</td>
+                                <td>Nantes</td>
+                                <td>
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 4], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
+                                        <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+                                    </a>
+                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 4, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
+                                        <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                    </a>
                                 </td>
                             </tr>
                         </tbody>
@@ -130,157 +207,3 @@ if (! current_user_can('manage_options')) {
         </ul>
     </div>
 </section>
-
-<div class="gw-modal-backdrop" id="gw-modal-tiers" aria-hidden="true">
-    <div class="gw-modal gw-modal" role="dialog" aria-modal="true" aria-labelledby="gw-modal-tiers-title">
-        <div class="gw-modal-header">
-            <h3 class="gw-modal-title" id="gw-modal-tiers-title"><?php esc_html_e('Nouveau tiers', 'gestiwork'); ?></h3>
-            <button type="button" class="gw-modal-close" data-gw-modal-close="gw-modal-tiers" aria-label="<?php esc_attr_e('Fermer', 'gestiwork'); ?>">
-                ×
-            </button>
-        </div>
-
-        <form method="post" action="">
-            <div class="gw-modal-body">
-                <p class="gw-modal-required-info">
-                    <?php esc_html_e('Ce formulaire est une maquette : les données ne sont pas encore enregistrées en base. Il permet de poser la structure des informations pour un tiers.', 'gestiwork'); ?>
-                </p>
-
-                <div class="gw-modal-grid">
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_type"><?php esc_html_e('Type de tiers', 'gestiwork'); ?></label>
-                        <select id="gw_tier_type" name="gw_tier_type" class="gw-modal-input">
-                            <option value="client_particulier"><?php esc_html_e('Client particulier', 'gestiwork'); ?></option>
-                            <option value="entreprise"><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
-                            <option value="financeur"><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
-                            <option value="of_donneur_ordre"><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
-                        </select>
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_raison_sociale"><?php esc_html_e('Raison sociale', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_raison_sociale" name="gw_tier_raison_sociale" class="gw-modal-input" placeholder="Entreprise Exemple SARL" />
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_contact_nom"><?php esc_html_e('Nom du contact principal', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_contact_nom" name="gw_tier_contact_nom" class="gw-modal-input" placeholder="Dupont" />
-                    </div>
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_contact_prenom"><?php esc_html_e('Prénom du contact principal', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_contact_prenom" name="gw_tier_contact_prenom" class="gw-modal-input" placeholder="Jean" />
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_email"><?php esc_html_e('E-mail de contact', 'gestiwork'); ?></label>
-                        <input type="email" id="gw_tier_email" name="gw_tier_email" class="gw-modal-input" placeholder="contact@exemple-client.fr" />
-                    </div>
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_telephone"><?php esc_html_e('Téléphone', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_telephone" name="gw_tier_telephone" class="gw-modal-input" placeholder="01 23 45 67 89" />
-                    </div>
-
-                    <div class="gw-modal-field gw-modal-field--full">
-                        <label for="gw_tier_adresse"><?php esc_html_e('Adresse', 'gestiwork'); ?></label>
-                        <textarea id="gw_tier_adresse" name="gw_tier_adresse" class="gw-modal-textarea" rows="2" placeholder="15 rue des Entrepreneurs&#10;Bâtiment B"></textarea>
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_code_postal"><?php esc_html_e('Code postal', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_code_postal" name="gw_tier_code_postal" class="gw-modal-input" placeholder="75010" />
-                    </div>
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_ville"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_ville" name="gw_tier_ville" class="gw-modal-input" placeholder="Paris" />
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_siret" name="gw_tier_siret" class="gw-modal-input" placeholder="123 456 789 00012" />
-                    </div>
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_tva_intra"><?php esc_html_e('TVA intracommunautaire', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_tva_intra" name="gw_tier_tva_intra" class="gw-modal-input" placeholder="FR12 12345678901" />
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_banque"><?php esc_html_e('Banque principale', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_banque" name="gw_tier_banque" class="gw-modal-input" placeholder="Banque Populaire, Crédit Agricole..." />
-                    </div>
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_iban"><?php esc_html_e('IBAN', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_iban" name="gw_tier_iban" class="gw-modal-input" placeholder="FR76 1234 5678 9012 3456 7890 123" />
-                    </div>
-
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_bic"><?php esc_html_e('BIC', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tier_bic" name="gw_tier_bic" class="gw-modal-input" placeholder="ABCDFRPPXXX" />
-                    </div>
-                    <div class="gw-modal-field">
-                        <label for="gw_tier_mode_reglement"><?php esc_html_e('Mode de règlement par défaut', 'gestiwork'); ?></label>
-                        <select id="gw_tier_mode_reglement" name="gw_tier_mode_reglement" class="gw-modal-input">
-                            <option value="a_reception"><?php esc_html_e('À réception de facture', 'gestiwork'); ?></option>
-                            <option value="30j_net"><?php esc_html_e('30J Net', 'gestiwork'); ?></option>
-                            <option value="30j_fdm"><?php esc_html_e('30J FDM', 'gestiwork'); ?></option>
-                            <option value="60j_net"><?php esc_html_e('60J Net', 'gestiwork'); ?></option>
-                            <option value="60j_fdm"><?php esc_html_e('60J FDM', 'gestiwork'); ?></option>
-                        </select>
-                    </div>
-
-                    <div class="gw-modal-field gw-modal-field--full">
-                        <label for="gw_tier_notes"><?php esc_html_e('Remarques internes', 'gestiwork'); ?></label>
-                        <textarea id="gw_tier_notes" name="gw_tier_notes" class="gw-modal-textarea" rows="3" placeholder="Notes internes sur ce tiers (conditions particulières, interlocuteurs secondaires, etc.)."></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="gw-modal-footer">
-                <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-tiers">
-                    <?php esc_html_e('Annuler', 'gestiwork'); ?>
-                </button>
-                <button type="submit" class="gw-button gw-button--primary">
-                    <?php esc_html_e('Créer le tiers', 'gestiwork'); ?>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    (function () {
-        var triggers = document.querySelectorAll('[data-gw-modal-target="gw-modal-tiers"]');
-        var modal = document.getElementById('gw-modal-tiers');
-        var closeButtons = document.querySelectorAll('[data-gw-modal-close="gw-modal-tiers"]');
-
-        if (!modal || !triggers.length) {
-            return;
-        }
-
-        function openModal() {
-            modal.classList.add('gw-modal-backdrop--open');
-            modal.setAttribute('aria-hidden', 'false');
-            if (typeof modal.scrollIntoView === 'function') {
-                modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        function closeModal() {
-            modal.classList.remove('gw-modal-backdrop--open');
-            modal.setAttribute('aria-hidden', 'true');
-        }
-
-        triggers.forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                openModal();
-            });
-        });
-
-        closeButtons.forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                closeModal();
-            });
-        });
-    })();
-</script>

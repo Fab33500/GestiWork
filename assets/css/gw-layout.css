@@ -46,6 +46,7 @@
     cursor: pointer;
     align-items: center;
     justify-content: center;
+    color: var(--gw-color-surface);
     padding: 0;
     font-family: "dashicons";
     font-size: 20px;
@@ -53,7 +54,9 @@
 }
 
 .gw-header-toggle::before {
-    content: "\f039";
+    font-family: "dashicons";
+    content: "\f333";
+    display: block;
 }
 
 .gw-header-toggle-bar {
@@ -99,17 +102,18 @@
     padding: 0;
     margin: 0;
     display: grid;
-    gap: 8px;
+    gap: 3px;
 }
 
 .gw-nav-link {
     display: block;
     background-color: var(--gw-color-accent);
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 3px 12px;
+    border-radius: 5px;
     text-decoration: none;
     color: var(--gw-color-surface);
     font-weight: var(--gw-font-weight-medium);
+    font-size: 0.8em;
     transition: all 0.2s ease;
 }
 
@@ -236,6 +240,16 @@
 
 .gw-settings-panel--active {
     display: block;
+}
+
+.gw-tier-info-layout {
+    grid-template-columns: 2fr 1fr;
+}
+
+@media (max-width: 1024px) {
+    .gw-tier-info-layout {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* === Settings: Onglet 1 - Général & Identité === */
@@ -647,6 +661,7 @@
     .gw-nav-list {
         /* Items l'un sous l'autre en mobile */
         grid-template-columns: 1fr;
+        font-size: 1.5em;
     }
 
     .gw-main {
@@ -671,6 +686,14 @@
     .gw-table--tiers td:nth-child(4),
     .gw-table--tiers td:nth-child(5),
     .gw-table--tiers td:nth-child(6) {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Sur mobile, on masque aussi la colonne "Type" pour ne garder que Nom + Actions */
+    .gw-table--tiers th:nth-child(2),
+    .gw-table--tiers td:nth-child(2) {
         display: none;
     }
 }

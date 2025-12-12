@@ -34,6 +34,8 @@ if ($gw_view === 'Aide') {
     $active_view = 'settings';
 } elseif ($is_admin && $gw_view === 'Tiers') {
     $active_view = 'tiers';
+} elseif ($is_admin && $gw_view === 'Client') {
+    $active_view = 'client';
 }
 
 $dashboard_url = home_url('/gestiwork/');
@@ -76,6 +78,8 @@ if ($active_view === 'settings' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/aide/view-aide.php';
 } elseif ($active_view === 'tiers' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/tiers/view-tiers.php';
+} elseif ($active_view === 'client' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/tiers/view-client.php';
 } else {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
 }
