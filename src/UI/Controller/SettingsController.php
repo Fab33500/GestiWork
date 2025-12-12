@@ -481,6 +481,8 @@ class SettingsController
             'siret'               => isset($_POST['gw_siret']) ? sanitize_text_field(wp_unslash($_POST['gw_siret'])) : '',
             'code_ape'            => isset($_POST['gw_code_ape']) ? sanitize_text_field(wp_unslash($_POST['gw_code_ape'])) : '',
             'rcs'                 => isset($_POST['gw_rcs']) ? sanitize_text_field(wp_unslash($_POST['gw_rcs'])) : '',
+            'forme_juridique'     => isset($_POST['gw_forme_juridique']) ? sanitize_text_field(wp_unslash($_POST['gw_forme_juridique'])) : '',
+            'capital_social'      => isset($_POST['gw_capital_social']) ? sanitize_text_field(wp_unslash($_POST['gw_capital_social'])) : '',
             'nda'                 => isset($_POST['gw_nda']) ? sanitize_text_field(wp_unslash($_POST['gw_nda'])) : '',
             'qualiopi'            => isset($_POST['gw_qualiopi']) ? sanitize_text_field(wp_unslash($_POST['gw_qualiopi'])) : '',
             'datadock'            => isset($_POST['gw_datadock']) ? sanitize_text_field(wp_unslash($_POST['gw_datadock'])) : '',
@@ -510,6 +512,8 @@ class SettingsController
             '%s', // siret
             '%s', // code_ape
             '%s', // rcs
+            '%s', // forme_juridique
+            '%s', // capital_social
             '%s', // nda
             '%s', // qualiopi
             '%s', // datadock

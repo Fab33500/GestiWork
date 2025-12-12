@@ -55,6 +55,8 @@ class SettingsProvider
             'siret'               => '',
             'code_ape'            => '',
             'rcs'                 => '',
+            'forme_juridique'     => '',
+            'capital_social'      => '',
             'nda'                 => '',
             'qualiopi'            => '',
             'datadock'            => '',

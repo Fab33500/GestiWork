@@ -120,6 +120,14 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                         <p class="gw-settings-placeholder"><?php echo isset($ofIdentity['raison_sociale']) ? esc_html($ofIdentity['raison_sociale']) : ''; ?></p>
                     </div>
                     <div class="gw-settings-field">
+                        <p class="gw-settings-label"><?php esc_html_e('Forme juridique', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php echo isset($ofIdentity['forme_juridique']) ? esc_html($ofIdentity['forme_juridique']) : ''; ?></p>
+                    </div>
+                    <div class="gw-settings-field">
+                        <p class="gw-settings-label"><?php esc_html_e('Capital social', 'gestiwork'); ?></p>
+                        <p class="gw-settings-placeholder"><?php echo isset($ofIdentity['capital_social']) ? esc_html($ofIdentity['capital_social']) : ''; ?></p>
+                    </div>
+                    <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Adresse', 'gestiwork'); ?></p>
                         <p class="gw-settings-placeholder"><?php echo isset($ofIdentity['adresse']) ? esc_html($ofIdentity['adresse']) : ''; ?></p>
                     </div>
@@ -962,6 +970,14 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                         <div class="gw-modal-field">
                             <label for="gw_rcs"><?php esc_html_e('RCS / immatriculation', 'gestiwork'); ?></label>
                             <input type="text" class="gw-modal-input" id="gw_rcs" name="gw_rcs" value="<?php echo isset($ofIdentity['rcs']) ? esc_attr($ofIdentity['rcs']) : ''; ?>" />
+                        </div>
+                        <div class="gw-modal-field">
+                            <label for="gw_forme_juridique"><?php esc_html_e('Forme juridique', 'gestiwork'); ?></label>
+                            <input type="text" class="gw-modal-input" id="gw_forme_juridique" name="gw_forme_juridique" value="<?php echo isset($ofIdentity['forme_juridique']) ? esc_attr($ofIdentity['forme_juridique']) : ''; ?>" />
+                        </div>
+                        <div class="gw-modal-field">
+                            <label for="gw_capital_social"><?php esc_html_e('Capital social', 'gestiwork'); ?></label>
+                            <input type="text" class="gw-modal-input" id="gw_capital_social" name="gw_capital_social" value="<?php echo isset($ofIdentity['capital_social']) ? esc_attr($ofIdentity['capital_social']) : ''; ?>" />
                         </div>
                         <div class="gw-modal-field">
                             <label for="gw_nda"><?php esc_html_e('NDA (numéro de déclaration d’activité)', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>

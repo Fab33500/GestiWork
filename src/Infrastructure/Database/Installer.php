@@ -57,6 +57,8 @@ logo_id BIGINT(20) UNSIGNED NULL,
 siret VARCHAR(20) NOT NULL DEFAULT '',
 code_ape VARCHAR(10) NOT NULL DEFAULT '',
 rcs VARCHAR(190) NOT NULL DEFAULT '',
+forme_juridique VARCHAR(190) NOT NULL DEFAULT '',
+capital_social VARCHAR(190) NOT NULL DEFAULT '',
 nda VARCHAR(50) NOT NULL DEFAULT '',
 qualiopi VARCHAR(190) NOT NULL DEFAULT '',
 datadock VARCHAR(190) NOT NULL DEFAULT '',
@@ -204,6 +206,8 @@ KEY is_active (is_active)
             'representant_nom'    => "VARCHAR(190) NOT NULL DEFAULT '' AFTER compteur_devis",
             'representant_prenom' => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_nom",
             'habilitation_inrs'   => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_prenom",
+            'forme_juridique'     => "VARCHAR(190) NOT NULL DEFAULT '' AFTER rcs",
+            'capital_social'      => "VARCHAR(190) NOT NULL DEFAULT '' AFTER forme_juridique",
         ];
 
         $existingIdentityColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tableIdentity}", 0);
