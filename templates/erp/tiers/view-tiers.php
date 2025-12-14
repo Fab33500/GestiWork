@@ -20,10 +20,16 @@
 
 declare(strict_types=1);
 
+use GestiWork\Domain\Tiers\TierProvider;
+
 if (! current_user_can('manage_options')) {
     // Par sécurité, on ne montre rien aux non-admins.
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
+
+$tiersSearchResult = TierProvider::search([], 1, 15);
+$tiersItems = $tiersSearchResult['items'] ?? [];
+$hasDbTiers = is_array($tiersItems) && count($tiersItems) > 0;
 ?>
 
 <section class="gw-section gw-section-dashboard">
@@ -95,7 +101,7 @@ if (! current_user_can('manage_options')) {
                 </div>
             </div>
             <div class="gw-settings-field" style="grid-column: 1 / -1;">
-                <p class="gw-settings-label"><?php esc_html_e('Tiers récents (exemple fictif)', 'gestiwork'); ?></p>
+                <p class="gw-settings-label"><?php esc_html_e('Tiers récents', 'gestiwork'); ?></p>
                 <div class="gw-table-wrapper">
                     <table class="gw-table gw-table--tiers">
                         <thead>
@@ -110,86 +116,79 @@ if (! current_user_can('manage_options')) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 1], home_url('/gestiwork/'))); ?>">
-                                        Entreprise Exemple SARL
-                                    </a>
-                                </td>
-                                <td><?php esc_html_e('Client', 'gestiwork'); ?></td>
-                                <td>Jean Dupont</td>
-                                <td><a href="mailto:contact@exemple-client.fr">contact@exemple-client.fr</a></td>
-                                <td>01 23 45 67 89</td>
-                                <td>Paris</td>
-                                <td>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 1], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 1, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 2], home_url('/gestiwork/'))); ?>">
-                                        OPCO Démo
-                                    </a>
-                                </td>
-                                <td><?php esc_html_e('Financeur', 'gestiwork'); ?></td>
-                                <td>Service Financement</td>
-                                <td><a href="mailto:financement@opco-demo.fr">financement@opco-demo.fr</a></td>
-                                <td>04 56 78 90 12</td>
-                                <td>Lyon</td>
-                                <td>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 2], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 2, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 3], home_url('/gestiwork/'))); ?>">
-                                        OF Donneur d’ordre Alpha
-                                    </a>
-                                </td>
-                                <td><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></td>
-                                <td>Marie Martin</td>
-                                <td><a href="mailto:contact@of-alpha.fr">contact@of-alpha.fr</a></td>
-                                <td>05 11 22 33 44</td>
-                                <td>Bordeaux</td>
-                                <td>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 3], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 3, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 4], home_url('/gestiwork/'))); ?>">
-                                        Camille Leroy
-                                    </a>
-                                </td>
-                                <td><?php esc_html_e('Particulier', 'gestiwork'); ?></td>
-                                <td>Camille Leroy</td>
-                                <td><a href="mailto:camille.leroy@example.com">camille.leroy@example.com</a></td>
-                                <td>06 22 33 44 55</td>
-                                <td>Nantes</td>
-                                <td>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 4], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => 4, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
-                                        <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                    </a>
-                                </td>
-                            </tr>
+                            <?php if ($hasDbTiers) : ?>
+                                <?php foreach ($tiersItems as $tier) : ?>
+                                    <?php
+                                    $tierId = isset($tier['id']) ? (int) $tier['id'] : 0;
+                                    $tierType = isset($tier['type']) ? (string) $tier['type'] : '';
+                                    $tierName = isset($tier['raison_sociale']) ? (string) $tier['raison_sociale'] : '';
+                                    $tierNom = isset($tier['nom']) ? (string) $tier['nom'] : '';
+                                    $tierPrenom = isset($tier['prenom']) ? (string) $tier['prenom'] : '';
+                                    $tierEmail = isset($tier['email']) ? (string) $tier['email'] : '';
+                                    $tierTel = isset($tier['telephone']) ? (string) $tier['telephone'] : '';
+                                    $tierTelMobile = isset($tier['telephone_portable']) ? (string) $tier['telephone_portable'] : '';
+                                    $tierVille = isset($tier['ville']) ? (string) $tier['ville'] : '';
+
+                                    $displayName = $tierName;
+                                    if ($displayName === '') {
+                                        $displayName = trim($tierPrenom . ' ' . $tierNom);
+                                    }
+
+                                    $contactPrincipal = trim($tierPrenom . ' ' . $tierNom);
+                                    if ($contactPrincipal === '') {
+                                        $contactPrincipal = '-';
+                                    }
+
+                                    $typeLabel = $tierType;
+                                    if ($tierType === 'client_particulier') {
+                                        $typeLabel = __('Particulier', 'gestiwork');
+                                    } elseif ($tierType === 'entreprise') {
+                                        $typeLabel = __('Entreprise', 'gestiwork');
+                                    } elseif ($tierType === 'financeur') {
+                                        $typeLabel = __('Financeur', 'gestiwork');
+                                    } elseif ($tierType === 'of_donneur_ordre') {
+                                        $typeLabel = __('OF donneur d\'ordre', 'gestiwork');
+                                    }
+
+                                    $telephoneDisplay = $tierTel !== '' ? $tierTel : $tierTelMobile;
+                                    if ($telephoneDisplay === '') {
+                                        $telephoneDisplay = '-';
+                                    }
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <a href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId], home_url('/gestiwork/'))); ?>">
+                                                <?php echo esc_html($displayName !== '' ? $displayName : ('#' . $tierId)); ?>
+                                            </a>
+                                        </td>
+                                        <td><?php echo esc_html($typeLabel); ?></td>
+                                        <td><?php echo esc_html($contactPrincipal); ?></td>
+                                        <td>
+                                            <?php if ($tierEmail !== '') : ?>
+                                                <a href="mailto:<?php echo esc_attr($tierEmail); ?>"><?php echo esc_html($tierEmail); ?></a>
+                                            <?php else : ?>
+                                                -
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo esc_html($telephoneDisplay); ?></td>
+                                        <td><?php echo esc_html($tierVille !== '' ? $tierVille : '-'); ?></td>
+                                        <td>
+                                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
+                                                <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+                                            </a>
+                                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
+                                                <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else : ?>
+                                <tr>
+                                    <td colspan="7" style="color: var(--gw-color-muted); font-style: italic;">
+                                        <?php esc_html_e('Aucun tiers enregistré.', 'gestiwork'); ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

@@ -53,5 +53,13 @@ class AssetsLoader
             ['gestiwork-variables'],
             GW_VERSION
         );
+
+        wp_enqueue_script(
+            'gestiwork-form-utils',
+            GW_PLUGIN_URL . 'assets/js/gw-form-utils.js',
+            [],
+            GW_VERSION,
+            true
+        );
     }
 }

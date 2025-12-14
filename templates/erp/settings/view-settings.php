@@ -1392,30 +1392,17 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 
         // Formatage automatique des champs au blur
         function gwFormatPhone(value) {
-            if (!value) {
-                return '';
+            if (window.GWFormUtils && typeof window.GWFormUtils.gwFormatPhone === 'function') {
+                return window.GWFormUtils.gwFormatPhone(value);
             }
-            var digits = value.replace(/\D/g, '').slice(0, 10);
-            if (digits.length !== 10) {
-                return value.trim();
-            }
-            return digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+            return value ? String(value).trim() : '';
         }
 
         function gwFormatSiret(value) {
-            if (!value) {
-                return '';
+            if (window.GWFormUtils && typeof window.GWFormUtils.gwFormatSiret === 'function') {
+                return window.GWFormUtils.gwFormatSiret(value);
             }
-            var digits = value.replace(/\D/g, '');
-            if (digits.length === 9) {
-                // SIREN : 9 chiffres -> 123 456 789
-                return digits.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
-            }
-            if (digits.length === 14) {
-                // SIRET : 14 chiffres -> 123 456 789 00012
-                return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/, '$1 $2 $3 $4');
-            }
-            return value.trim();
+            return value ? String(value).trim() : '';
         }
 
         function gwNormalizeIban(value) {
