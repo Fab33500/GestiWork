@@ -16,6 +16,214 @@ if (!function_exists('current_time')) {
     }
 }
 
+if (!function_exists('__')) {
+    function __(string $text, string $domain = ''): string
+    {
+        return $text;
+    }
+}
+
+if (!function_exists('esc_html__')) {
+    function esc_html__(string $text, string $domain = ''): string
+    {
+        return $text;
+    }
+}
+
+if (!function_exists('esc_attr__')) {
+    function esc_attr__(string $text, string $domain = ''): string
+    {
+        return $text;
+    }
+}
+
+if (!function_exists('esc_html_e')) {
+    function esc_html_e(string $text, string $domain = ''): void
+    {
+        echo $text;
+    }
+}
+
+if (!function_exists('esc_attr_e')) {
+    function esc_attr_e(string $text, string $domain = ''): void
+    {
+        echo $text;
+    }
+}
+
+if (!function_exists('esc_html')) {
+    function esc_html(string $text): string
+    {
+        return $text;
+    }
+}
+
+if (!function_exists('esc_attr')) {
+    function esc_attr(string $text): string
+    {
+        return $text;
+    }
+}
+
+if (!function_exists('esc_url')) {
+    function esc_url(string $url): string
+    {
+        return $url;
+    }
+}
+
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field(string $text): string
+    {
+        return trim($text);
+    }
+}
+
+if (!function_exists('wp_unslash')) {
+    function wp_unslash(string $text): string
+    {
+        return $text;
+    }
+}
+
+if (!function_exists('current_user_can')) {
+    function current_user_can(string $cap): bool
+    {
+        return true;
+    }
+}
+
+if (!function_exists('wp_die')) {
+    function wp_die(string $message = '', int $code = 0): void
+    {
+        throw new RuntimeException($message !== '' ? $message : 'wp_die');
+    }
+}
+
+if (!function_exists('home_url')) {
+    function home_url(string $path = ''): string
+    {
+        return 'http://example.test' . $path;
+    }
+}
+
+if (!function_exists('wp_nonce_field')) {
+    function wp_nonce_field($action = -1, string $name = '_wpnonce', bool $referer = true, bool $echo = true)
+    {
+        $field = '<input type="hidden" name="' . esc_attr($name) . '" value="test_nonce" />';
+        if ($echo) {
+            echo $field;
+            return '';
+        }
+        return $field;
+    }
+}
+
+if (!function_exists('get_bloginfo')) {
+    function get_bloginfo(string $show = ''): string
+    {
+        if ($show === 'name') {
+            return 'Site de test';
+        }
+        return '';
+    }
+}
+
+if (!function_exists('get_theme_mod')) {
+    function get_theme_mod(string $name, $default = false)
+    {
+        return $default;
+    }
+}
+
+if (!function_exists('wp_get_attachment_image_url')) {
+    function wp_get_attachment_image_url(int $attachment_id, string $size = 'full')
+    {
+        return '';
+    }
+}
+
+if (!function_exists('get_site_icon_url')) {
+    function get_site_icon_url(int $size = 512, string $url = ''): string
+    {
+        return '';
+    }
+}
+
+if (!function_exists('language_attributes')) {
+    function language_attributes(string $doctype = 'html'): void
+    {
+        echo 'lang="fr-FR"';
+    }
+}
+
+if (!function_exists('bloginfo')) {
+    function bloginfo(string $show = ''): void
+    {
+        if ($show === 'charset') {
+            echo 'UTF-8';
+            return;
+        }
+        echo '';
+    }
+}
+
+if (!function_exists('wp_head')) {
+    function wp_head(): void
+    {
+    }
+}
+
+if (!function_exists('wp_footer')) {
+    function wp_footer(): void
+    {
+    }
+}
+
+if (!function_exists('body_class')) {
+    function body_class($class = ''): void
+    {
+        $classes = [];
+        if (is_array($class)) {
+            $classes = $class;
+        } elseif (is_string($class) && $class !== '') {
+            $classes = preg_split('~\s+~', $class) ?: [];
+        }
+
+        $class_attr = trim(implode(' ', array_filter(array_map('strval', $classes))));
+        echo 'class="' . esc_attr($class_attr) . '"';
+    }
+}
+
+if (!function_exists('add_query_arg')) {
+    function add_query_arg(array $args, string $url): string
+    {
+        $parsed = parse_url($url);
+        $existing = [];
+        if (isset($parsed['query'])) {
+            parse_str($parsed['query'], $existing);
+        }
+        $merged = array_merge($existing, $args);
+        $query = http_build_query($merged);
+
+        $base = $url;
+        if (isset($parsed['scheme'], $parsed['host'])) {
+            $base = $parsed['scheme'] . '://' . $parsed['host'] . ($parsed['path'] ?? '');
+        }
+
+        return $query !== '' ? ($base . '?' . $query) : $base;
+    }
+}
+
+if (!function_exists('selected')) {
+    function selected(string $value, string $current): void
+    {
+        if ($value === $current) {
+            echo ' selected="selected"';
+        }
+    }
+}
+
 class wpdb
 {
     public string $prefix = 'wp_';
@@ -221,6 +429,14 @@ use GestiWork\Domain\Tiers\LegalFormCatalog;
 
 $GLOBALS['wpdb'] = new wpdb();
 
+if (!defined('GW_PLUGIN_DIR')) {
+    $pluginRoot = realpath(__DIR__ . '/..');
+    if ($pluginRoot === false) {
+        $pluginRoot = __DIR__ . '/..';
+    }
+    define('GW_PLUGIN_DIR', rtrim($pluginRoot, "\\/") . DIRECTORY_SEPARATOR);
+}
+
 function expectTrue(bool $condition, string $message): void
 {
     if ($condition) {
@@ -338,6 +554,52 @@ $contactIds = array_map(function (array $row): int {
 
 expectTrue(in_array($contact1Id, $contactIds, true), 'Création contacts: contact1 présent');
 expectTrue(in_array($contact2Id, $contactIds, true), 'Création contacts: contact2 présent');
+
+info('--- Smoke tests templates (Apprenants / Équipe pédagogique) ---');
+
+$renderTemplate = function (string $absolutePath, array $get = []): string {
+    $oldGet = $_GET;
+    $_GET = $get;
+
+    ob_start();
+    try {
+        require $absolutePath;
+    } catch (Throwable $e) {
+        ob_end_clean();
+        fwrite(STDERR, "FAIL: Template {$absolutePath} a levé une exception: {$e->getMessage()}\n");
+        exit(1);
+    }
+    $out = ob_get_clean();
+
+    $_GET = $oldGet;
+    return $out;
+};
+
+$apprenantsHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenants.php', [
+    'gw_apprenants_query' => 'Dupont',
+]);
+expectNotEmpty($apprenantsHtml, 'Template apprenants: doit produire du HTML');
+expectTrue(strpos($apprenantsHtml, 'Recherche avancée') !== false, 'Template apprenants: contient "Recherche avancée"');
+expectTrue(strpos($apprenantsHtml, 'Apprenants récents') !== false, 'Template apprenants: contient "Apprenants récents"');
+
+$equipeHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-equipe-pedagogique.php', [
+    'gw_formateurs_query' => 'Paugam',
+]);
+expectNotEmpty($equipeHtml, 'Template équipe pédagogique: doit produire du HTML');
+expectTrue(strpos($equipeHtml, 'Recherche avancée') !== false, 'Template équipe pédagogique: contient "Recherche avancée"');
+expectTrue(strpos($equipeHtml, 'Formateurs récents') !== false, 'Template équipe pédagogique: contient "Formateurs récents"');
+
+$apprenantFicheHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenant.php', [
+    'gw_apprenant_id' => 1,
+]);
+expectNotEmpty($apprenantFicheHtml, 'Template fiche apprenant: doit produire du HTML');
+expectTrue(strpos($apprenantFicheHtml, 'Fiche apprenant') !== false, 'Template fiche apprenant: contient "Fiche apprenant"');
+
+$responsableFicheHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-responsable.php', [
+    'gw_responsable_id' => 1,
+]);
+expectNotEmpty($responsableFicheHtml, 'Template fiche responsable: doit produire du HTML');
+expectTrue(strpos($responsableFicheHtml, 'Fiche formateur / responsable pédagogique') !== false, 'Template fiche responsable: contient "Fiche formateur / responsable pédagogique"');
 
 $elapsedMs = (microtime(true) - $start) * 1000;
 info(sprintf('OK (%.1f ms)', $elapsedMs));

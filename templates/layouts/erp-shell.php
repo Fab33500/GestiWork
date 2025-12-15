@@ -32,8 +32,19 @@ declare(strict_types=1);
 <div class="gw-app-wrapper">
     <header class="gw-header">
         <div class="gw-header-left">
-            <h1 class="gw-title"><?php esc_html_e('GestiWork ERP', 'gestiwork'); ?></h1>
-            <p class="gw-subtitle"><?php esc_html_e('Interface ERP - zone dédiée /gestiwork/', 'gestiwork'); ?></p>
+            <?php
+            $header_logo_rel = 'assets/images/gestiwork-erp-header.png';
+            $header_logo_path = defined('GW_PLUGIN_DIR') ? GW_PLUGIN_DIR . $header_logo_rel : '';
+            $header_logo_url = defined('GW_PLUGIN_URL') ? GW_PLUGIN_URL . $header_logo_rel : '';
+            $has_header_logo = ! empty($header_logo_path) && file_exists($header_logo_path);
+            ?>
+            <a class="gw-header-brand" href="<?php echo esc_url(home_url('/gestiwork/')); ?>">
+                <?php if ($has_header_logo) : ?>
+                    <img class="gw-header-logo" src="<?php echo esc_url($header_logo_url); ?>" alt="<?php echo esc_attr__('GestiWork ERP', 'gestiwork'); ?>" />
+                <?php else : ?>
+                    <span class="gw-header-brand-fallback"><?php esc_html_e('GestiWork ERP', 'gestiwork'); ?></span>
+                <?php endif; ?>
+            </a>
         </div>
 
         <?php if (! empty($nav_items)) : ?>
@@ -48,6 +59,20 @@ declare(strict_types=1);
     <div class="gw-layout <?php echo isset($layout_mode) ? esc_attr($layout_mode) : ''; ?>">
         <?php if (! empty($nav_items)) : ?>
             <nav id="gw-nav" class="gw-nav">
+                <div class="gw-nav-brand">
+                    <?php
+                    $company_name = get_bloginfo('name');
+                    $custom_logo_id = function_exists('get_theme_mod') ? (int) get_theme_mod('custom_logo') : 0;
+                    $custom_logo_url = $custom_logo_id > 0 ? wp_get_attachment_image_url($custom_logo_id, 'full') : '';
+                    $site_icon_url = function_exists('get_site_icon_url') ? (string) get_site_icon_url(128) : '';
+                    $brand_logo_url = ! empty($custom_logo_url) ? $custom_logo_url : $site_icon_url;
+                    ?>
+                    <?php if (! empty($brand_logo_url)) : ?>
+                        <img class="gw-nav-brand-logo" src="<?php echo esc_url($brand_logo_url); ?>" alt="<?php echo esc_attr($company_name); ?>" />
+                    <?php else : ?>
+                        <span class="gw-nav-brand-name"><?php echo esc_html($company_name); ?></span>
+                    <?php endif; ?>
+                </div>
                 <ul class="gw-nav-list">
                     <?php foreach ($nav_items as $item) : ?>
                         <li class="gw-nav-item">
@@ -105,7 +130,7 @@ declare(strict_types=1);
     </div>
 
     <footer class="gw-footer">
-        <span><?php esc_html_e('GestiWork ERP — Site dédié /gestiwork/', 'gestiwork'); ?></span>
+        <span><?php esc_html_e('© GestiWork ERP - 2025- tous droits reservés', 'gestiwork'); ?></span>
     </footer>
 </div>
 

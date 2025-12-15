@@ -40,6 +40,10 @@ if ($gw_view === 'Aide') {
     $active_view = 'apprenants';
 } elseif ($is_admin && $gw_view === 'equipe-pedagogique') {
     $active_view = 'equipe_pedagogique';
+} elseif ($is_admin && $gw_view === 'Apprenant') {
+    $active_view = 'apprenant';
+} elseif ($is_admin && $gw_view === 'Responsable') {
+    $active_view = 'responsable';
 }
 
 $dashboard_url = home_url('/gestiwork/');
@@ -102,6 +106,10 @@ if ($active_view === 'settings' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenants.php';
 } elseif ($active_view === 'equipe_pedagogique' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-equipe-pedagogique.php';
+} elseif ($active_view === 'apprenant' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenant.php';
+} elseif ($active_view === 'responsable' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-responsable.php';
 } else {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
 }

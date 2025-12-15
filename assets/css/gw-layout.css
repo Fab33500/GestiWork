@@ -36,6 +36,25 @@
     gap: 2px;
 }
 
+.gw-header-brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #fff;
+}
+
+.gw-header-logo {
+    height: 34px;
+    width: auto;
+    display: block;
+}
+
+.gw-header-brand-fallback {
+    font-size: 18px;
+    font-weight: var(--gw-font-weight-bold);
+    letter-spacing: 0.2px;
+}
+
 .gw-header-toggle {
     display: none;
     width: 40px;
@@ -94,7 +113,33 @@
 .gw-nav {
     background: #fff;
     border-right: 1px solid var(--gw-color-border);
-    padding: 10px 5px;
+    padding: 5px;
+}
+
+.gw-nav-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border-bottom: 1px solid var(--gw-color-border);
+    margin: 0 5px 10px;
+    min-height: 48px;
+}
+
+.gw-nav-brand-logo {
+    max-width: 100%;
+    max-height: 55px;
+    width: auto;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.gw-nav-brand-name {
+    font-weight: var(--gw-font-weight-bold);
+    color: var(--gw-color-text);
+    font-size: 14px;
+    text-align: center;
 }
 
 .gw-nav-list {
@@ -659,6 +704,10 @@
     font-weight: var(--gw-font-weight-medium);
     color: var(--gw-color-primary);
     margin-bottom: 4px;
+}
+
+.gw-required-asterisk {
+    color: #d63638;
 }
 
 .gw-modal-input,

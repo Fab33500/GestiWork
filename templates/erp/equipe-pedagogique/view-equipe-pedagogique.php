@@ -90,9 +90,9 @@ $gw_search_fields = [
             <?php esc_html_e('Créez une nouvelle fiche formateur pour l’intégrer à votre équipe pédagogique. La création détaillée sera disponible prochainement.', 'gestiwork'); ?>
         </p>
 
-        <a class="gw-button gw-button--primary" href="#">
+        <button type="button" class="gw-button gw-button--primary" data-gw-modal-target="gw-modal-formateur-create">
             <?php esc_html_e('Nouveau formateur', 'gestiwork'); ?>
-        </a>
+        </button>
     </div>
 
     <div class="gw-settings-group">
@@ -130,7 +130,7 @@ $gw_search_fields = [
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($formateurs as $formateur) : ?>
+                            <?php foreach ($formateurs as $index => $formateur) : ?>
                                 <tr>
                                     <td><input type="checkbox" /></td>
                                     <td>
@@ -141,7 +141,14 @@ $gw_search_fields = [
                                         <?php endforeach; ?>
                                     </td>
                                     <td>
-                                        <a href="#" class="gw-link-primary-strong">
+                                        <?php
+                                        $responsableId = (int) $index + 1;
+                                        $responsableViewUrl = add_query_arg(
+                                            ['gw_view' => 'Responsable', 'gw_responsable_id' => $responsableId],
+                                            home_url('/gestiwork/')
+                                        );
+                                        ?>
+                                        <a href="<?php echo esc_url($responsableViewUrl); ?>" class="gw-link-primary-strong">
                                             <?php echo esc_html((string) ($formateur['nom'] ?? '')); ?>
                                         </a>
                                     </td>
@@ -166,7 +173,7 @@ $gw_search_fields = [
                                     </td>
                                     <td><?php echo esc_html((string) ($formateur['created_at'] ?? '-')); ?></td>
                                     <td>
-                                        <a class="gw-button gw-button--secondary" href="#" title="<?php echo esc_attr__('Voir', 'gestiwork'); ?>">
+                                        <a class="gw-button gw-button--secondary" href="<?php echo esc_url($responsableViewUrl); ?>" title="<?php echo esc_attr__('Voir', 'gestiwork'); ?>">
                                             <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
                                         </a>
                                         <a class="gw-button gw-button--secondary" href="#" title="<?php echo esc_attr__('Modifier', 'gestiwork'); ?>">
@@ -182,3 +189,112 @@ $gw_search_fields = [
         </div>
     </div>
 </section>
+
+<div class="gw-modal-backdrop" id="gw-modal-formateur-create" aria-hidden="true">
+    <div class="gw-modal" role="dialog" aria-modal="true" aria-labelledby="gw-modal-formateur-create-title">
+        <div class="gw-modal-header">
+            <h3 class="gw-modal-title" id="gw-modal-formateur-create-title"><?php esc_html_e('Créer un formateur', 'gestiwork'); ?></h3>
+            <button type="button" class="gw-modal-close" data-gw-modal-close="gw-modal-formateur-create" aria-label="<?php esc_attr_e('Fermer', 'gestiwork'); ?>">×</button>
+        </div>
+
+        <form method="post" action="">
+            <input type="hidden" name="gw_action" value="gw_formateur_create" />
+            <?php wp_nonce_field('gw_formateur_manage', 'gw_nonce'); ?>
+
+            <div class="gw-modal-body">
+                <p class="gw-modal-required-info">
+                    <?php esc_html_e('Renseignez les informations principales du formateur. Les champs obligatoires sont marqués d’une astérisque (*).', 'gestiwork'); ?>
+                </p>
+
+                <div class="gw-modal-grid">
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_civilite"><?php esc_html_e('Civilité', 'gestiwork'); ?></label>
+                        <select id="gw_formateur_civilite" name="civilite" class="gw-modal-input">
+                            <option value=""><?php esc_html_e('Non renseigné', 'gestiwork'); ?></option>
+                            <option value="Madame"><?php esc_html_e('Madame', 'gestiwork'); ?></option>
+                            <option value="Monsieur"><?php esc_html_e('Monsieur', 'gestiwork'); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                        <input type="text" id="gw_formateur_prenom" name="prenom" class="gw-modal-input" value="" required />
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_nom"><?php esc_html_e('Nom', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                        <input type="text" id="gw_formateur_nom" name="nom" class="gw-modal-input" value="" required />
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_fonction"><?php esc_html_e('Fonction', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_fonction" name="fonction" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field gw-full-width">
+                        <label for="gw_formateur_email"><?php esc_html_e('E-mail', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                        <input type="email" id="gw_formateur_email" name="email" class="gw-modal-input" value="" required />
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_telephone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?></label>
+                        <input type="tel" id="gw_formateur_telephone" name="telephone" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_role"><?php esc_html_e('Rôle', 'gestiwork'); ?></label>
+                        <select id="gw_formateur_role" name="role" class="gw-modal-input">
+                            <option value=""><?php esc_html_e('Sélectionner', 'gestiwork'); ?></option>
+                            <option value="Interne"><?php esc_html_e('Interne', 'gestiwork'); ?></option>
+                            <option value="Externe"><?php esc_html_e('Externe', 'gestiwork'); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_sous_traitant"><?php esc_html_e('Sous-traitant', 'gestiwork'); ?></label>
+                        <select id="gw_formateur_sous_traitant" name="sous_traitant" class="gw-modal-input">
+                            <option value=""><?php esc_html_e('Sélectionner', 'gestiwork'); ?></option>
+                            <option value="Non"><?php esc_html_e('Non', 'gestiwork'); ?></option>
+                            <option value="Oui"><?php esc_html_e('Oui', 'gestiwork'); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="gw-modal-field gw-full-width">
+                        <label for="gw_formateur_nda_sous_traitant"><?php esc_html_e('NDA de l’organisme du sous-traitant', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_nda_sous_traitant" name="nda_sous_traitant" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field gw-full-width">
+                        <label for="gw_formateur_adresse_postale"><?php esc_html_e('Adresse postale', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_adresse_postale" name="adresse_postale" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field gw-full-width">
+                        <label for="gw_formateur_rue"><?php esc_html_e('Numéro de rue et rue', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_rue" name="rue" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_code_postal"><?php esc_html_e('Code postal', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_code_postal" name="code_postal" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field">
+                        <label for="gw_formateur_ville"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_ville" name="ville" class="gw-modal-input" value="" />
+                    </div>
+
+                    <div class="gw-modal-field gw-full-width">
+                        <label for="gw_formateur_competences"><?php esc_html_e('Compétences', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_formateur_competences" name="competences" class="gw-modal-input" value="" placeholder="<?php echo esc_attr__('Ex. : Management, Bureautique...', 'gestiwork'); ?>" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="gw-modal-footer">
+                <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-formateur-create"><?php esc_html_e('Annuler', 'gestiwork'); ?></button>
+                <button type="submit" class="gw-button gw-button--primary"><?php esc_html_e('Créer', 'gestiwork'); ?></button>
+            </div>
+        </form>
+    </div>
+</div>
