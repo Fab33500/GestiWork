@@ -90,6 +90,8 @@ final class LegalFormCatalog
             '6340' => 'Syndicat de copropriétaires',
             '6400' => 'Autres personnes morales de droit privé',
             '6540' => 'Autres groupements de droit privé',
+            '6597' => 'Société civile d’exploitation agricole (SCEA)',
+            '6598' => 'Exploitation agricole à responsabilité limitée (EARL)',
             '7112' => 'Organisme professionnel',
             '7120' => 'Organisation patronale',
             '7210' => 'Syndicat de salariés',

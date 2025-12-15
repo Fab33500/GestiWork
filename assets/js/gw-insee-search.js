@@ -144,13 +144,13 @@
             adresse1: adresse1,
             adresse2: siege.adresse_ligne_2 || '',
             cp: siege.code_postal || '',
-            ville: siege.commune || siege.libelle_commune || '',
+            ville: siege.libelle_commune || siege.commune || '',
             code_ape: entry.activite_principale || (siege.activite_principale || ''),
             forme_juridique: formatLegalForm(legal),
             displayAdresse: [
                 adresse1,
                 siege.adresse_ligne_2 || '',
-                [siege.code_postal || '', siege.commune || siege.libelle_commune || ''].join(' ').trim()
+                [siege.code_postal || '', siege.libelle_commune || siege.commune || ''].join(' ').trim()
             ].filter(function (part) {
                 return part && part.trim() !== '';
             }).join(', ')

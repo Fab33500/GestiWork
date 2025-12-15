@@ -89,6 +89,37 @@ class AssetsLoader
 
         if (in_array($currentView, $viewsWithForms, true)) {
             wp_enqueue_script(
+                'gestiwork-geo-cp-ville',
+                GW_PLUGIN_URL . 'assets/js/gw-geo-cp-ville.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            $geoContexts = [
+                'tier_create' => [
+                    'cp' => '#gw_tier_create_cp',
+                    'ville' => '#gw_tier_create_ville',
+                ],
+                'tier_view' => [
+                    'cp' => '#gw_tier_view_cp',
+                    'ville' => '#gw_tier_view_ville',
+                ],
+                'settings_identity' => [
+                    'cp' => '#gw_code_postal',
+                    'ville' => '#gw_ville',
+                ],
+            ];
+
+            wp_localize_script('gestiwork-geo-cp-ville', 'GWGeoCpVille', [
+                'apiUrl' => 'https://geo.api.gouv.fr/communes',
+                'i18n' => [
+                    'chooseCity' => __('Choisir une ville', 'gestiwork'),
+                ],
+                'contexts' => $geoContexts,
+            ]);
+
+            wp_enqueue_script(
                 'gestiwork-insee-search',
                 GW_PLUGIN_URL . 'assets/js/gw-insee-search.js',
                 ['gestiwork-ui', 'gestiwork-form-utils'],
