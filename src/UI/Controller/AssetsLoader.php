@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace GestiWork\UI\Controller;
 
+use GestiWork\Domain\Tiers\LegalFormCatalog;
 use GestiWork\UI\Router\GestiWorkRouter;
 
 class AssetsLoader
@@ -37,7 +38,7 @@ class AssetsLoader
             return;
         }
 
-        // Icônes WordPress (Dashicons) pour le bouton de menu mobile
+        // Assets globaux chargés sur toutes les vues GestiWork
         wp_enqueue_style('dashicons');
 
         wp_enqueue_style(
@@ -53,5 +54,145 @@ class AssetsLoader
             ['gestiwork-variables'],
             GW_VERSION
         );
+
+        wp_enqueue_script(
+            'gestiwork-nav',
+            GW_PLUGIN_URL . 'assets/js/gw-nav.js',
+            [],
+            GW_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'gestiwork-ui',
+            GW_PLUGIN_URL . 'assets/js/gw-ui.js',
+            [],
+            GW_VERSION,
+            true
+        );
+
+        // Assets conditionnels selon la vue active
+        $currentView = self::getCurrentView();
+        
+        $viewsWithForms = ['settings', 'client'];
+
+        // gw-form-utils nécessaire sur Settings et Client (formulaires avec formatage)
+        if (in_array($currentView, $viewsWithForms, true)) {
+            wp_enqueue_script(
+                'gestiwork-form-utils',
+                GW_PLUGIN_URL . 'assets/js/gw-form-utils.js',
+                [],
+                GW_VERSION,
+                true
+            );
+        }
+
+        if (in_array($currentView, $viewsWithForms, true)) {
+            wp_enqueue_script(
+                'gestiwork-geo-cp-ville',
+                GW_PLUGIN_URL . 'assets/js/gw-geo-cp-ville.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            $geoContexts = [
+                'tier_create' => [
+                    'cp' => '#gw_tier_create_cp',
+                    'ville' => '#gw_tier_create_ville',
+                ],
+                'tier_view' => [
+                    'cp' => '#gw_tier_view_cp',
+                    'ville' => '#gw_tier_view_ville',
+                ],
+                'settings_identity' => [
+                    'cp' => '#gw_code_postal',
+                    'ville' => '#gw_ville',
+                ],
+            ];
+
+            wp_localize_script('gestiwork-geo-cp-ville', 'GWGeoCpVille', [
+                'apiUrl' => 'https://geo.api.gouv.fr/communes',
+                'i18n' => [
+                    'chooseCity' => __('Choisir une ville', 'gestiwork'),
+                ],
+                'contexts' => $geoContexts,
+            ]);
+
+            wp_enqueue_script(
+                'gestiwork-insee-search',
+                GW_PLUGIN_URL . 'assets/js/gw-insee-search.js',
+                ['gestiwork-ui', 'gestiwork-form-utils'],
+                GW_VERSION,
+                true
+            );
+
+            $contexts = [
+                'tier_create' => [
+                    'fields' => [
+                        'raison_sociale' => '#gw_tier_create_raison_sociale',
+                        'siret' => '#gw_tier_create_siret',
+                        'adresse1' => '#gw_tier_create_adresse1',
+                        'adresse2' => '#gw_tier_create_adresse2',
+                        'cp' => '#gw_tier_create_cp',
+                        'ville' => '#gw_tier_create_ville',
+                        'forme_juridique' => '#gw_tier_create_forme_juridique',
+                    ],
+                ],
+                'settings_identity' => [
+                    'fields' => [
+                        'raison_sociale' => '#gw_raison_sociale',
+                        'siret' => '#gw_siret',
+                        'adresse' => '#gw_adresse',
+                        'cp' => '#gw_code_postal',
+                        'ville' => '#gw_ville',
+                        'forme_juridique' => '#gw_forme_juridique',
+                        'code_ape' => '#gw_code_ape',
+                    ],
+                ],
+            ];
+
+            wp_localize_script('gestiwork-insee-search', 'GWInseeLookup', [
+                'apiUrl' => 'https://recherche-entreprises.api.gouv.fr/search',
+                'perPage' => 25,
+                'i18n' => [
+                    'emptyTerm' => __('Veuillez saisir un SIRET ou une raison sociale.', 'gestiwork'),
+                    'minChars' => __('Veuillez saisir au moins 3 caractères.', 'gestiwork'),
+                    'loading' => __('Recherche en cours…', 'gestiwork'),
+                    'noResults' => __('Aucun établissement trouvé.', 'gestiwork'),
+                    'resultsFor' => __('Résultats pour “%s”.', 'gestiwork'),
+                    'error' => __('La recherche a échoué : ', 'gestiwork'),
+                    'inserted' => __('Les informations ont été préremplies.', 'gestiwork'),
+                    'selectLabel' => __('Insérer ces informations', 'gestiwork'),
+                    'activityLabel' => __('Activité principale', 'gestiwork'),
+                    'legalLabel' => __('Forme juridique', 'gestiwork'),
+                    'initialHint' => __('Lancez une recherche pour afficher les résultats.', 'gestiwork'),
+                    'contextMissing' => __('Aucun contexte actif pour l’insertion.', 'gestiwork'),
+                ],
+                'contexts' => $contexts,
+                'legalForms' => LegalFormCatalog::labels(),
+            ]);
+        }
+    }
+
+    private static function getCurrentView(): string
+    {
+        $viewVar = get_query_var('gw_view');
+        if (is_string($viewVar) && $viewVar !== '') {
+            $view = strtolower(trim($viewVar));
+        } else {
+            $view = isset($_GET['gw_view']) ? strtolower(trim((string) $_GET['gw_view'])) : '';
+        }
+        
+        // Normaliser les vues connues
+        switch ($view) {
+            case 'settings':
+            case 'client':
+            case 'tiers':
+            case 'aide':
+                return $view;
+            default:
+                return 'dashboard';
+        }
     }
 }

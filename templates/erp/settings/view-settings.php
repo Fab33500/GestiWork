@@ -189,12 +189,12 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     </div>
                     <div class="gw-settings-field gw-settings-field-logo">
                         <p class="gw-settings-label"><?php esc_html_e('Logo GestiWork', 'gestiwork'); ?></p>
-                        <form method="post" action="" style="margin:0; padding:0;">
+                        <form method="post" action="" class="gw-m-0" style="padding:0;">
                             <?php wp_nonce_field('gw_save_of_logo', 'gw_settings_nonce_logo'); ?>
                             <input type="hidden" name="gw_settings_action" value="save_of_logo" />
                             <input type="hidden" id="gw_logo_id" name="gw_logo_id" value="<?php echo isset($ofIdentity['logo_id']) ? (int) $ofIdentity['logo_id'] : 0; ?>" />
 
-                            <div style="margin-bottom:8px; text-align:center;">
+                            <div class="gw-mb-8" style="text-align:center;">
                                 <?php if (!empty($gwLogoUrl)) : ?>
                                     <img id="gw-logo-preview" src="<?php echo esc_url($gwLogoUrl); ?>" alt="<?php echo esc_attr($ofIdentity['raison_sociale'] ?? ''); ?>" style="max-width: 96px; max-height: 64px; height: auto; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); background: #fff; padding: 4px; display: inline-block;">
                                 <?php else : ?>
@@ -203,7 +203,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                 <?php endif; ?>
                             </div>
 
-                            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                            <div class="gw-flex-center">
                                 <button type="button" class="gw-button gw-button--secondary" id="gw-logo-select-button"><?php esc_html_e('Choisir / modifier le logo', 'gestiwork'); ?></button>
                             </div>
                         </form>
@@ -893,6 +893,15 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <input type="text" class="gw-modal-input" id="gw_raison_sociale" name="gw_raison_sociale" value="<?php echo isset($ofIdentity['raison_sociale']) ? esc_attr($ofIdentity['raison_sociale']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
+                            <button type="button"
+                                class="gw-link-button"
+                                data-gw-modal-target="gw-insee-modal"
+                                data-gw-insee-context="settings_identity">
+                                <span class="dashicons dashicons-search" aria-hidden="true"></span>
+                                <?php esc_html_e('Rechercher dans la base de l\'INSEE', 'gestiwork'); ?>
+                            </button>
+                        </div>
+                        <div class="gw-modal-field">
                             <label for="gw_representant_nom"><?php esc_html_e('Nom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_representant_nom" name="gw_representant_nom" value="<?php echo isset($ofIdentity['representant_nom']) ? esc_attr($ofIdentity['representant_nom']) : ''; ?>" required />
                         </div>
@@ -1291,32 +1300,16 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 
 <script>
     (function () {
+        // Logique spécifique Settings : gestion URL avec '/settings/tab/'
         var tabs = document.querySelectorAll('.gw-settings-tab');
-        var panels = document.querySelectorAll('.gw-settings-panel');
-        var modalTriggers = document.querySelectorAll('[data-gw-modal-target]');
-        var modalCloseButtons = document.querySelectorAll('[data-gw-modal-close]');
-        var allModals = document.querySelectorAll('.gw-modal-backdrop');
-
-        if (tabs.length && panels.length) {
+        
+        if (tabs.length) {
             tabs.forEach(function (tab) {
                 tab.addEventListener('click', function () {
                     var target = tab.getAttribute('data-gw-tab');
                     if (!target) {
                         return;
                     }
-
-                    // Mise à jour de l'état visuel des onglets
-                    tabs.forEach(function (t) {
-                        t.classList.remove('gw-settings-tab--active');
-                    });
-                    panels.forEach(function (panel) {
-                        panel.classList.remove('gw-settings-panel--active');
-                        if (panel.getAttribute('data-gw-tab-panel') === target) {
-                            panel.classList.add('gw-settings-panel--active');
-                        }
-                    });
-
-                    tab.classList.add('gw-settings-tab--active');
 
                     // Mise à jour de l'URL pour refléter l'onglet actif, sans recharger la page
                     try {
@@ -1345,77 +1338,19 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             });
         }
 
-        modalTriggers.forEach(function (trigger) {
-            trigger.addEventListener('click', function () {
-                var targetId = trigger.getAttribute('data-gw-modal-target');
-                if (!targetId) {
-                    return;
-                }
-
-                // Ferme d'abord toutes les autres modales éventuellemen	 ouvertes
-                if (allModals && allModals.length) {
-                    allModals.forEach(function (backdrop) {
-                        backdrop.classList.remove('gw-modal-backdrop--open');
-                        backdrop.setAttribute('aria-hidden', 'true');
-                    });
-                }
-
-                var modal = document.getElementById(targetId);
-                if (modal) {
-                    modal.classList.add('gw-modal-backdrop--open');
-                    modal.setAttribute('aria-hidden', 'false');
-
-                    if (typeof modal.scrollIntoView === 'function') {
-                        try {
-                            modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        } catch (e) {
-                            // ignore
-                        }
-                    }
-                }
-            });
-        });
-
-        modalCloseButtons.forEach(function (button) {
-            button.addEventListener('click', function () {
-                var targetId = button.getAttribute('data-gw-modal-close');
-                if (!targetId) {
-                    return;
-                }
-                var modal = document.getElementById(targetId);
-                if (modal) {
-                    modal.classList.remove('gw-modal-backdrop--open');
-                    modal.setAttribute('aria-hidden', 'true');
-                }
-            });
-        });
-
         // Formatage automatique des champs au blur
         function gwFormatPhone(value) {
-            if (!value) {
-                return '';
+            if (window.GWFormUtils && typeof window.GWFormUtils.gwFormatPhone === 'function') {
+                return window.GWFormUtils.gwFormatPhone(value);
             }
-            var digits = value.replace(/\D/g, '').slice(0, 10);
-            if (digits.length !== 10) {
-                return value.trim();
-            }
-            return digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+            return value ? String(value).trim() : '';
         }
 
         function gwFormatSiret(value) {
-            if (!value) {
-                return '';
+            if (window.GWFormUtils && typeof window.GWFormUtils.gwFormatSiret === 'function') {
+                return window.GWFormUtils.gwFormatSiret(value);
             }
-            var digits = value.replace(/\D/g, '');
-            if (digits.length === 9) {
-                // SIREN : 9 chiffres -> 123 456 789
-                return digits.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
-            }
-            if (digits.length === 14) {
-                // SIRET : 14 chiffres -> 123 456 789 00012
-                return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/, '$1 $2 $3 $4');
-            }
-            return value.trim();
+            return value ? String(value).trim() : '';
         }
 
         function gwNormalizeIban(value) {

@@ -1,0 +1,225 @@
+(function () {
+    // Gestion des modales communes
+    function initModals() {
+        var modalTriggers = document.querySelectorAll('[data-gw-modal-target]');
+        var modalCloseButtons = document.querySelectorAll('[data-gw-modal-close]');
+        var allModals = document.querySelectorAll('.gw-modal-backdrop');
+        var lastTriggerByModalId = {};
+        var previousModalByModalId = {};
+
+        function openModal(modal) {
+            if (!modal) {
+                return;
+            }
+            modal.classList.add('gw-modal-backdrop--open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeModal(modal) {
+            if (!modal) {
+                return;
+            }
+            modal.classList.remove('gw-modal-backdrop--open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function isFocusableVisible(el) {
+            if (!el || typeof el.closest !== 'function') {
+                return false;
+            }
+            var hiddenAncestor = el.closest('[aria-hidden="true"]');
+            if (hiddenAncestor) {
+                return false;
+            }
+            return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+        }
+
+        modalTriggers.forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                var targetId = trigger.getAttribute('data-gw-modal-target');
+                if (!targetId) {
+                    return;
+                }
+
+                var modal = document.getElementById(targetId);
+                if (!modal) {
+                    return;
+                }
+
+                // Mémorise le déclencheur pour restaurer le focus à la fermeture
+                lastTriggerByModalId[targetId] = trigger;
+
+                // Retient la modale actuellement ouverte (si on ouvre une modale depuis une autre)
+                previousModalByModalId[targetId] = null;
+                if (allModals && allModals.length) {
+                    allModals.forEach(function (backdrop) {
+                        if (backdrop !== modal && backdrop.classList.contains('gw-modal-backdrop--open')) {
+                            previousModalByModalId[targetId] = backdrop.id || null;
+                        }
+                    });
+                }
+
+                // Ouvre d'abord la modale cible et place le focus dedans,
+                // puis ferme les autres modales. Cela évite de masquer (aria-hidden)
+                // une modale contenant encore le focus, ce que certains navigateurs bloquent.
+                openModal(modal);
+
+                var focusable = modal.querySelector(
+                    'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+                );
+                if (focusable && typeof focusable.focus === 'function') {
+                    focusable.focus();
+                } else {
+                    modal.setAttribute('tabindex', '-1');
+                    if (typeof modal.focus === 'function') {
+                        modal.focus();
+                    }
+                }
+
+                // Ferme toutes les autres modales éventuellement ouvertes
+                if (allModals && allModals.length) {
+                    allModals.forEach(function (backdrop) {
+                        if (backdrop === modal) {
+                            return;
+                        }
+                        closeModal(backdrop);
+                    });
+                }
+
+                if (typeof modal.scrollIntoView === 'function') {
+                    try {
+                        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+            });
+        });
+
+        modalCloseButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                var targetId = button.getAttribute('data-gw-modal-close');
+                if (!targetId) {
+                    return;
+                }
+                var modal = document.getElementById(targetId);
+                if (modal) {
+                    // Déplacer le focus HORS de la modale avant de la masquer (sinon warning aria-hidden)
+                    var previousModalId = previousModalByModalId[targetId];
+                    var previousModal = previousModalId ? document.getElementById(previousModalId) : null;
+                    if (previousModal) {
+                        openModal(previousModal);
+                    }
+
+                    var lastTrigger = lastTriggerByModalId[targetId];
+                    if (lastTrigger && typeof lastTrigger.focus === 'function' && isFocusableVisible(lastTrigger)) {
+                        lastTrigger.focus();
+                    } else if (previousModal) {
+                        var previousFocusable = previousModal.querySelector(
+                            'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+                        );
+                        if (previousFocusable && typeof previousFocusable.focus === 'function') {
+                            previousFocusable.focus();
+                        }
+                    } else if (document.body && typeof document.body.focus === 'function') {
+                        document.body.focus();
+                    }
+
+                    closeModal(modal);
+                }
+            });
+        });
+    }
+
+    // Gestion des onglets basique (sans URL spécifique)
+    function initBasicTabs() {
+        var tabs = document.querySelectorAll('.gw-settings-tab');
+        var panels = document.querySelectorAll('.gw-settings-panel');
+
+        if (!tabs.length || !panels.length) {
+            return;
+        }
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var target = tab.getAttribute('data-gw-tab');
+                if (!target) {
+                    return;
+                }
+
+                // Mise à jour de l'état visuel des onglets
+                tabs.forEach(function (t) {
+                    t.classList.remove('gw-settings-tab--active');
+                });
+                panels.forEach(function (panel) {
+                    panel.classList.remove('gw-settings-panel--active');
+                    if (panel.getAttribute('data-gw-tab-panel') === target) {
+                        panel.classList.add('gw-settings-panel--active');
+                    }
+                });
+
+                tab.classList.add('gw-settings-tab--active');
+            });
+        });
+    }
+
+    // Validation formulaires
+    function initFormValidation() {
+        var forms = document.querySelectorAll('form');
+        
+        forms.forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                var requiredFields = form.querySelectorAll('[required]');
+                var hasErrors = false;
+                
+                requiredFields.forEach(function (field) {
+                    var value = field.value.trim();
+                    
+                    // Retirer les anciens marqueurs d'erreur
+                    field.style.borderColor = '';
+                    field.style.backgroundColor = '';
+                    
+                    if (value === '') {
+                        // Marquer le champ en erreur
+                        field.style.borderColor = '#d63638';
+                        field.style.backgroundColor = '#ffeaea';
+                        hasErrors = true;
+                        
+                        // Focus sur le premier champ en erreur
+                        if (!hasErrors || field === requiredFields[0]) {
+                            field.focus();
+                        }
+                    }
+                });
+                
+                if (hasErrors) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Validation en temps réel : retirer l'erreur dès que l'utilisateur tape
+            var requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(function (field) {
+                field.addEventListener('input', function () {
+                    if (field.value.trim() !== '') {
+                        field.style.borderColor = '';
+                        field.style.backgroundColor = '';
+                    }
+                });
+            });
+        });
+    }
+
+    // Initialisation
+    initModals();
+    initBasicTabs();
+    initFormValidation();
+
+    // Exposer pour réutilisation
+    window.GWUIUtils = {
+        initModals: initModals,
+        initBasicTabs: initBasicTabs,
+        initFormValidation: initFormValidation
+    };
+})();

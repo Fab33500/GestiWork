@@ -23,6 +23,8 @@ declare(strict_types=1);
 namespace GestiWork\Infrastructure\Database;
 
 use wpdb;
+use function get_option;
+use function update_option;
 
 class Installer
 {
@@ -37,6 +39,8 @@ class Installer
         $charsetCollate    = $wpdb->get_charset_collate();
         $tableIdentity     = $wpdb->prefix . 'gw_of_identity';
         $tableOptions      = $wpdb->prefix . 'gw_options';
+        $tableTiers        = $wpdb->prefix . 'gw_tiers';
+        $tableTierContacts = $wpdb->prefix . 'gw_tier_contacts';
         $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
         $tablePdfShortcodes = $wpdb->prefix . 'gw_pdf_shortcodes';
 
@@ -104,6 +108,55 @@ PRIMARY KEY  (id)
 ) {$charsetCollate};";
 
         dbDelta($sqlOptions);
+
+        $sqlTiers = "CREATE TABLE {$tableTiers} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+type VARCHAR(30) NOT NULL DEFAULT 'entreprise',
+statut VARCHAR(20) NOT NULL DEFAULT 'client',
+raison_sociale VARCHAR(255) NOT NULL DEFAULT '',
+nom VARCHAR(190) NOT NULL DEFAULT '',
+prenom VARCHAR(190) NOT NULL DEFAULT '',
+siret VARCHAR(20) NOT NULL DEFAULT '',
+forme_juridique VARCHAR(190) NOT NULL DEFAULT '',
+email VARCHAR(190) NOT NULL DEFAULT '',
+telephone VARCHAR(50) NOT NULL DEFAULT '',
+telephone_portable VARCHAR(50) NOT NULL DEFAULT '',
+adresse1 VARCHAR(255) NOT NULL DEFAULT '',
+adresse2 VARCHAR(255) NOT NULL DEFAULT '',
+cp VARCHAR(20) NOT NULL DEFAULT '',
+ville VARCHAR(100) NOT NULL DEFAULT '',
+deleted_at DATETIME NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+KEY type (type),
+KEY statut (statut),
+KEY ville (ville),
+KEY deleted_at (deleted_at)
+) {$charsetCollate};";
+
+        dbDelta($sqlTiers);
+
+        $sqlTierContacts = "CREATE TABLE {$tableTierContacts} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+tier_id BIGINT(20) UNSIGNED NOT NULL,
+civilite VARCHAR(30) NOT NULL DEFAULT 'non_renseigne',
+fonction VARCHAR(190) NOT NULL DEFAULT '',
+nom VARCHAR(190) NOT NULL DEFAULT '',
+prenom VARCHAR(190) NOT NULL DEFAULT '',
+mail VARCHAR(190) NOT NULL DEFAULT '',
+tel1 VARCHAR(50) NOT NULL DEFAULT '',
+tel2 VARCHAR(50) NOT NULL DEFAULT '',
+deleted_at DATETIME NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+KEY tier_id (tier_id),
+KEY mail (mail),
+KEY deleted_at (deleted_at)
+) {$charsetCollate};";
+
+        dbDelta($sqlTierContacts);
 
         $sqlPdfTemplates = "CREATE TABLE {$tablePdfTemplates} (
 id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -198,24 +251,65 @@ KEY is_active (is_active)
             $wpdb->prepare('SHOW TABLES LIKE %s', $tableIdentity)
         );
 
-        if ($tableExistsIdentity !== $tableIdentity) {
+        if ($tableExistsIdentity === $tableIdentity) {
+            $columnsToAddIdentity = [
+                'representant_nom'    => "VARCHAR(190) NOT NULL DEFAULT '' AFTER compteur_devis",
+                'representant_prenom' => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_nom",
+                'habilitation_inrs'   => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_prenom",
+                'forme_juridique'     => "VARCHAR(190) NOT NULL DEFAULT '' AFTER rcs",
+                'capital_social'      => "VARCHAR(190) NOT NULL DEFAULT '' AFTER forme_juridique",
+            ];
+
+            $existingIdentityColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tableIdentity}", 0);
+
+            foreach ($columnsToAddIdentity as $column => $definition) {
+                if (!in_array($column, $existingIdentityColumns, true)) {
+                    $wpdb->query("ALTER TABLE {$tableIdentity} ADD COLUMN {$column} {$definition}");
+                }
+            }
+        }
+
+        self::migrateLegacyLegalForms($wpdb);
+    }
+
+    private static function migrateLegacyLegalForms(\wpdb $wpdb): void
+    {
+        $optionKey = 'gestiwork_legal_form_labels_migrated';
+        if (\get_option($optionKey) === '1') {
             return;
         }
 
-        $columnsToAddIdentity = [
-            'representant_nom'    => "VARCHAR(190) NOT NULL DEFAULT '' AFTER compteur_devis",
-            'representant_prenom' => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_nom",
-            'habilitation_inrs'   => "VARCHAR(190) NOT NULL DEFAULT '' AFTER representant_prenom",
-            'forme_juridique'     => "VARCHAR(190) NOT NULL DEFAULT '' AFTER rcs",
-            'capital_social'      => "VARCHAR(190) NOT NULL DEFAULT '' AFTER forme_juridique",
+        $mappings = \GestiWork\Domain\Tiers\LegalFormCatalog::labels();
+
+        if (empty($mappings)) {
+            return;
+        }
+
+        $tables = [
+            $wpdb->prefix . 'gw_tiers',
+            $wpdb->prefix . 'gw_of_identity',
         ];
 
-        $existingIdentityColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tableIdentity}", 0);
+        foreach ($tables as $table) {
+            $tableExists = $wpdb->get_var(
+                $wpdb->prepare('SHOW TABLES LIKE %s', $table)
+            );
 
-        foreach ($columnsToAddIdentity as $column => $definition) {
-            if (!in_array($column, $existingIdentityColumns, true)) {
-                $wpdb->query("ALTER TABLE {$tableIdentity} ADD COLUMN {$column} {$definition}");
+            if ($tableExists !== $table) {
+                continue;
+            }
+
+            foreach ($mappings as $code => $label) {
+                $wpdb->query(
+                    $wpdb->prepare(
+                        "UPDATE {$table} SET forme_juridique = %s WHERE forme_juridique = %s",
+                        $label,
+                        $code
+                    )
+                );
             }
         }
+
+        \update_option($optionKey, '1');
     }
 }

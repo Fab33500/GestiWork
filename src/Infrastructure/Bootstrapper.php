@@ -56,6 +56,11 @@ class Bootstrapper
         if (class_exists(\GestiWork\UI\Controller\SettingsController::class)) {
             \GestiWork\UI\Controller\SettingsController::register();
         }
+
+        if (class_exists(\GestiWork\UI\Controller\TiersController::class)) {
+            \GestiWork\UI\Controller\TiersController::register();
+        }
+
     }
 
     public static function onActivation(): void
