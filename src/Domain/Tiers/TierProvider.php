@@ -226,6 +226,37 @@ class TierProvider
         return $ok !== false;
     }
 
+    public static function delete(int $tierId): bool
+    {
+        global $wpdb;
+
+        if ($tierId <= 0) {
+            return false;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return false;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tiers';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return false;
+        }
+
+        $ok = $wpdb->delete(
+            $tableName,
+            ['id' => $tierId],
+            ['%d']
+        );
+
+        return $ok !== false && $ok > 0;
+    }
+
     public static function softDelete(int $tierId): bool
     {
         global $wpdb;

@@ -27,9 +27,28 @@ if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
 
-$tiersSearchResult = TierProvider::search([], 1, 15);
+$requestQuery = isset($_GET['gw_tiers_query']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_tiers_query'])) : '';
+$requestType = isset($_GET['gw_tiers_type']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_tiers_type'])) : '';
+$requestStatut = isset($_GET['gw_tiers_statut']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_tiers_statut'])) : '';
+$requestVille = isset($_GET['gw_tiers_ville']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_tiers_ville'])) : '';
+$requestPage = isset($_GET['gw_tiers_page']) ? (int) $_GET['gw_tiers_page'] : 1;
+
+$tiersFilters = [
+    'query' => $requestQuery,
+    'type' => $requestType,
+    'statut' => $requestStatut,
+    'ville' => $requestVille,
+];
+
+$tiersSearchResult = TierProvider::search($tiersFilters, max(1, $requestPage), 15);
 $tiersItems = $tiersSearchResult['items'] ?? [];
 $hasDbTiers = is_array($tiersItems) && count($tiersItems) > 0;
+$tiersTotal = isset($tiersSearchResult['total']) ? (int) $tiersSearchResult['total'] : 0;
+$tiersPage = isset($tiersSearchResult['page']) ? (int) $tiersSearchResult['page'] : 1;
+$tiersPageSize = isset($tiersSearchResult['page_size']) ? (int) $tiersSearchResult['page_size'] : 15;
+$tiersTotalPages = $tiersPageSize > 0 ? (int) ceil($tiersTotal / $tiersPageSize) : 1;
+
+$currentResetUrl = home_url('/gestiwork/Tiers/');
 ?>
 
 <section class="gw-section gw-section-dashboard">
@@ -67,41 +86,46 @@ $hasDbTiers = is_array($tiersItems) && count($tiersItems) > 0;
         <div class="gw-settings-grid">
             <div class="gw-settings-field" style="grid-column: 1 / -1;">
                 <p class="gw-settings-label"><?php esc_html_e('Recherche avancée', 'gestiwork'); ?></p>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; align-items: end;">
+                <form method="get" action="" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; align-items: end;">
                     <div>
                         <label class="gw-settings-placeholder" for="gw_tiers_search_query"><?php esc_html_e('Recherche (nom, e-mail, téléphone...)', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tiers_search_query" class="gw-modal-input" placeholder="Entreprise, Dupont..." />
+                        <input type="text" id="gw_tiers_search_query" name="gw_tiers_query" class="gw-modal-input" value="<?php echo esc_attr($requestQuery); ?>" placeholder="Entreprise, Dupont..." />
                     </div>
                     <div>
                         <label class="gw-settings-placeholder" for="gw_tiers_search_type"><?php esc_html_e('Type de tiers', 'gestiwork'); ?></label>
-                        <select id="gw_tiers_search_type" class="gw-modal-input">
-                            <option value=""><?php esc_html_e('Tous', 'gestiwork'); ?></option>
-                            <option value="client_particulier"><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
-                            <option value="entreprise"><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
-                            <option value="financeur"><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
-                            <option value="of_donneur_ordre"><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
+                        <select id="gw_tiers_search_type" name="gw_tiers_type" class="gw-modal-input">
+                            <option value="" <?php selected($requestType, ''); ?>><?php esc_html_e('Tous', 'gestiwork'); ?></option>
+                            <option value="client_particulier" <?php selected($requestType, 'client_particulier'); ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
+                            <option value="entreprise" <?php selected($requestType, 'entreprise'); ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
+                            <option value="financeur" <?php selected($requestType, 'financeur'); ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
+                            <option value="of_donneur_ordre" <?php selected($requestType, 'of_donneur_ordre'); ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
                         </select>
                     </div>
                     <div>
                         <label class="gw-settings-placeholder" for="gw_tiers_search_status"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
-                        <select id="gw_tiers_search_status" class="gw-modal-input">
-                            <option value=""><?php esc_html_e('Tous', 'gestiwork'); ?></option>
-                            <option value="prospect"><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
-                            <option value="client"><?php esc_html_e('Client', 'gestiwork'); ?></option>
+                        <select id="gw_tiers_search_status" name="gw_tiers_statut" class="gw-modal-input">
+                            <option value="" <?php selected($requestStatut, ''); ?>><?php esc_html_e('Tous', 'gestiwork'); ?></option>
+                            <option value="prospect" <?php selected($requestStatut, 'prospect'); ?>><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
+                            <option value="client" <?php selected($requestStatut, 'client'); ?>><?php esc_html_e('Client', 'gestiwork'); ?></option>
                         </select>
                     </div>
                     <div>
                         <label class="gw-settings-placeholder" for="gw_tiers_search_city"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tiers_search_city" class="gw-modal-input" placeholder="Paris" />
+                        <input type="text" id="gw_tiers_search_city" name="gw_tiers_ville" class="gw-modal-input" value="<?php echo esc_attr($requestVille); ?>" placeholder="Paris" />
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                        <button type="button" class="gw-button gw-button--secondary"><?php esc_html_e('Réinitialiser', 'gestiwork'); ?></button>
-                        <button type="button" class="gw-button gw-button--primary"><?php esc_html_e('Rechercher', 'gestiwork'); ?></button>
+                        <a class="gw-button gw-button--secondary" href="<?php echo esc_url($currentResetUrl); ?>"><?php esc_html_e('Réinitialiser', 'gestiwork'); ?></a>
+                        <button type="submit" class="gw-button gw-button--primary"><?php esc_html_e('Rechercher', 'gestiwork'); ?></button>
                     </div>
-                </div>
+                </form>
             </div>
             <div class="gw-settings-field" style="grid-column: 1 / -1;">
                 <p class="gw-settings-label"><?php esc_html_e('Tiers récents', 'gestiwork'); ?></p>
+                <?php if ($tiersTotalPages > 1) : ?>
+                    <p class="gw-section-description" style="margin-top: -4px;">
+                        <?php echo esc_html(sprintf(__('Page %d sur %d — %d résultat(s).', 'gestiwork'), $tiersPage, $tiersTotalPages, $tiersTotal)); ?>
+                    </p>
+                <?php endif; ?>
                 <div class="gw-table-wrapper">
                     <table class="gw-table gw-table--tiers">
                         <thead>
@@ -192,6 +216,22 @@ $hasDbTiers = is_array($tiersItems) && count($tiersItems) > 0;
                         </tbody>
                     </table>
                 </div>
+                <?php if ($tiersTotalPages > 1) : ?>
+                    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 12px;">
+                        <?php
+                        $queryArgs = $_GET;
+                        unset($queryArgs['gw_tiers_page']);
+                        $prevUrl = $tiersPage > 1 ? add_query_arg(array_merge($queryArgs, ['gw_tiers_page' => $tiersPage - 1]), $currentResetUrl) : '';
+                        $nextUrl = $tiersPage < $tiersTotalPages ? add_query_arg(array_merge($queryArgs, ['gw_tiers_page' => $tiersPage + 1]), $currentResetUrl) : '';
+                        ?>
+                        <?php if ($prevUrl !== '') : ?>
+                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url($prevUrl); ?>"><?php esc_html_e('Précédent', 'gestiwork'); ?></a>
+                        <?php endif; ?>
+                        <?php if ($nextUrl !== '') : ?>
+                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url($nextUrl); ?>"><?php esc_html_e('Suivant', 'gestiwork'); ?></a>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

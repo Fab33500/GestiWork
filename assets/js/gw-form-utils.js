@@ -89,6 +89,9 @@
         if (fields.prenomField) {
             fields.prenomField.style.display = isParticulier ? '' : 'none';
         }
+        if (fields.searchButtonWrapper) {
+            fields.searchButtonWrapper.style.display = isParticulier ? 'none' : '';
+        }
     }
 
     function bindTierClient() {
@@ -116,7 +119,8 @@
                 formeJuridiqueField: document.getElementById('gw_tier_create_field_forme_juridique'),
                 raisonSocialeField: document.getElementById('gw_tier_create_field_raison_sociale'),
                 nomField: document.getElementById('gw_tier_create_field_nom'),
-                prenomField: document.getElementById('gw_tier_create_field_prenom')
+                prenomField: document.getElementById('gw_tier_create_field_prenom'),
+                searchButtonWrapper: document.getElementById('gw_tier_create_insee_button_wrapper')
             };
 
             var updateCreate = function () {
@@ -164,6 +168,8 @@
     var api = {
         gwFormatPhone: gwFormatPhone,
         gwFormatSiret: gwFormatSiret,
+        formatPhone: gwFormatPhone,
+        formatSiret: gwFormatSiret,
         bindSettingsGeneral: bindSettingsGeneral,
         bindTierClient: bindTierClient
     };

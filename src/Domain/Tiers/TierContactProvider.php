@@ -26,6 +26,39 @@ use wpdb;
 
 class TierContactProvider
 {
+    public static function getById(int $contactId): ?array
+    {
+        global $wpdb;
+
+        if ($contactId <= 0) {
+            return null;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return null;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tier_contacts';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return null;
+        }
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$tableName} WHERE id = %d AND deleted_at IS NULL LIMIT 1",
+                $contactId
+            ),
+            ARRAY_A
+        );
+
+        return is_array($row) ? $row : null;
+    }
+
     /**
      * @return array<int,array>
      */
@@ -96,6 +129,104 @@ class TierContactProvider
         }
 
         return (int) $wpdb->insert_id;
+    }
+
+    public static function update(int $contactId, array $data): bool
+    {
+        global $wpdb;
+
+        if ($contactId <= 0) {
+            return false;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return false;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tier_contacts';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return false;
+        }
+
+        $updateData = self::normalizeContactData($data);
+
+        $ok = $wpdb->update(
+            $tableName,
+            $updateData,
+            ['id' => $contactId],
+            null,
+            ['%d']
+        );
+
+        return $ok !== false;
+    }
+
+    public static function delete(int $contactId): bool
+    {
+        global $wpdb;
+
+        if ($contactId <= 0) {
+            return false;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return false;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tier_contacts';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return false;
+        }
+
+        $ok = $wpdb->delete(
+            $tableName,
+            ['id' => $contactId],
+            ['%d']
+        );
+
+        return $ok !== false && $ok > 0;
+    }
+
+    public static function deleteByTierId(int $tierId): bool
+    {
+        global $wpdb;
+
+        if ($tierId <= 0) {
+            return false;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return false;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tier_contacts';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return false;
+        }
+
+        $ok = $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$tableName} WHERE tier_id = %d",
+                $tierId
+            )
+        );
+
+        return $ok !== false;
     }
 
     public static function softDelete(int $contactId): bool

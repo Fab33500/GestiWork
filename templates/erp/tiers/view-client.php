@@ -84,123 +84,6 @@ if (!isset($clientData['type']) || trim((string) $clientData['type']) === '') {
     $clientData['type'] = 'client_particulier';
 }
 
-$postError = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = isset($_POST['gw_action']) ? (string) $_POST['gw_action'] : '';
-    $action = strtolower(trim($action));
-
-    if ($action === 'gw_tier_create') {
-        if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_tier_create')) {
-            $postError = 'nonce';
-        } else {
-            $data = [
-                'type' => isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier',
-                'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
-                'raison_sociale' => isset($_POST['raison_sociale']) ? sanitize_text_field((string) $_POST['raison_sociale']) : '',
-                'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
-                'prenom' => isset($_POST['prenom']) ? sanitize_text_field((string) $_POST['prenom']) : '',
-                'siret' => isset($_POST['siret']) ? sanitize_text_field((string) $_POST['siret']) : '',
-                'forme_juridique' => isset($_POST['forme_juridique']) ? sanitize_text_field((string) $_POST['forme_juridique']) : '',
-                'email' => isset($_POST['email']) ? sanitize_email((string) $_POST['email']) : '',
-                'telephone' => isset($_POST['telephone']) ? sanitize_text_field((string) $_POST['telephone']) : '',
-                'telephone_portable' => isset($_POST['telephone_portable']) ? sanitize_text_field((string) $_POST['telephone_portable']) : '',
-                'adresse1' => isset($_POST['adresse1']) ? sanitize_text_field((string) $_POST['adresse1']) : '',
-                'adresse2' => isset($_POST['adresse2']) ? sanitize_text_field((string) $_POST['adresse2']) : '',
-                'cp' => isset($_POST['cp']) ? sanitize_text_field((string) $_POST['cp']) : '',
-                'ville' => isset($_POST['ville']) ? sanitize_text_field((string) $_POST['ville']) : '',
-            ];
-
-            $newId = TierProvider::create($data);
-            if ($newId > 0) {
-                $redirectUrl = add_query_arg([
-                    'gw_view' => 'Client',
-                    'gw_tier_id' => $newId,
-                    'gw_notice' => 'tier_created',
-                ], home_url('/gestiwork/'));
-                wp_safe_redirect($redirectUrl);
-                exit;
-            }
-
-            $postError = 'create_failed';
-        }
-    }
-
-    if ($action === 'gw_tier_update') {
-        if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_tier_update')) {
-            $postError = 'nonce';
-        } else {
-            $tierId = isset($_POST['tier_id']) ? (int) $_POST['tier_id'] : 0;
-            if ($tierId <= 0) {
-                $postError = 'invalid_id';
-            } else {
-                $data = [
-                    'type' => isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier',
-                    'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
-                    'raison_sociale' => isset($_POST['raison_sociale']) ? sanitize_text_field((string) $_POST['raison_sociale']) : '',
-                    'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
-                    'prenom' => isset($_POST['prenom']) ? sanitize_text_field((string) $_POST['prenom']) : '',
-                    'siret' => isset($_POST['siret']) ? sanitize_text_field((string) $_POST['siret']) : '',
-                    'forme_juridique' => isset($_POST['forme_juridique']) ? sanitize_text_field((string) $_POST['forme_juridique']) : '',
-                    'email' => isset($_POST['email']) ? sanitize_email((string) $_POST['email']) : '',
-                    'telephone' => isset($_POST['telephone']) ? sanitize_text_field((string) $_POST['telephone']) : '',
-                    'telephone_portable' => isset($_POST['telephone_portable']) ? sanitize_text_field((string) $_POST['telephone_portable']) : '',
-                    'adresse1' => isset($_POST['adresse1']) ? sanitize_text_field((string) $_POST['adresse1']) : '',
-                    'adresse2' => isset($_POST['adresse2']) ? sanitize_text_field((string) $_POST['adresse2']) : '',
-                    'cp' => isset($_POST['cp']) ? sanitize_text_field((string) $_POST['cp']) : '',
-                    'ville' => isset($_POST['ville']) ? sanitize_text_field((string) $_POST['ville']) : '',
-                ];
-
-                $ok = TierProvider::update($tierId, $data);
-                if ($ok) {
-                    $redirectUrl = add_query_arg([
-                        'gw_view' => 'Client',
-                        'gw_tier_id' => $tierId,
-                        'gw_notice' => 'tier_updated',
-                    ], home_url('/gestiwork/'));
-                    wp_safe_redirect($redirectUrl);
-                    exit;
-                }
-
-                $postError = 'update_failed';
-            }
-        }
-    }
-
-    if ($action === 'gw_tier_contact_create') {
-        if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_tier_contact_create')) {
-            $postError = 'nonce';
-        } else {
-            $tierId = isset($_POST['tier_id']) ? (int) $_POST['tier_id'] : 0;
-            if ($tierId <= 0) {
-                $postError = 'invalid_id';
-            } else {
-                $data = [
-                    'civilite' => isset($_POST['civilite']) ? sanitize_text_field((string) $_POST['civilite']) : 'non_renseigne',
-                    'fonction' => isset($_POST['fonction']) ? sanitize_text_field((string) $_POST['fonction']) : '',
-                    'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
-                    'prenom' => isset($_POST['prenom']) ? sanitize_text_field((string) $_POST['prenom']) : '',
-                    'mail' => isset($_POST['mail']) ? sanitize_email((string) $_POST['mail']) : '',
-                    'tel1' => isset($_POST['tel1']) ? sanitize_text_field((string) $_POST['tel1']) : '',
-                    'tel2' => isset($_POST['tel2']) ? sanitize_text_field((string) $_POST['tel2']) : '',
-                ];
-
-                $newContactId = TierContactProvider::create($tierId, $data);
-                if ($newContactId > 0) {
-                    $redirectUrl = add_query_arg([
-                        'gw_view' => 'Client',
-                        'gw_tier_id' => $tierId,
-                        'gw_notice' => 'contact_created',
-                    ], home_url('/gestiwork/'));
-                    wp_safe_redirect($redirectUrl);
-                    exit;
-                }
-
-                $postError = 'contact_create_failed';
-            }
-        }
-    }
-}
 
 $tierContacts = [];
 if (is_array($dbClientData) && $clientId > 0) {
@@ -230,24 +113,65 @@ $cancelEditUrl = add_query_arg([
 
 <section class="gw-section gw-section-dashboard">
     <?php if ($tierNotice === 'tier_created') : ?>
-        <div class="notice notice-success" style="margin: 12px 0;">
+        <div class="notice notice-success gw-notice-spacing">
             <p><?php esc_html_e('Tiers créé avec succès.', 'gestiwork'); ?></p>
         </div>
     <?php elseif ($tierNotice === 'tier_updated') : ?>
-        <div class="notice notice-success" style="margin: 12px 0;">
+        <div class="notice notice-success gw-notice-spacing">
             <p><?php esc_html_e('Tiers mis à jour avec succès.', 'gestiwork'); ?></p>
         </div>
     <?php elseif ($tierNotice === 'contact_created') : ?>
-        <div class="notice notice-success" style="margin: 12px 0;">
+        <div class="notice notice-success gw-notice-spacing">
             <p><?php esc_html_e('Contact ajouté avec succès.', 'gestiwork'); ?></p>
         </div>
-    <?php elseif ($postError !== '') : ?>
-        <div class="notice notice-error" style="margin: 12px 0;">
-            <p><?php esc_html_e('Une erreur est survenue lors de l\'enregistrement.', 'gestiwork'); ?></p>
+    <?php elseif ($tierNotice === 'contact_updated') : ?>
+        <div class="notice notice-success gw-notice-spacing">
+            <p><?php esc_html_e('Contact modifié avec succès.', 'gestiwork'); ?></p>
+        </div>
+    <?php elseif ($tierNotice === 'contact_deleted') : ?>
+        <div class="notice notice-success gw-notice-spacing">
+            <p><?php esc_html_e('Contact supprimé avec succès.', 'gestiwork'); ?></p>
+        </div>
+    <?php elseif (isset($_GET['gw_error']) && $_GET['gw_error'] !== '') : ?>
+        <div class="notice notice-error gw-notice-spacing">
+            <p>
+            <?php
+            $errorType = (string) $_GET['gw_error'];
+            switch ($errorType) {
+                case 'nonce':
+                    esc_html_e('Erreur de sécurité : veuillez recharger la page et réessayer.', 'gestiwork');
+                    break;
+                case 'invalid_id':
+                    esc_html_e('Erreur : identifiant de tiers invalide.', 'gestiwork');
+                    break;
+                case 'create_failed':
+                    esc_html_e('Erreur lors de la création du tiers. Veuillez réessayer.', 'gestiwork');
+                    break;
+                case 'update_failed':
+                    esc_html_e('Erreur lors de la mise à jour du tiers. Veuillez réessayer.', 'gestiwork');
+                    break;
+                case 'contact_create_failed':
+                    esc_html_e('Erreur lors de la création du contact. Veuillez réessayer.', 'gestiwork');
+                    break;
+                case 'contact_update_failed':
+                    esc_html_e('Erreur lors de la modification du contact. Veuillez réessayer.', 'gestiwork');
+                    break;
+                case 'contact_delete_failed':
+                    esc_html_e('Erreur lors de la suppression du contact. Veuillez réessayer.', 'gestiwork');
+                    break;
+                case 'tier_delete_failed':
+                    esc_html_e('Erreur lors de la suppression du tiers. Veuillez réessayer.', 'gestiwork');
+                    break;
+                default:
+                    esc_html_e('Une erreur est survenue lors de l\'enregistrement.', 'gestiwork');
+                    break;
+            }
+            ?>
+            </p>
         </div>
     <?php endif; ?>
 
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+    <div class="gw-flex-between">
         <div>
             <?php if ($isCreate) : ?>
                 <h2 class="gw-section-title"><?php esc_html_e('Création Tiers', 'gestiwork'); ?></h2>
@@ -277,7 +201,7 @@ $cancelEditUrl = add_query_arg([
                 </p>
             <?php endif; ?>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <div class="gw-flex-end">
             <a class="gw-button gw-button--secondary" href="<?php echo esc_url($backUrl); ?>">
                 <?php esc_html_e('Retour aux tiers', 'gestiwork'); ?>
             </a>
@@ -285,6 +209,17 @@ $cancelEditUrl = add_query_arg([
                 <a class="gw-button gw-button--primary" href="<?php echo esc_url($editUrl); ?>">
                     <?php esc_html_e('Modifier', 'gestiwork'); ?>
                 </a>
+            <?php endif; ?>
+            <?php if (! $isCreate && $clientId > 0) : ?>
+                <form method="post" action="" style="margin:0;">
+                    <input type="hidden" name="gw_action" value="gw_tier_delete" />
+                    <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                    <?php wp_nonce_field('gw_tier_delete', 'gw_nonce'); ?>
+                    <button type="submit" class="gw-button gw-button--secondary gw-tier-delete" style="border-color:#d63638; color:#d63638; background:#fff;">
+                        <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                        <?php esc_html_e('Supprimer le client', 'gestiwork'); ?>
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
     </div>
@@ -312,22 +247,25 @@ $cancelEditUrl = add_query_arg([
     <div class="gw-settings-panels">
         <div class="gw-settings-panel<?php echo $activeTab === 'informations_generales' ? ' gw-settings-panel--active' : ''; ?>" data-gw-tab-panel="informations_generales">
             <?php if ($isCreate) : ?>
-                <div class="gw-tier-info-layout" style="display:grid; gap: 14px; align-items:start;">
-                    <div class="gw-settings-group" style="margin:0;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Informations générales', 'gestiwork'); ?></h3>
-                            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-                                <a href="#" onclick="return false;" style="text-decoration:none; font-size:13px;">
+                <div class="gw-tier-info-layout gw-grid-layout">
+                    <div class="gw-settings-group gw-m-0">
+                        <div class="gw-flex-between-center">
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Informations générales', 'gestiwork'); ?></h3>
+                            <div class="gw-flex-end" id="gw_tier_create_insee_button_wrapper">
+                                <button type="button"
+                                    class="gw-link-button"
+                                    data-gw-modal-target="gw-insee-modal"
+                                    data-gw-insee-context="tier_create">
                                     <span class="dashicons dashicons-search" aria-hidden="true"></span>
-                                    <?php esc_html_e('Rechercher dans la base de l\'INSEE', 'gestiwork'); ?>
-                                </a>
+                                    <?php esc_html_e('Rechercher une entreprise', 'gestiwork'); ?>
+                                </button>
                             </div>
                         </div>
 
-                        <form method="post" action="" style="margin-top: 12px;">
+                        <form method="post" action="" class="gw-mt-12">
                             <input type="hidden" name="gw_action" value="gw_tier_create" />
                             <?php wp_nonce_field('gw_tier_create', 'gw_nonce'); ?>
-                            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+                            <div class="gw-grid-2">
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_type"><?php esc_html_e('Catégorie', 'gestiwork'); ?></label>
                                     <select id="gw_tier_create_type" name="type" class="gw-modal-input">
@@ -346,62 +284,62 @@ $cancelEditUrl = add_query_arg([
                                     </select>
                                 </div>
 
-                                <div id="gw_tier_create_field_raison_sociale" style="grid-column: 1 / -1;">
+                                <div id="gw_tier_create_field_raison_sociale" class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_raison_sociale"><?php esc_html_e('Nom / Raison sociale', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_raison_sociale" name="raison_sociale" class="gw-modal-input" placeholder="Groupe BB - siège social Beaux Bâtons" />
+                                    <input type="text" id="gw_tier_create_raison_sociale" name="raison_sociale" class="gw-modal-input" />
                                 </div>
 
                                 <div id="gw_tier_create_field_nom">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_nom"><?php esc_html_e('Nom', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_nom" name="nom" class="gw-modal-input" placeholder="DUPONT" />
+                                    <input type="text" id="gw_tier_create_nom" name="nom" class="gw-modal-input" />
                                 </div>
 
                                 <div id="gw_tier_create_field_prenom">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_prenom" name="prenom" class="gw-modal-input" placeholder="Jean" />
+                                    <input type="text" id="gw_tier_create_prenom" name="prenom" class="gw-modal-input" />
                                 </div>
 
-                                <div id="gw_tier_create_field_siret" style="grid-column: 1 / -1;">
+                                <div id="gw_tier_create_field_siret" class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_siret" name="siret" class="gw-modal-input" placeholder="007007000777" />
+                                    <input type="text" id="gw_tier_create_siret" name="siret" class="gw-modal-input" />
                                 </div>
 
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_email"><?php esc_html_e('Adresse e-mail', 'gestiwork'); ?></label>
-                                    <input type="email" id="gw_tier_create_email" name="email" class="gw-modal-input" placeholder="contact@bb-batons.fr" />
+                                    <input type="email" id="gw_tier_create_email" name="email" class="gw-modal-input" />
                                 </div>
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_phone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_phone" name="telephone" class="gw-modal-input" placeholder="01 52 63 41 52" />
+                                    <input type="text" id="gw_tier_create_phone" name="telephone" class="gw-modal-input" />
                                 </div>
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_phone_mobile"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_phone_mobile" name="telephone_portable" class="gw-modal-input" placeholder="06 12 34 56 78" />
+                                    <input type="text" id="gw_tier_create_phone_mobile" name="telephone_portable" class="gw-modal-input" />
                                 </div>
 
-                                <div style="grid-column: 1 / -1;">
+                                <div class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_adresse1"><?php esc_html_e('Numéro de rue et rue', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_adresse1" name="adresse1" class="gw-modal-input" placeholder="1 chemin de traverse" />
+                                    <input type="text" id="gw_tier_create_adresse1" name="adresse1" class="gw-modal-input" />
                                 </div>
-                                <div style="grid-column: 1 / -1;">
+                                <div class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_adresse2"><?php esc_html_e('Complément d\'adresse', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_adresse2" name="adresse2" class="gw-modal-input" placeholder="ex. 3e étage, BP 456" />
+                                    <input type="text" id="gw_tier_create_adresse2" name="adresse2" class="gw-modal-input" />
                                 </div>
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_cp"><?php esc_html_e('Code postal', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_cp" name="cp" class="gw-modal-input" placeholder="75000" />
+                                    <input type="text" id="gw_tier_create_cp" name="cp" class="gw-modal-input" />
                                 </div>
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_ville"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_ville" name="ville" class="gw-modal-input" placeholder="PARIS" />
+                                    <input type="text" id="gw_tier_create_ville" name="ville" class="gw-modal-input" />
                                 </div>
 
                                 <div id="gw_tier_create_field_forme_juridique">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_forme_juridique"><?php esc_html_e('Forme juridique', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_forme_juridique" name="forme_juridique" class="gw-modal-input" placeholder="SAS, SARL, EI..." />
+                                    <input type="text" id="gw_tier_create_forme_juridique" name="forme_juridique" class="gw-modal-input" />
                                 </div>
 
-                                <div style="grid-column: 1 / -1; margin-top: 6px;">
+                                <div class="gw-full-width gw-mt-6">
                                     <button type="submit" class="gw-button gw-button--primary">
                                         <?php esc_html_e('Enregistrer', 'gestiwork'); ?>
                                     </button>
@@ -410,10 +348,10 @@ $cancelEditUrl = add_query_arg([
                         </form>
                     </div>
 
-                    <div style="display:grid; gap:14px;">
-                        <div style="border:1px solid var(--gw-color-border); border-radius: 12px; background:#fff; padding: 12px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                                <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
+                    <div class="gw-grid-layout">
+                        <div class="gw-card">
+                            <div class="gw-flex-between-center">
+                                <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
                                 <a href="#" onclick="return false;" data-gw-modal-target="gw-modal-client-contacts" style="text-decoration:none; font-size:13px;">
                                     <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                     <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
@@ -429,13 +367,17 @@ $cancelEditUrl = add_query_arg([
                                         $contactMail = isset($contact['mail']) ? (string) $contact['mail'] : '';
                                         $contactTel1 = isset($contact['tel1']) ? (string) $contact['tel1'] : '';
                                         $contactTel2 = isset($contact['tel2']) ? (string) $contact['tel2'] : '';
-                                        $contactTel = trim($contactTel1);
-                                        if ($contactTel === '') {
-                                            $contactTel = trim($contactTel2);
+                                        $contactIdRow = isset($contact['id']) ? (int) $contact['id'] : 0;
+                                        $phones = [];
+                                        if (trim($contactTel1) !== '') {
+                                            $phones[] = trim($contactTel1);
                                         }
+                                        if (trim($contactTel2) !== '') {
+                                            $phones[] = trim($contactTel2);
+                                        }
+                                        $contactTel = implode(' — ', $phones);
                                         $contactLabel = trim($contactPrenom . ' ' . $contactNom);
-                                        $contactMeta = trim($contactFonction);
-                                        $isDefaultContact = ($index === 0);
+                                        $contactMeta = trim($contactFonction) !== '' ? trim($contactFonction) : __('Fonction non renseignée', 'gestiwork');
                                         ?>
                                         <div style="border:1px solid var(--gw-color-border); border-radius:12px; padding:12px; background:#f6f7f7;">
                                             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
@@ -444,34 +386,79 @@ $cancelEditUrl = add_query_arg([
                                                         <a href="#" onclick="return false;" style="text-decoration:none; font-weight:600; color: var(--gw-color-primary);">
                                                             <?php echo esc_html($contactLabel !== '' ? $contactLabel : '-'); ?>
                                                         </a>
-                                                        <span class="dashicons dashicons-external" aria-hidden="true" style="font-size:16px; line-height:1; color: var(--gw-color-primary);"></span>
                                                     </div>
                                                 </div>
                                                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-                                                    <?php if ($isDefaultContact) : ?>
-                                                        <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:8px; border:1px solid #c7b9ff; background:#f4f1ff; color:#5b47ff; font-size:12px; font-weight:500; white-space:nowrap;">
-                                                            <?php esc_html_e('Contact par défaut', 'gestiwork'); ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <button type="button" class="gw-button gw-button--secondary" style="padding:4px 8px; line-height:1;" onclick="return false;" aria-label="<?php esc_attr_e('Actions', 'gestiwork'); ?>">
-                                                        <span class="dashicons dashicons-ellipsis" aria-hidden="true"></span>
-                                                    </button>
+                                                    <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:8px; border:1px solid #c7b9ff; background:#f4f1ff; color:#5b47ff; font-size:12px; font-weight:500; white-space:nowrap;">
+                                                        <?php echo esc_html($contactMeta); ?>
+                                                    </span>
+
+                                                    <div class="gw-contact-actions" style="position:relative;">
+                                                        <button
+                                                            type="button"
+                                                            class="gw-button gw-button--secondary gw-contact-actions-trigger"
+                                                            style="padding:4px 8px; line-height:1;"
+                                                            aria-haspopup="menu"
+                                                            aria-expanded="false"
+                                                            aria-label="<?php esc_attr_e('Actions', 'gestiwork'); ?>"
+                                                            data-contact-actions="<?php echo (int) $contactIdRow; ?>">
+                                                            <span class="dashicons dashicons-ellipsis" aria-hidden="true"></span>
+                                                        </button>
+                                                        <div
+                                                            class="gw-contact-actions-menu"
+                                                            role="menu"
+                                                            style="display:none; position:absolute; right:0; top: calc(100% + 6px); background:#fff; border:1px solid var(--gw-color-border); border-radius:10px; padding:6px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 5;">
+                                                            <button
+                                                                type="button"
+                                                                role="menuitem"
+                                                                class="gw-link-button"
+                                                                style="width:100%; text-align:left; padding:8px 10px; border-radius:8px;"
+                                                                data-gw-modal-target="gw-modal-client-contact-edit"
+                                                                data-contact-id="<?php echo (int) $contactIdRow; ?>"
+                                                                data-contact-civilite="<?php echo esc_attr((string) ($contact['civilite'] ?? 'non_renseigne')); ?>"
+                                                                data-contact-fonction="<?php echo esc_attr((string) $contactFonction); ?>"
+                                                                data-contact-nom="<?php echo esc_attr((string) $contactNom); ?>"
+                                                                data-contact-prenom="<?php echo esc_attr((string) $contactPrenom); ?>"
+                                                                data-contact-mail="<?php echo esc_attr((string) $contactMail); ?>"
+                                                                data-contact-tel1="<?php echo esc_attr((string) $contactTel1); ?>"
+                                                                data-contact-tel2="<?php echo esc_attr((string) $contactTel2); ?>">
+                                                                <span class="dashicons dashicons-edit" aria-hidden="true" style="margin-right:6px;"></span>
+                                                                <?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?>
+                                                            </button>
+                                                            <form method="post" action="" style="margin:0;">
+                                                                <input type="hidden" name="gw_action" value="gw_tier_contact_delete" />
+                                                                <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                                                                <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
+                                                                <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+                                                                <button type="submit" role="menuitem" class="gw-link-button gw-contact-delete" style="width:100%; text-align:left; padding:8px 10px; border-radius:8px; color:#d63638;">
+                                                                    <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:6px;"></span>
+                                                                    <?php esc_html_e('Supprimer le contact', 'gestiwork'); ?>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <div style="margin-top: 8px; display:grid; gap:6px; color: var(--gw-color-text);">
-                                                <?php if ($contactMeta !== '') : ?>
-                                                    <div style="display:flex; align-items:center; gap:8px;">
-                                                        <span class="dashicons dashicons-briefcase" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
-                                                        <span><?php echo esc_html($contactMeta); ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-
                                                 <?php if ($contactTel !== '') : ?>
-                                                    <div style="display:flex; align-items:center; gap:8px;">
-                                                        <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
-                                                        <span><?php echo esc_html($contactTel); ?></span>
-                                                    </div>
+                                                    <?php if (trim($contactTel1) !== '' && trim($contactTel2) !== '') : ?>
+                                                        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                                                            <span style="display:inline-flex; align-items:center; gap:8px;">
+                                                                <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
+                                                                <span><?php echo esc_html(trim($contactTel1)); ?></span>
+                                                            </span>
+                                                            <span style="display:inline-flex; align-items:center; gap:8px;">
+                                                                <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
+                                                                <span><?php echo esc_html(trim($contactTel2)); ?></span>
+                                                            </span>
+                                                        </div>
+                                                    <?php else : ?>
+                                                        <div style="display:flex; align-items:center; gap:8px;">
+                                                            <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
+                                                            <span><?php echo esc_html($contactTel); ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
 
                                                 <?php if ($contactMail !== '') : ?>
@@ -524,7 +511,7 @@ $cancelEditUrl = add_query_arg([
                                     </select>
                                 </div>
 
-                                <div id="gw_tier_view_field_raison_sociale" style="grid-column: 1 / -1;">
+                                <div id="gw_tier_view_field_raison_sociale" class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_view_raison_sociale"><?php esc_html_e('Nom / Raison sociale', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_view_raison_sociale" name="raison_sociale" class="gw-modal-input" value="<?php echo esc_attr($clientData['raison_sociale']); ?>"<?php echo $isEdit ? '' : ' disabled'; ?> />
                                 </div>
@@ -539,7 +526,7 @@ $cancelEditUrl = add_query_arg([
                                     <input type="text" id="gw_tier_view_prenom" name="prenom" class="gw-modal-input" value="<?php echo esc_attr($clientData['prenom'] ?? ''); ?>"<?php echo $isEdit ? '' : ' disabled'; ?> />
                                 </div>
 
-                                <div id="gw_tier_view_field_siret" style="grid-column: 1 / -1;">
+                                <div id="gw_tier_view_field_siret" class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_view_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_view_siret" name="siret" class="gw-modal-input" value="<?php echo esc_attr($clientData['siret']); ?>"<?php echo $isEdit ? '' : ' disabled'; ?> />
                                 </div>
@@ -557,11 +544,11 @@ $cancelEditUrl = add_query_arg([
                                     <input type="text" id="gw_tier_view_telephone_portable" name="telephone_portable" class="gw-modal-input" value="<?php echo esc_attr($clientData['telephone_portable']); ?>"<?php echo $isEdit ? '' : ' disabled'; ?> />
                                 </div>
 
-                                <div style="grid-column: 1 / -1;">
+                                <div class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_view_adresse1"><?php esc_html_e('Numéro de rue et rue', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_view_adresse1" name="adresse1" class="gw-modal-input" value="<?php echo esc_attr($clientData['adresse1']); ?>"<?php echo $isEdit ? '' : ' disabled'; ?> />
                                 </div>
-                                <div style="grid-column: 1 / -1;">
+                                <div class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_view_adresse2"><?php esc_html_e('Complément d\'adresse', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_view_adresse2" name="adresse2" class="gw-modal-input" value="<?php echo esc_attr($clientData['adresse2']); ?>"<?php echo $isEdit ? '' : ' disabled'; ?> />
                                 </div>
@@ -580,7 +567,7 @@ $cancelEditUrl = add_query_arg([
                                 </div>
 
                                 <?php if ($isEdit) : ?>
-                                    <div style="grid-column: 1 / -1; margin-top: 6px; display:flex; gap:8px; flex-wrap:wrap;">
+                                    <div class="gw-full-width gw-mt-6 gw-flex-end">
                                         <a class="gw-button gw-button--secondary" href="<?php echo esc_url($cancelEditUrl); ?>">
                                             <?php esc_html_e('Annuler', 'gestiwork'); ?>
                                         </a>
@@ -621,13 +608,17 @@ $cancelEditUrl = add_query_arg([
                                         $contactMail = isset($contact['mail']) ? (string) $contact['mail'] : '';
                                         $contactTel1 = isset($contact['tel1']) ? (string) $contact['tel1'] : '';
                                         $contactTel2 = isset($contact['tel2']) ? (string) $contact['tel2'] : '';
-                                        $contactTel = trim($contactTel1);
-                                        if ($contactTel === '') {
-                                            $contactTel = trim($contactTel2);
+                                        $contactIdRow = isset($contact['id']) ? (int) $contact['id'] : 0;
+                                        $phones = [];
+                                        if (trim($contactTel1) !== '') {
+                                            $phones[] = trim($contactTel1);
                                         }
+                                        if (trim($contactTel2) !== '') {
+                                            $phones[] = trim($contactTel2);
+                                        }
+                                        $contactTel = implode(' — ', $phones);
                                         $contactLabel = trim($contactPrenom . ' ' . $contactNom);
-                                        $contactMeta = trim($contactFonction);
-                                        $isDefaultContact = ($index === 0);
+                                        $contactMeta = trim($contactFonction) !== '' ? trim($contactFonction) : __('Fonction non renseignée', 'gestiwork');
                                         ?>
                                         <div style="border:1px solid var(--gw-color-border); border-radius:12px; padding:12px; background:#f6f7f7;">
                                             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
@@ -636,34 +627,79 @@ $cancelEditUrl = add_query_arg([
                                                         <a href="#" onclick="return false;" style="text-decoration:none; font-weight:600; color: var(--gw-color-primary);">
                                                             <?php echo esc_html($contactLabel !== '' ? $contactLabel : '-'); ?>
                                                         </a>
-                                                        <span class="dashicons dashicons-external" aria-hidden="true" style="font-size:16px; line-height:1; color: var(--gw-color-primary);"></span>
                                                     </div>
                                                 </div>
                                                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-                                                    <?php if ($isDefaultContact) : ?>
-                                                        <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:8px; border:1px solid #c7b9ff; background:#f4f1ff; color:#5b47ff; font-size:12px; font-weight:500; white-space:nowrap;">
-                                                            <?php esc_html_e('Contact par défaut', 'gestiwork'); ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <button type="button" class="gw-button gw-button--secondary" style="padding:4px 8px; line-height:1;" onclick="return false;" aria-label="<?php esc_attr_e('Actions', 'gestiwork'); ?>">
-                                                        <span class="dashicons dashicons-ellipsis" aria-hidden="true"></span>
-                                                    </button>
+                                                    <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:8px; border:1px solid #c7b9ff; background:#f4f1ff; color:#5b47ff; font-size:12px; font-weight:500; white-space:nowrap;">
+                                                        <?php echo esc_html($contactMeta); ?>
+                                                    </span>
+
+                                                    <div class="gw-contact-actions" style="position:relative;">
+                                                        <button
+                                                            type="button"
+                                                            class="gw-button gw-button--secondary gw-contact-actions-trigger"
+                                                            style="padding:4px 8px; line-height:1;"
+                                                            aria-haspopup="menu"
+                                                            aria-expanded="false"
+                                                            aria-label="<?php esc_attr_e('Actions', 'gestiwork'); ?>"
+                                                            data-contact-actions="<?php echo (int) $contactIdRow; ?>">
+                                                            <span class="dashicons dashicons-ellipsis" aria-hidden="true"></span>
+                                                        </button>
+                                                        <div
+                                                            class="gw-contact-actions-menu"
+                                                            role="menu"
+                                                            style="display:none; position:absolute; right:0; top: calc(100% + 6px); background:#fff; border:1px solid var(--gw-color-border); border-radius:10px; padding:6px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 5;">
+                                                            <button
+                                                                type="button"
+                                                                role="menuitem"
+                                                                class="gw-link-button"
+                                                                style="width:100%; text-align:left; padding:8px 10px; border-radius:8px;"
+                                                                data-gw-modal-target="gw-modal-client-contact-edit"
+                                                                data-contact-id="<?php echo (int) $contactIdRow; ?>"
+                                                                data-contact-civilite="<?php echo esc_attr((string) ($contact['civilite'] ?? 'non_renseigne')); ?>"
+                                                                data-contact-fonction="<?php echo esc_attr((string) $contactFonction); ?>"
+                                                                data-contact-nom="<?php echo esc_attr((string) $contactNom); ?>"
+                                                                data-contact-prenom="<?php echo esc_attr((string) $contactPrenom); ?>"
+                                                                data-contact-mail="<?php echo esc_attr((string) $contactMail); ?>"
+                                                                data-contact-tel1="<?php echo esc_attr((string) $contactTel1); ?>"
+                                                                data-contact-tel2="<?php echo esc_attr((string) $contactTel2); ?>">
+                                                                <span class="dashicons dashicons-edit" aria-hidden="true" style="margin-right:6px;"></span>
+                                                                <?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?>
+                                                            </button>
+                                                            <form method="post" action="" style="margin:0;">
+                                                                <input type="hidden" name="gw_action" value="gw_tier_contact_delete" />
+                                                                <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                                                                <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
+                                                                <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+                                                                <button type="submit" role="menuitem" class="gw-link-button gw-contact-delete" style="width:100%; text-align:left; padding:8px 10px; border-radius:8px; color:#d63638;">
+                                                                    <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:6px;"></span>
+                                                                    <?php esc_html_e('Supprimer le contact', 'gestiwork'); ?>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <div style="margin-top: 8px; display:grid; gap:6px; color: var(--gw-color-text);">
-                                                <?php if ($contactMeta !== '') : ?>
-                                                    <div style="display:flex; align-items:center; gap:8px;">
-                                                        <span class="dashicons dashicons-briefcase" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
-                                                        <span><?php echo esc_html($contactMeta); ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-
                                                 <?php if ($contactTel !== '') : ?>
-                                                    <div style="display:flex; align-items:center; gap:8px;">
-                                                        <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
-                                                        <span><?php echo esc_html($contactTel); ?></span>
-                                                    </div>
+                                                    <?php if (trim($contactTel1) !== '' && trim($contactTel2) !== '') : ?>
+                                                        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                                                            <span style="display:inline-flex; align-items:center; gap:8px;">
+                                                                <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
+                                                                <span><?php echo esc_html(trim($contactTel1)); ?></span>
+                                                            </span>
+                                                            <span style="display:inline-flex; align-items:center; gap:8px;">
+                                                                <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
+                                                                <span><?php echo esc_html(trim($contactTel2)); ?></span>
+                                                            </span>
+                                                        </div>
+                                                    <?php else : ?>
+                                                        <div style="display:flex; align-items:center; gap:8px;">
+                                                            <span class="dashicons dashicons-phone" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
+                                                            <span><?php echo esc_html($contactTel); ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
 
                                                 <?php if ($contactMail !== '') : ?>
@@ -952,7 +988,7 @@ $cancelEditUrl = add_query_arg([
         <form method="post" action="">
             <input type="hidden" name="gw_action" value="gw_tier_contact_create" />
             <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
-            <?php wp_nonce_field('gw_tier_contact_create', 'gw_nonce'); ?>
+            <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
             <div class="gw-modal-body">
                 <div class="gw-modal-grid">
                     <div class="gw-modal-field">
@@ -975,7 +1011,7 @@ $cancelEditUrl = add_query_arg([
                         <label for="gw_client_contact_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?></label>
                         <input type="text" id="gw_client_contact_prenom" name="prenom" class="gw-modal-input" value="" required />
                     </div>
-                    <div class="gw-modal-field" style="grid-column: 1 / -1;">
+                    <div class="gw-modal-field gw-full-width">
                         <label for="gw_client_contact_mail"><?php esc_html_e('Mail', 'gestiwork'); ?></label>
                         <input type="email" id="gw_client_contact_mail" name="mail" class="gw-modal-input" value="" required />
                     </div>
@@ -999,37 +1035,78 @@ $cancelEditUrl = add_query_arg([
     </div>
 </div>
 
+<div class="gw-modal-backdrop" id="gw-modal-client-contact-edit" aria-hidden="true">
+    <div class="gw-modal gw-modal" role="dialog" aria-modal="true" aria-labelledby="gw-modal-client-contact-edit-title">
+        <div class="gw-modal-header">
+            <h3 class="gw-modal-title" id="gw-modal-client-contact-edit-title"><?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?></h3>
+            <button type="button" class="gw-modal-close" data-gw-modal-close="gw-modal-client-contact-edit" aria-label="<?php esc_attr_e('Fermer', 'gestiwork'); ?>">×</button>
+        </div>
+        <form method="post" action="">
+            <input type="hidden" name="gw_action" value="gw_tier_contact_update" />
+            <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+            <input type="hidden" name="contact_id" id="gw_client_contact_edit_id" value="0" />
+            <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+            <div class="gw-modal-body">
+                <div class="gw-modal-grid">
+                    <div class="gw-modal-field">
+                        <label for="gw_client_contact_edit_civilite"><?php esc_html_e('Civilité', 'gestiwork'); ?></label>
+                        <select id="gw_client_contact_edit_civilite" name="civilite" class="gw-modal-input">
+                            <option value="non_renseigne"><?php esc_html_e('Non renseigné', 'gestiwork'); ?></option>
+                            <option value="madame"><?php esc_html_e('Madame', 'gestiwork'); ?></option>
+                            <option value="monsieur"><?php esc_html_e('Monsieur', 'gestiwork'); ?></option>
+                        </select>
+                    </div>
+                    <div class="gw-modal-field">
+                        <label for="gw_client_contact_edit_fonction"><?php esc_html_e('Fonction', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_client_contact_edit_fonction" name="fonction" class="gw-modal-input" value="" />
+                    </div>
+                    <div class="gw-modal-field">
+                        <label for="gw_client_contact_edit_nom"><?php esc_html_e('Nom', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_client_contact_edit_nom" name="nom" class="gw-modal-input" value="" required />
+                    </div>
+                    <div class="gw-modal-field">
+                        <label for="gw_client_contact_edit_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_client_contact_edit_prenom" name="prenom" class="gw-modal-input" value="" required />
+                    </div>
+                    <div class="gw-modal-field gw-full-width">
+                        <label for="gw_client_contact_edit_mail"><?php esc_html_e('Mail', 'gestiwork'); ?></label>
+                        <input type="email" id="gw_client_contact_edit_mail" name="mail" class="gw-modal-input" value="" required />
+                    </div>
+                    <div class="gw-modal-field">
+                        <label for="gw_client_contact_edit_tel1"><?php esc_html_e('Numéro de téléphone 1', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_client_contact_edit_tel1" name="tel1" class="gw-modal-input" value="" pattern="[0-9]{2}( [0-9]{2}){4}" placeholder="00 00 00 00 00" />
+                    </div>
+                    <div class="gw-modal-field">
+                        <label for="gw_client_contact_edit_tel2"><?php esc_html_e('Numéro de téléphone 2', 'gestiwork'); ?></label>
+                        <input type="text" id="gw_client_contact_edit_tel2" name="tel2" class="gw-modal-input" value="" pattern="[0-9]{2}( [0-9]{2}){4}" placeholder="00 00 00 00 00" />
+                    </div>
+                </div>
+            </div>
+            <div class="gw-modal-footer">
+                <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-client-contact-edit"><?php esc_html_e('Annuler', 'gestiwork'); ?></button>
+                <button type="submit" class="gw-button gw-button--primary">
+                    <?php esc_html_e('Enregistrer', 'gestiwork'); ?>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+    // Logique spécifique page Tiers/Client : gestion URL avec query string 'tab='
     (function () {
         var tabs = document.querySelectorAll('.gw-settings-tab');
-        var panels = document.querySelectorAll('.gw-settings-panel');
-        var modalTriggers = document.querySelectorAll('[data-gw-modal-target]');
-        var modalCloseButtons = document.querySelectorAll('[data-gw-modal-close]');
-        var allModals = document.querySelectorAll('.gw-modal-backdrop');
-
-        if (!tabs.length || !panels.length) {
+        
+        if (!tabs.length) {
             return;
         }
 
-        function setActiveTab(target) {
+        function setActiveTabWithUrl(target) {
             if (!target) {
                 return;
             }
 
-            tabs.forEach(function (t) {
-                t.classList.remove('gw-settings-tab--active');
-                if (t.getAttribute('data-gw-tab') === target) {
-                    t.classList.add('gw-settings-tab--active');
-                }
-            });
-
-            panels.forEach(function (panel) {
-                panel.classList.remove('gw-settings-panel--active');
-                if (panel.getAttribute('data-gw-tab-panel') === target) {
-                    panel.classList.add('gw-settings-panel--active');
-                }
-            });
-
+            // Le styling des tabs est géré par gw-ui.js, on ne fait que l'URL ici
             try {
                 if (typeof window !== 'undefined' && window.history && typeof window.history.replaceState === 'function') {
                     var url = new URL(window.location.href);
@@ -1041,46 +1118,120 @@ $cancelEditUrl = add_query_arg([
             }
         }
 
+        // Override du comportement basic tabs pour ajouter la gestion d'URL
         tabs.forEach(function (tab) {
             tab.addEventListener('click', function () {
                 var target = tab.getAttribute('data-gw-tab');
-                setActiveTab(target);
+                setActiveTabWithUrl(target);
+            });
+        });
+    })();
+
+    (function () {
+        function closeAllMenus() {
+            document.querySelectorAll('.gw-contact-actions-menu').forEach(function (menu) {
+                menu.style.display = 'none';
+            });
+            document.querySelectorAll('.gw-contact-actions-trigger').forEach(function (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            var trigger = e.target.closest ? e.target.closest('.gw-contact-actions-trigger') : null;
+            if (!trigger) {
+                closeAllMenus();
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            var wrapper = trigger.parentElement;
+            if (!wrapper) {
+                return;
+            }
+            var menu = wrapper.querySelector('.gw-contact-actions-menu');
+            if (!menu) {
+                return;
+            }
+
+            var willOpen = menu.style.display === 'none' || menu.style.display === '';
+            closeAllMenus();
+            if (willOpen) {
+                menu.style.display = 'block';
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        document.querySelectorAll('.gw-contact-delete').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                if (!window.confirm('<?php echo esc_js(__('Supprimer ce contact ?', 'gestiwork')); ?>')) {
+                    e.preventDefault();
+                }
             });
         });
 
-        modalTriggers.forEach(function (trigger) {
-            trigger.addEventListener('click', function () {
-                var targetId = trigger.getAttribute('data-gw-modal-target');
-                if (!targetId) {
-                    return;
-                }
-
-                if (allModals && allModals.length) {
-                    allModals.forEach(function (backdrop) {
-                        backdrop.classList.remove('gw-modal-backdrop--open');
-                        backdrop.setAttribute('aria-hidden', 'true');
-                    });
-                }
-
-                var modal = document.getElementById(targetId);
-                if (modal) {
-                    modal.classList.add('gw-modal-backdrop--open');
-                    modal.setAttribute('aria-hidden', 'false');
+        document.querySelectorAll('.gw-tier-delete').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                if (!window.confirm('<?php echo esc_js(__('Supprimer définitivement ce client et tous ses contacts ?', 'gestiwork')); ?>')) {
+                    e.preventDefault();
                 }
             });
         });
 
-        modalCloseButtons.forEach(function (button) {
-            button.addEventListener('click', function () {
-                var targetId = button.getAttribute('data-gw-modal-close');
-                if (!targetId) {
-                    return;
-                }
-                var modal = document.getElementById(targetId);
-                if (modal) {
-                    modal.classList.remove('gw-modal-backdrop--open');
-                    modal.setAttribute('aria-hidden', 'true');
-                }
+        function applyEditData(button) {
+            if (!button) {
+                return;
+            }
+            var id = button.getAttribute('data-contact-id') || '0';
+            var civilite = button.getAttribute('data-contact-civilite') || 'non_renseigne';
+            var fonction = button.getAttribute('data-contact-fonction') || '';
+            var nom = button.getAttribute('data-contact-nom') || '';
+            var prenom = button.getAttribute('data-contact-prenom') || '';
+            var mail = button.getAttribute('data-contact-mail') || '';
+            var tel1 = button.getAttribute('data-contact-tel1') || '';
+            var tel2 = button.getAttribute('data-contact-tel2') || '';
+
+            var idInput = document.getElementById('gw_client_contact_edit_id');
+            var civiliteInput = document.getElementById('gw_client_contact_edit_civilite');
+            var fonctionInput = document.getElementById('gw_client_contact_edit_fonction');
+            var nomInput = document.getElementById('gw_client_contact_edit_nom');
+            var prenomInput = document.getElementById('gw_client_contact_edit_prenom');
+            var mailInput = document.getElementById('gw_client_contact_edit_mail');
+            var tel1Input = document.getElementById('gw_client_contact_edit_tel1');
+            var tel2Input = document.getElementById('gw_client_contact_edit_tel2');
+
+            if (idInput) {
+                idInput.value = id;
+            }
+            if (civiliteInput) {
+                civiliteInput.value = civilite;
+            }
+            if (fonctionInput) {
+                fonctionInput.value = fonction;
+            }
+            if (nomInput) {
+                nomInput.value = nom;
+            }
+            if (prenomInput) {
+                prenomInput.value = prenom;
+            }
+            if (mailInput) {
+                mailInput.value = mail;
+            }
+            if (tel1Input) {
+                tel1Input.value = tel1;
+            }
+            if (tel2Input) {
+                tel2Input.value = tel2;
+            }
+        }
+
+        document.querySelectorAll('[data-gw-modal-target="gw-modal-client-contact-edit"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                applyEditData(btn);
+                closeAllMenus();
             });
         });
     })();
