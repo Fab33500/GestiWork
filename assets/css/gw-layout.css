@@ -188,6 +188,31 @@
     font-weight: var(--gw-font-weight-medium);
 }
 
+/* Pastilles (origines, compétences, rôles) */
+.gw-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.2;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    background: rgba(99, 102, 241, 0.12);
+    color: rgba(67, 56, 202, 1);
+    font-weight: var(--gw-font-weight-medium);
+}
+
+.gw-tag--soft {
+    background: rgba(148, 163, 184, 0.18);
+    color: rgba(71, 85, 105, 1);
+}
+
+.gw-tag--warning {
+    background: rgba(245, 158, 11, 0.16);
+    color: rgba(180, 83, 9, 1);
+}
+
 /* === Settings: styles génériques (titres, listes, tabs) === */
 .gw-section-subtitle {
     margin: 18px 0 6px;
@@ -275,6 +300,66 @@
     padding: 10px 12px;
     background: #fdfdfd;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.gw-settings-field--full {
+    grid-column: 1 / -1;
+}
+
+.gw-flex-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gw-table-wrapper--mt {
+    margin-top: 12px;
+}
+
+.gw-table-col-select {
+    width: 24px;
+}
+
+.gw-link-primary-strong {
+    text-decoration: none;
+    color: var(--gw-color-primary);
+    font-weight: 600;
+}
+
+.gw-tag--spaced {
+    margin-right: 6px;
+}
+
+.gw-advanced-search-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    align-items: end;
+}
+
+.gw-advanced-search-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.gw-section-description--compact {
+    margin-top: -4px;
+}
+
+.gw-table-empty {
+    color: var(--gw-color-muted);
+    font-style: italic;
+}
+
+.gw-pagination {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 12px;
 }
 
 .gw-pdf-current-template-name {

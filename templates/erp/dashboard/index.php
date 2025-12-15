@@ -36,12 +36,18 @@ if ($gw_view === 'Aide') {
     $active_view = 'tiers';
 } elseif ($is_admin && $gw_view === 'Client') {
     $active_view = 'client';
+} elseif ($is_admin && $gw_view === 'apprenants') {
+    $active_view = 'apprenants';
+} elseif ($is_admin && $gw_view === 'equipe-pedagogique') {
+    $active_view = 'equipe_pedagogique';
 }
 
 $dashboard_url = home_url('/gestiwork/');
 $settings_url  = $is_admin ? home_url('/gestiwork/settings/general/') : $dashboard_url;
 $help_url      = home_url('/gestiwork/Aide/');
 $tiers_url     = $is_admin ? home_url('/gestiwork/Tiers/') : $dashboard_url;
+$apprenants_url = $is_admin ? home_url('/gestiwork/apprenants/') : $dashboard_url;
+$equipe_pedagogique_url = $is_admin ? home_url('/gestiwork/equipe-pedagogique/') : $dashboard_url;
 
 $nav_items = [
     [
@@ -68,6 +74,18 @@ if ($is_admin) {
         'url'   => $tiers_url,
         'active'=> $active_view === 'tiers',
     ];
+
+    $nav_items[] = [
+        'label' => __('Stagiaires', 'gestiwork'),
+        'url'   => $apprenants_url,
+        'active'=> $active_view === 'apprenants',
+    ];
+
+    $nav_items[] = [
+        'label' => __('Équipe pédagogique', 'gestiwork'),
+        'url'   => $equipe_pedagogique_url,
+        'active'=> $active_view === 'equipe_pedagogique',
+    ];
 }
 
 $layout_mode = $is_admin ? 'gw-layout--with-nav' : 'gw-layout--full';
@@ -80,6 +98,10 @@ if ($active_view === 'settings' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/tiers/view-tiers.php';
 } elseif ($active_view === 'client' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/tiers/view-client.php';
+} elseif ($active_view === 'apprenants' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenants.php';
+} elseif ($active_view === 'equipe_pedagogique' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-equipe-pedagogique.php';
 } else {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
 }
