@@ -450,12 +450,7 @@ class SettingsController
                 );
             }
 
-            $redirectUrl = add_query_arg(
-                [
-                    'gw_updated' => '1',
-                ],
-                home_url('/gestiwork/settings/general/')
-            );
+            $redirectUrl = home_url('/gestiwork/settings/general/');
 
             wp_safe_redirect($redirectUrl);
             exit;

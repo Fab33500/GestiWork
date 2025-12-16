@@ -55,7 +55,7 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
     <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
     <p class="gw-section-description">
         <?php esc_html_e(
-            'Cet écran regroupera à terme tous vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
+            'Gérez vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
             'gestiwork'
         ); ?>
     </p>

@@ -125,14 +125,12 @@ adresse1 VARCHAR(255) NOT NULL DEFAULT '',
 adresse2 VARCHAR(255) NOT NULL DEFAULT '',
 cp VARCHAR(20) NOT NULL DEFAULT '',
 ville VARCHAR(100) NOT NULL DEFAULT '',
-deleted_at DATETIME NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY  (id),
 KEY type (type),
 KEY statut (statut),
 KEY ville (ville),
-KEY deleted_at (deleted_at)
 ) {$charsetCollate};";
 
         dbDelta($sqlTiers);
@@ -147,13 +145,11 @@ prenom VARCHAR(190) NOT NULL DEFAULT '',
 mail VARCHAR(190) NOT NULL DEFAULT '',
 tel1 VARCHAR(50) NOT NULL DEFAULT '',
 tel2 VARCHAR(50) NOT NULL DEFAULT '',
-deleted_at DATETIME NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY  (id),
 KEY tier_id (tier_id),
 KEY mail (mail),
-KEY deleted_at (deleted_at)
 ) {$charsetCollate};";
 
         dbDelta($sqlTierContacts);
@@ -266,6 +262,29 @@ KEY is_active (is_active)
                 if (!in_array($column, $existingIdentityColumns, true)) {
                     $wpdb->query("ALTER TABLE {$tableIdentity} ADD COLUMN {$column} {$definition}");
                 }
+            }
+        }
+
+        $tiersTable = $wpdb->prefix . 'gw_tiers';
+        $tiersContactsTable = $wpdb->prefix . 'gw_tier_contacts';
+
+        foreach ([$tiersTable, $tiersContactsTable] as $table) {
+            $tableExists = $wpdb->get_var(
+                $wpdb->prepare('SHOW TABLES LIKE %s', $table)
+            );
+
+            if ($tableExists !== $table) {
+                continue;
+            }
+
+            $existingColumns = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+            if (in_array('deleted_at', $existingColumns, true)) {
+                $indexes = $wpdb->get_col("SHOW INDEX FROM {$table} WHERE Key_name = 'deleted_at'", 0);
+                if (!empty($indexes)) {
+                    $wpdb->query("DROP INDEX deleted_at ON {$table}");
+                }
+
+                $wpdb->query("ALTER TABLE {$table} DROP COLUMN deleted_at");
             }
         }
 

@@ -50,7 +50,7 @@ class TierProvider
 
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT * FROM {$tableName} WHERE id = %d AND deleted_at IS NULL LIMIT 1",
+                "SELECT * FROM {$tableName} WHERE id = %d LIMIT 1",
                 $tierId
             ),
             ARRAY_A
@@ -96,7 +96,7 @@ class TierProvider
             return $defaults;
         }
 
-        $where = ['deleted_at IS NULL'];
+        $where = ['1=1'];
         $params = [];
 
         $query = isset($filters['query']) ? trim((string) $filters['query']) : '';
@@ -255,39 +255,6 @@ class TierProvider
         );
 
         return $ok !== false && $ok > 0;
-    }
-
-    public static function softDelete(int $tierId): bool
-    {
-        global $wpdb;
-
-        if ($tierId <= 0) {
-            return false;
-        }
-
-        if (!($wpdb instanceof wpdb)) {
-            return false;
-        }
-
-        $tableName = $wpdb->prefix . 'gw_tiers';
-
-        $tableExists = $wpdb->get_var(
-            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
-        );
-
-        if ($tableExists !== $tableName) {
-            return false;
-        }
-
-        $ok = $wpdb->update(
-            $tableName,
-            ['deleted_at' => current_time('mysql')],
-            ['id' => $tierId],
-            ['%s'],
-            ['%d']
-        );
-
-        return $ok !== false;
     }
 
     private static function normalizeTierData(array $data): array

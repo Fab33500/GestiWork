@@ -85,9 +85,6 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 ?>
 <section class="gw-section gw-section-settings">
     <h2 class="gw-section-title"><?php esc_html_e('Paramètres GestiWork', 'gestiwork'); ?></h2>
-    <p class="gw-section-description">
-        <?php esc_html_e('Les paramètres ci-dessous sont organisés en trois onglets. Pour l’instant, tout est décrit en dur sans sauvegarde : il s’agit de la maquette fonctionnelle de la future page de configuration.', 'gestiwork'); ?>
-    </p>
 
     <div class="gw-settings-tabs" role="tablist">
         <button  type="button" class="gw-settings-tab<?php echo $gw_active_tab === 'general' ? ' gw-settings-tab--active' : ''; ?>" data-gw-tab="general">

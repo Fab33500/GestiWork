@@ -28,27 +28,29 @@ if ($gw_view === '' && isset($_GET['gw_view'])) {
     $gw_view = (string) $_GET['gw_view'];
 }
 
-if ($gw_view === 'Aide') {
+$gw_view_normalized = strtolower(trim((string) $gw_view));
+
+if ($gw_view_normalized === 'aide') {
     $active_view = 'aide';
-} elseif ($is_admin && $gw_view === 'settings') {
+} elseif ($is_admin && $gw_view_normalized === 'settings') {
     $active_view = 'settings';
-} elseif ($is_admin && $gw_view === 'Tiers') {
+} elseif ($is_admin && $gw_view_normalized === 'tiers') {
     $active_view = 'tiers';
-} elseif ($is_admin && $gw_view === 'Client') {
+} elseif ($is_admin && $gw_view_normalized === 'client') {
     $active_view = 'client';
-} elseif ($is_admin && $gw_view === 'apprenants') {
+} elseif ($is_admin && $gw_view_normalized === 'apprenants') {
     $active_view = 'apprenants';
-} elseif ($is_admin && $gw_view === 'equipe-pedagogique') {
+} elseif ($is_admin && $gw_view_normalized === 'equipe-pedagogique') {
     $active_view = 'equipe_pedagogique';
-} elseif ($is_admin && $gw_view === 'Apprenant') {
+} elseif ($is_admin && $gw_view_normalized === 'apprenant') {
     $active_view = 'apprenant';
-} elseif ($is_admin && $gw_view === 'Responsable') {
+} elseif ($is_admin && $gw_view_normalized === 'responsable') {
     $active_view = 'responsable';
 }
 
 $dashboard_url = home_url('/gestiwork/');
 $settings_url  = $is_admin ? home_url('/gestiwork/settings/general/') : $dashboard_url;
-$help_url      = home_url('/gestiwork/Aide/');
+$help_url      = home_url('/gestiwork/aide/');
 $tiers_url     = $is_admin ? home_url('/gestiwork/Tiers/') : $dashboard_url;
 $apprenants_url = $is_admin ? home_url('/gestiwork/apprenants/') : $dashboard_url;
 $equipe_pedagogique_url = $is_admin ? home_url('/gestiwork/equipe-pedagogique/') : $dashboard_url;

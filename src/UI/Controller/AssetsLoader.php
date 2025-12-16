@@ -76,6 +76,24 @@ class AssetsLoader
         
         $viewsWithForms = ['settings', 'client'];
 
+        // Assets spécifiques à la vue Aide
+        if ($currentView === 'aide') {
+            wp_enqueue_style(
+                'gestiwork-aide',
+                GW_PLUGIN_URL . 'assets/css/gw-aide.css',
+                ['gestiwork-layout'],
+                GW_VERSION
+            );
+
+            wp_enqueue_script(
+                'gestiwork-aide',
+                GW_PLUGIN_URL . 'assets/js/gw-aide.js',
+                [],
+                GW_VERSION,
+                true
+            );
+        }
+
         // gw-form-utils nécessaire sur Settings et Client (formulaires avec formatage)
         if (in_array($currentView, $viewsWithForms, true)) {
             wp_enqueue_script(
