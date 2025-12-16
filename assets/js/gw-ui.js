@@ -211,15 +211,121 @@
         });
     }
 
+    // Auto-remplir le champ Entreprise lors de la sélection dans la card (Apprenant create)
+    function initEntrepriseAutoFill() {
+        var entrepriseSelect = document.getElementById('gw_apprenant_entreprise_id');
+        var entrepriseInput = document.getElementById('gw_apprenant_entreprise');
+
+        if (!entrepriseSelect || !entrepriseInput) {
+            return;
+        }
+
+        entrepriseSelect.addEventListener('change', function () {
+            var selectedOption = entrepriseSelect.options[entrepriseSelect.selectedIndex];
+            if (selectedOption && selectedOption.value !== '') {
+                entrepriseInput.value = selectedOption.text;
+            } else {
+                entrepriseInput.value = '';
+            }
+        });
+    }
+
+    // Calcul automatique coût jour <-> heure (basé sur heures_par_jour dynamique)
+    function initCoutCalculation() {
+        var DEFAULT_HEURES_PAR_JOUR = 7;
+
+        // Récupère le nombre d'heures par jour depuis le champ associé ou utilise la valeur par défaut
+        function getHeuresParJour(input) {
+            var sourceId = input.getAttribute('data-heures-jour-source');
+            if (sourceId) {
+                var sourceInput = document.getElementById(sourceId);
+                if (sourceInput) {
+                    var value = parseFloat(sourceInput.value);
+                    if (!isNaN(value) && value > 0) {
+                        return value;
+                    }
+                }
+            }
+            return DEFAULT_HEURES_PAR_JOUR;
+        }
+
+        // Coût jour -> coût heure
+        var coutJourInputs = document.querySelectorAll('.gw-cout-jour');
+        coutJourInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                var targetId = input.getAttribute('data-cout-heure-target');
+                if (!targetId) return;
+                var targetInput = document.getElementById(targetId);
+                if (!targetInput) return;
+
+                var heuresParJour = getHeuresParJour(input);
+                var coutJour = parseFloat(input.value);
+                if (!isNaN(coutJour) && coutJour > 0) {
+                    var coutHeure = coutJour / heuresParJour;
+                    targetInput.value = coutHeure.toFixed(2);
+                } else if (input.value === '') {
+                    targetInput.value = '';
+                }
+            });
+        });
+
+        // Coût heure -> coût jour
+        var coutHeureInputs = document.querySelectorAll('.gw-cout-heure');
+        coutHeureInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                var targetId = input.getAttribute('data-cout-jour-target');
+                if (!targetId) return;
+                var targetInput = document.getElementById(targetId);
+                if (!targetInput) return;
+
+                var heuresParJour = getHeuresParJour(input);
+                var coutHeure = parseFloat(input.value);
+                if (!isNaN(coutHeure) && coutHeure > 0) {
+                    var coutJour = coutHeure * heuresParJour;
+                    targetInput.value = coutJour.toFixed(2);
+                } else if (input.value === '') {
+                    targetInput.value = '';
+                }
+            });
+        });
+
+        // Quand heures_par_jour change, recalculer le coût heure à partir du coût jour
+        var heuresJourInputs = document.querySelectorAll('.gw-heures-jour');
+        heuresJourInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                var coutJourTargetId = input.getAttribute('data-cout-jour-target');
+                var coutHeureTargetId = input.getAttribute('data-cout-heure-target');
+                if (!coutJourTargetId || !coutHeureTargetId) return;
+
+                var coutJourInput = document.getElementById(coutJourTargetId);
+                var coutHeureInput = document.getElementById(coutHeureTargetId);
+                if (!coutJourInput || !coutHeureInput) return;
+
+                var heuresParJour = parseFloat(input.value);
+                if (isNaN(heuresParJour) || heuresParJour <= 0) return;
+
+                var coutJour = parseFloat(coutJourInput.value);
+                if (!isNaN(coutJour) && coutJour > 0) {
+                    var coutHeure = coutJour / heuresParJour;
+                    coutHeureInput.value = coutHeure.toFixed(2);
+                }
+            });
+        });
+    }
+
     // Initialisation
     initModals();
     initBasicTabs();
     initFormValidation();
+    initEntrepriseAutoFill();
+    initCoutCalculation();
 
     // Exposer pour réutilisation
     window.GWUIUtils = {
         initModals: initModals,
         initBasicTabs: initBasicTabs,
-        initFormValidation: initFormValidation
+        initFormValidation: initFormValidation,
+        initEntrepriseAutoFill: initEntrepriseAutoFill,
+        initCoutCalculation: initCoutCalculation
     };
 })();

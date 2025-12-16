@@ -74,7 +74,7 @@ class AssetsLoader
         // Assets conditionnels selon la vue active
         $currentView = self::getCurrentView();
         
-        $viewsWithForms = ['settings', 'client'];
+        $viewsWithForms = ['settings', 'client', 'apprenant', 'responsable'];
 
         // Assets spécifiques à la vue Aide
         if ($currentView === 'aide') {
@@ -126,6 +126,14 @@ class AssetsLoader
                 'settings_identity' => [
                     'cp' => '#gw_code_postal',
                     'ville' => '#gw_ville',
+                ],
+                'apprenant_create' => [
+                    'cp' => '#gw_apprenant_cp',
+                    'ville' => '#gw_apprenant_ville',
+                ],
+                'responsable_create' => [
+                    'cp' => '#gw_responsable_code_postal',
+                    'ville' => '#gw_responsable_ville',
                 ],
             ];
 
@@ -208,6 +216,8 @@ class AssetsLoader
             case 'client':
             case 'tiers':
             case 'aide':
+            case 'apprenant':
+            case 'responsable':
                 return $view;
             default:
                 return 'dashboard';

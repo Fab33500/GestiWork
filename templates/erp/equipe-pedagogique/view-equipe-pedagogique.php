@@ -2,36 +2,14 @@
 
 declare(strict_types=1);
 
+use GestiWork\Domain\ResponsableFormateur\ResponsableFormateurProvider;
+use GestiWork\Domain\ResponsableFormateur\FormateurCompetenceProvider;
+
 if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
 
-$formateurs = [
-    [
-        'competences' => ['Management'],
-        'nom' => 'Vincent PAUGAM',
-        'email' => 'paugam.vincent@gmail.com',
-        'role' => 'Interne',
-        'sous_traitant' => 'Non',
-        'created_at' => '20/09/2023',
-    ],
-    [
-        'competences' => ['Premiers secours'],
-        'nom' => 'Valentin CARLOS',
-        'email' => 'c.valentin@grunnings.fr',
-        'role' => 'Externe',
-        'sous_traitant' => 'Oui',
-        'created_at' => '20/09/2023',
-    ],
-    [
-        'competences' => ['Bureautique'],
-        'nom' => 'Jérémy FRENKLIN',
-        'email' => 'julie.frenchin@laposte.net',
-        'role' => 'Externe',
-        'sous_traitant' => 'Oui',
-        'created_at' => '20/09/2023',
-    ],
-];
+$formateurs = ResponsableFormateurProvider::getAll();
 
 $gwEquipePedagogiqueResetUrl = home_url('/gestiwork/equipe-pedagogique/');
 
@@ -121,24 +99,36 @@ $gw_search_fields = [
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($formateurs as $index => $formateur) : ?>
+                            <?php foreach ($formateurs as $formateur) : ?>
                                 <tr>
                                     <td>
                                         <?php
-                                        $responsableId = (int) $index + 1;
+                                        $responsableId = isset($formateur['id']) ? (int) $formateur['id'] : 0;
                                         $responsableViewUrl = add_query_arg(
                                             ['gw_view' => 'Responsable', 'gw_responsable_id' => $responsableId],
                                             home_url('/gestiwork/')
                                         );
+
+                                        $prenom = isset($formateur['prenom']) ? trim((string) $formateur['prenom']) : '';
+                                        $nom = isset($formateur['nom']) ? trim((string) $formateur['nom']) : '';
+                                        $label = trim($prenom . ' ' . $nom);
+                                        if ($label === '') {
+                                            $label = $responsableId > 0 ? (string) $responsableId : '-';
+                                        }
                                         ?>
-                                        <a href="<?php echo esc_url($responsableViewUrl); ?>" class="gw-link-primary-strong">
-                                            <?php echo esc_html((string) ($formateur['nom'] ?? '')); ?>
-                                        </a>
+                                        <?php if ($responsableId > 0) : ?>
+                                            <a href="<?php echo esc_url($responsableViewUrl); ?>" class="gw-link-primary-strong">
+                                                <?php echo esc_html($label); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            <?php echo esc_html($label); ?>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if (!empty($formateur['email'])) : ?>
-                                            <a href="mailto:<?php echo esc_attr((string) $formateur['email']); ?>">
-                                                <?php echo esc_html((string) $formateur['email']); ?>
+                                        <?php $email = isset($formateur['email']) ? trim((string) $formateur['email']) : ''; ?>
+                                        <?php if ($email !== '') : ?>
+                                            <a href="mailto:<?php echo esc_attr($email); ?>">
+                                                <?php echo esc_html($email); ?>
                                             </a>
                                         <?php else : ?>
                                             -
@@ -146,26 +136,43 @@ $gw_search_fields = [
                                     </td>
                                     <td>
                                         <span class="gw-tag">
-                                            <?php echo esc_html((string) ($formateur['role'] ?? '-')); ?>
+                                            <?php echo esc_html((string) ($formateur['role_type'] ?? '-')); ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="gw-tag <?php echo (($formateur['sous_traitant'] ?? '') === 'Oui') ? 'gw-tag--warning' : 'gw-tag--soft'; ?>">
-                                            <?php echo esc_html((string) ($formateur['sous_traitant'] ?? '-')); ?>
+                                        <?php $sousTraitant = (string) ($formateur['sous_traitant'] ?? '-'); ?>
+                                        <span class="gw-tag <?php echo ($sousTraitant === 'Oui') ? 'gw-tag--warning' : 'gw-tag--soft'; ?>">
+                                            <?php echo esc_html($sousTraitant); ?>
                                         </span>
                                     </td>
                                     <td><?php echo esc_html((string) ($formateur['created_at'] ?? '-')); ?></td>
                                     <td>
-                                        <?php foreach (($formateur['competences'] ?? []) as $competence) : ?>
-                                            <span class="gw-tag gw-tag--soft gw-tag--spaced">
-                                                <?php echo esc_html($competence); ?>
-                                            </span>
-                                        <?php endforeach; ?>
+                                        <?php
+                                        $competences = [];
+                                        if ($responsableId > 0) {
+                                            $competences = FormateurCompetenceProvider::getCompetencesByFormateurId($responsableId);
+                                        }
+                                        if (is_array($competences) && count($competences) > 0) :
+                                            foreach ($competences as $competence) :
+                                        ?>
+                                                <span class="gw-tag gw-tag--soft gw-tag--spaced">
+                                                    <?php echo esc_html((string) $competence); ?>
+                                                </span>
+                                        <?php
+                                            endforeach;
+                                        else :
+                                        ?>
+                                            -
+                                        <?php endif; ?>
                                     </td>
                                     <td>
-                                        <a class="gw-button gw-button--secondary" href="<?php echo esc_url($responsableViewUrl); ?>" title="<?php echo esc_attr__('Voir', 'gestiwork'); ?>">
-                                            <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                        </a>
+                                        <?php if ($responsableId > 0) : ?>
+                                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url($responsableViewUrl); ?>" title="<?php echo esc_attr__('Voir', 'gestiwork'); ?>">
+                                                <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+                                            </a>
+                                        <?php else : ?>
+                                            -
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

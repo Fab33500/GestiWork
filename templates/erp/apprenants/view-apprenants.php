@@ -2,30 +2,14 @@
 
 declare(strict_types=1);
 
+use GestiWork\Domain\Apprenant\ApprenantProvider;
+use GestiWork\Domain\Tiers\TierProvider;
+
 if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
 
-$apprenants = [
-    [
-        'nom' => 'Géraldine COUVERT',
-        'email' => 'gege@yahoo.fr',
-        'entreprise' => 'Groupe BB - siège social Beaux Bâtons',
-        'origine' => 'Campagne',
-    ],
-    [
-        'nom' => 'Emeline POUILLON',
-        'email' => 'e.pouillon@toto.fr',
-        'entreprise' => 'HP2M',
-        'origine' => 'France travail',
-    ],
-    [
-        'nom' => 'Harry POTTER',
-        'email' => 'h.potter@smartof.tech',
-        'entreprise' => 'Beaux Bâtons',
-        'origine' => 'Réseaux sociaux',
-    ],
-];
+$apprenants = ApprenantProvider::getAll();
 
 $gwApprenantsResetUrl = home_url('/gestiwork/apprenants/');
 
@@ -110,35 +94,73 @@ $gw_search_fields = [
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($apprenants as $index => $apprenant) : ?>
+                            <?php foreach ($apprenants as $apprenant) : ?>
                                 <tr>
                                     <td>
                                         <?php
-                                        $apprenantId = (int) $index + 1;
+                                        $apprenantId = isset($apprenant['id']) ? (int) $apprenant['id'] : 0;
                                         $apprenantViewUrl = add_query_arg(
                                             ['gw_view' => 'Apprenant', 'gw_apprenant_id' => $apprenantId],
                                             home_url('/gestiwork/')
                                         );
+
+                                        $prenom = isset($apprenant['prenom']) ? trim((string) $apprenant['prenom']) : '';
+                                        $nom = isset($apprenant['nom']) ? trim((string) $apprenant['nom']) : '';
+                                        $label = trim($prenom . ' ' . $nom);
+                                        if ($label === '') {
+                                            $label = $apprenantId > 0 ? (string) $apprenantId : '-';
+                                        }
                                         ?>
-                                        <a href="<?php echo esc_url($apprenantViewUrl); ?>" class="gw-link-primary-strong">
-                                            <?php echo esc_html($apprenant['nom']); ?>
-                                        </a>
+                                        <?php if ($apprenantId > 0) : ?>
+                                            <a href="<?php echo esc_url($apprenantViewUrl); ?>" class="gw-link-primary-strong">
+                                                <?php echo esc_html($label); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            <?php echo esc_html($label); ?>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
-                                        <a href="mailto:<?php echo esc_attr($apprenant['email']); ?>">
-                                            <?php echo esc_html($apprenant['email']); ?>
-                                        </a>
+                                        <?php $email = isset($apprenant['email']) ? trim((string) $apprenant['email']) : ''; ?>
+                                        <?php if ($email !== '') : ?>
+                                            <a href="mailto:<?php echo esc_attr($email); ?>">
+                                                <?php echo esc_html($email); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            -
+                                        <?php endif; ?>
                                     </td>
-                                    <td><?php echo esc_html($apprenant['entreprise']); ?></td>
+                                    <td>
+                                        <?php
+                                        $entrepriseLabel = '-';
+                                        $entrepriseId = isset($apprenant['entreprise_id']) ? (int) $apprenant['entreprise_id'] : 0;
+                                        if ($entrepriseId > 0) {
+                                            $tier = TierProvider::getById($entrepriseId);
+                                            if (is_array($tier)) {
+                                                $raisonSociale = isset($tier['raison_sociale']) ? trim((string) $tier['raison_sociale']) : '';
+                                                $nomTier = isset($tier['nom']) ? trim((string) $tier['nom']) : '';
+                                                $prenomTier = isset($tier['prenom']) ? trim((string) $tier['prenom']) : '';
+                                                $entrepriseLabel = $raisonSociale !== '' ? $raisonSociale : trim($prenomTier . ' ' . $nomTier);
+                                                if ($entrepriseLabel === '') {
+                                                    $entrepriseLabel = (string) $entrepriseId;
+                                                }
+                                            }
+                                        }
+                                        echo esc_html($entrepriseLabel);
+                                        ?>
+                                    </td>
                                     <td>
                                         <span class="gw-tag">
-                                            <?php echo esc_html($apprenant['origine']); ?>
+                                            <?php echo esc_html((string) ($apprenant['origine'] ?? '-')); ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <a class="gw-button gw-button--secondary" href="<?php echo esc_url($apprenantViewUrl); ?>" title="<?php echo esc_attr__('Voir', 'gestiwork'); ?>">
-                                            <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                        </a>
+                                        <?php if ($apprenantId > 0) : ?>
+                                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url($apprenantViewUrl); ?>" title="<?php echo esc_attr__('Voir', 'gestiwork'); ?>">
+                                                <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+                                            </a>
+                                        <?php else : ?>
+                                            -
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

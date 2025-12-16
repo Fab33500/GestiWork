@@ -44,6 +44,18 @@
         });
     }
 
+    function setNumericInputAttributes(input, maxLength) {
+        if (!input) {
+            return;
+        }
+        if (typeof maxLength === 'number') {
+            input.maxLength = maxLength;
+        }
+        input.setAttribute('inputmode', 'numeric');
+        var count = typeof maxLength === 'number' ? maxLength : 5;
+        input.setAttribute('pattern', '[0-9]{' + count + '}');
+    }
+
     function bindSettingsGeneral() {
         var telFixe = document.getElementById('gw_telephone_fixe');
         var telPortable = document.getElementById('gw_telephone_portable');
@@ -165,13 +177,31 @@
         bindPhoneBlur(contactTel2);
     }
 
+    function bindApprenantForm() {
+        var telField = document.getElementById('gw_apprenant_telephone');
+        var cpField = document.getElementById('gw_apprenant_cp');
+
+        bindPhoneBlur(telField);
+        setNumericInputAttributes(cpField, 5);
+    }
+
+    function bindResponsableForm() {
+        var telField = document.getElementById('gw_responsable_telephone');
+        var cpField = document.getElementById('gw_responsable_code_postal');
+
+        bindPhoneBlur(telField);
+        setNumericInputAttributes(cpField, 5);
+    }
+
     var api = {
         gwFormatPhone: gwFormatPhone,
         gwFormatSiret: gwFormatSiret,
         formatPhone: gwFormatPhone,
         formatSiret: gwFormatSiret,
         bindSettingsGeneral: bindSettingsGeneral,
-        bindTierClient: bindTierClient
+        bindTierClient: bindTierClient,
+        bindApprenantForm: bindApprenantForm,
+        bindResponsableForm: bindResponsableForm
     };
 
     window.GWFormUtils = window.GWFormUtils || api;
@@ -179,6 +209,8 @@
     function init() {
         bindSettingsGeneral();
         bindTierClient();
+        bindApprenantForm();
+        bindResponsableForm();
     }
 
     if (document) {

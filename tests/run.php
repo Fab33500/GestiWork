@@ -215,6 +215,55 @@ if (!function_exists('add_query_arg')) {
     }
 }
 
+if (!function_exists('sanitize_email')) {
+    function sanitize_email(string $email): string
+    {
+        return trim($email);
+    }
+}
+
+if (!function_exists('sanitize_textarea_field')) {
+    function sanitize_textarea_field(string $text): string
+    {
+        return trim($text);
+    }
+}
+
+if (!function_exists('wp_verify_nonce')) {
+    function wp_verify_nonce(string $nonce, string $action): bool
+    {
+        return true; // Toujours valide en test
+    }
+}
+
+if (!function_exists('wp_redirect')) {
+    function wp_redirect(string $location, int $status = 302): void
+    {
+        // Ne fait rien en test
+    }
+}
+
+if (!function_exists('get_query_var')) {
+    function get_query_var(string $var, $default = '')
+    {
+        return $_GET[$var] ?? $default;
+    }
+}
+
+if (!function_exists('add_action')) {
+    function add_action(string $hook, $callback, int $priority = 10, int $accepted_args = 1): void
+    {
+        // Ne fait rien en test
+    }
+}
+
+if (!function_exists('esc_textarea')) {
+    function esc_textarea(string $text): string
+    {
+        return htmlspecialchars($text);
+    }
+}
+
 if (!function_exists('selected')) {
     function selected(string $value, string $current): void
     {
@@ -235,11 +284,17 @@ class wpdb
     private int $tiersAutoId = 0;
 
     private int $contactsAutoId = 0;
+    private int $apprenantsAutoId = 0;
+    private int $responsablesAutoId = 0;
+    private int $competencesAutoId = 0;
 
     public function __construct()
     {
         $this->tables[$this->prefix . 'gw_tiers'] = [];
         $this->tables[$this->prefix . 'gw_tier_contacts'] = [];
+        $this->tables[$this->prefix . 'gw_apprenants'] = [];
+        $this->tables[$this->prefix . 'gw_responsables_formateurs'] = [];
+        $this->tables[$this->prefix . 'gw_formateur_competences'] = [];
     }
 
     public function prepare(string $query, ...$args): string
@@ -247,7 +302,21 @@ class wpdb
         if (!$args) {
             return $query;
         }
-        return vsprintf($query, $args);
+
+        if (count($args) === 1 && is_array($args[0])) {
+            $args = $args[0];
+        }
+
+        $normalized = [];
+        foreach ($args as $arg) {
+            if (is_string($arg)) {
+                $normalized[] = "'" . str_replace("'", "\\'", $arg) . "'";
+                continue;
+            }
+            $normalized[] = $arg;
+        }
+
+        return vsprintf($query, $normalized);
     }
 
     public function esc_like(string $text): string
@@ -274,7 +343,20 @@ class wpdb
                 if (!array_key_exists($table, $this->tables)) {
                     return 0;
                 }
-                return count($this->tables[$table]);
+
+                $rows = array_values($this->tables[$table]);
+                if (stripos($query, "type = 'entreprise'") !== false) {
+                    $rows = array_values(array_filter($rows, function (array $row): bool {
+                        return (string) ($row['type'] ?? '') === 'entreprise';
+                    }));
+                }
+                if (stripos($query, 'deleted_at IS NULL') !== false) {
+                    $rows = array_values(array_filter($rows, function (array $row): bool {
+                        return !isset($row['deleted_at']) || $row['deleted_at'] === null;
+                    }));
+                }
+
+                return count($rows);
             }
         }
 
@@ -316,6 +398,30 @@ class wpdb
             return 1;
         }
 
+        if (str_ends_with($table, 'gw_apprenants')) {
+            $this->apprenantsAutoId++;
+            $data['id'] = $this->apprenantsAutoId;
+            $this->tables[$table][$this->apprenantsAutoId] = $data;
+            $this->insert_id = $this->apprenantsAutoId;
+            return 1;
+        }
+
+        if (str_ends_with($table, 'gw_responsables_formateurs')) {
+            $this->responsablesAutoId++;
+            $data['id'] = $this->responsablesAutoId;
+            $this->tables[$table][$this->responsablesAutoId] = $data;
+            $this->insert_id = $this->responsablesAutoId;
+            return 1;
+        }
+
+        if (str_ends_with($table, 'gw_formateur_competences')) {
+            $this->competencesAutoId++;
+            $data['id'] = $this->competencesAutoId;
+            $this->tables[$table][$this->competencesAutoId] = $data;
+            $this->insert_id = $this->competencesAutoId;
+            return 1;
+        }
+
         return false;
     }
 
@@ -323,6 +429,19 @@ class wpdb
     {
         if (!array_key_exists($table, $this->tables)) {
             return false;
+        }
+
+        // Support pour UPDATE WHERE formateur_id = X
+        if (isset($where['formateur_id'])) {
+            $formateurId = (int) $where['formateur_id'];
+            $updated = 0;
+            foreach ($this->tables[$table] as $id => $row) {
+                if ((int) ($row['formateur_id'] ?? 0) === $formateurId) {
+                    $this->tables[$table][$id] = array_merge($this->tables[$table][$id], $data);
+                    $updated++;
+                }
+            }
+            return $updated;
         }
 
         $id = isset($where['id']) ? (int) $where['id'] : 0;
@@ -338,6 +457,19 @@ class wpdb
     {
         if (!array_key_exists($table, $this->tables)) {
             return false;
+        }
+
+        // Support pour DELETE by formateur_id
+        if (isset($where['formateur_id'])) {
+            $formateurId = (int) $where['formateur_id'];
+            $deleted = 0;
+            foreach ($this->tables[$table] as $id => $row) {
+                if ((int) ($row['formateur_id'] ?? 0) === $formateurId) {
+                    unset($this->tables[$table][$id]);
+                    $deleted++;
+                }
+            }
+            return $deleted;
         }
 
         $id = isset($where['id']) ? (int) $where['id'] : 0;
@@ -387,6 +519,28 @@ class wpdb
             return $row;
         }
 
+        // Support pour SELECT cout_* FROM table WHERE formateur_id = X LIMIT 1
+        if (preg_match('~SELECT\s+cout_jour_ht,\s*cout_heure_ht,\s*heures_par_jour,\s*tva_rate\s+FROM\s+([^\s]+)\s+WHERE\s+formateur_id\s*=\s*(\d+)\s+LIMIT\s+1~i', $query, $m)) {
+            $table = $m[1];
+            $formateurId = (int) $m[2];
+            if (!array_key_exists($table, $this->tables) || empty($this->tables[$table])) {
+                return null;
+            }
+
+            foreach ($this->tables[$table] as $row) {
+                if ((int) ($row['formateur_id'] ?? 0) === $formateurId) {
+                    return [
+                        'cout_jour_ht' => $row['cout_jour_ht'] ?? null,
+                        'cout_heure_ht' => $row['cout_heure_ht'] ?? null,
+                        'heures_par_jour' => $row['heures_par_jour'] ?? 7.00,
+                        'tva_rate' => $row['tva_rate'] ?? 0.00,
+                    ];
+                }
+            }
+
+            return null;
+        }
+
         return null;
     }
 
@@ -417,6 +571,55 @@ class wpdb
             return $rows;
         }
 
+        // Support pour SELECT competence FROM table WHERE formateur_id = X
+        if (preg_match('~SELECT\s+competence\s+FROM\s+([^\s]+)\s+WHERE\s+formateur_id\s*=\s*(\d+)~i', $query, $m)) {
+            $table = $m[1];
+            $formateurId = (int) $m[2];
+            if (!array_key_exists($table, $this->tables)) {
+                return [];
+            }
+
+            $rows = [];
+            foreach ($this->tables[$table] as $row) {
+                if ((int) ($row['formateur_id'] ?? 0) === $formateurId) {
+                    $rows[] = ['competence' => $row['competence'] ?? ''];
+                }
+            }
+
+            return $rows;
+        }
+
+        // Support pour SELECT * FROM table ORDER BY ...
+        if (preg_match('~SELECT\s+\*\s+FROM\s+([^\s]+)(?:\s+ORDER\s+BY\s+[^;]+)?~i', $query, $m)) {
+            $table = $m[1];
+            if (!array_key_exists($table, $this->tables)) {
+                return [];
+            }
+
+            $rows = array_values($this->tables[$table]);
+
+            // Filtrages simples utilisés par TierProvider::search (type, deleted_at)
+            if (stripos($query, "type = 'entreprise'") !== false) {
+                $rows = array_values(array_filter($rows, function (array $row): bool {
+                    return (string) ($row['type'] ?? '') === 'entreprise';
+                }));
+            }
+            if (stripos($query, 'deleted_at IS NULL') !== false) {
+                $rows = array_values(array_filter($rows, function (array $row): bool {
+                    return !isset($row['deleted_at']) || $row['deleted_at'] === null;
+                }));
+            }
+
+            // Support minimal LIMIT/OFFSET
+            if (preg_match('~LIMIT\s+(\d+)\s+OFFSET\s+(\d+)~i', $query, $lm)) {
+                $limit = (int) $lm[1];
+                $offset = (int) $lm[2];
+                $rows = array_slice($rows, $offset, $limit);
+            }
+
+            return $rows;
+        }
+
         return [];
     }
 }
@@ -426,6 +629,9 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use GestiWork\Domain\Tiers\TierProvider;
 use GestiWork\Domain\Tiers\TierContactProvider;
 use GestiWork\Domain\Tiers\LegalFormCatalog;
+use GestiWork\Domain\Apprenant\ApprenantProvider;
+use GestiWork\Domain\ResponsableFormateur\ResponsableFormateurProvider;
+use GestiWork\Domain\ResponsableFormateur\FormateurCompetenceProvider;
 
 $GLOBALS['wpdb'] = new wpdb();
 
@@ -580,14 +786,14 @@ $apprenantsHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/apprenants/view
 ]);
 expectNotEmpty($apprenantsHtml, 'Template apprenants: doit produire du HTML');
 expectTrue(strpos($apprenantsHtml, 'Recherche avancée') !== false, 'Template apprenants: contient "Recherche avancée"');
-expectTrue(strpos($apprenantsHtml, 'Apprenants récents') !== false, 'Template apprenants: contient "Apprenants récents"');
+expectTrue(strpos($apprenantsHtml, 'liste des apprenants') !== false, 'Template apprenants: contient "liste des apprenants"');
 
 $equipeHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-equipe-pedagogique.php', [
     'gw_formateurs_query' => 'Paugam',
 ]);
 expectNotEmpty($equipeHtml, 'Template équipe pédagogique: doit produire du HTML');
 expectTrue(strpos($equipeHtml, 'Recherche avancée') !== false, 'Template équipe pédagogique: contient "Recherche avancée"');
-expectTrue(strpos($equipeHtml, 'Formateurs récents') !== false, 'Template équipe pédagogique: contient "Formateurs récents"');
+expectTrue(strpos($equipeHtml, 'formateurs & responsables') !== false, 'Template équipe pédagogique: contient "formateurs & responsables"');
 
 $apprenantFicheHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenant.php', [
     'gw_apprenant_id' => 1,
@@ -601,5 +807,107 @@ $responsableFicheHtml = $renderTemplate(GW_PLUGIN_DIR . 'templates/erp/equipe-pe
 expectNotEmpty($responsableFicheHtml, 'Template fiche responsable: doit produire du HTML');
 expectTrue(strpos($responsableFicheHtml, 'Fiche formateur / responsable pédagogique') !== false, 'Template fiche responsable: contient "Fiche formateur / responsable pédagogique"');
 
+info('--- Tests nouveaux providers (Apprenants / ResponsableFormateur) ---');
+
+// Test création apprenant
+$apprenantId = ApprenantProvider::create([
+    'civilite' => 'Monsieur',
+    'prenom' => 'Harry',
+    'nom' => 'Potter',
+    'email' => 'harry.potter@poudlard.com',
+    'telephone' => '01 23 45 67 89',
+    'origine' => 'École de magie',
+    'adresse1' => '4 Privet Drive',
+    'cp' => '75001',
+    'ville' => 'Paris',
+]);
+
+expectTrue($apprenantId > 0, 'Création apprenant: id > 0');
+info("- Apprenant créé: id={$apprenantId}");
+
+$apprenant = ApprenantProvider::getById($apprenantId);
+expectTrue(is_array($apprenant), 'Création apprenant: getById retourne un array');
+expectSame('Harry', $apprenant['prenom'] ?? null, 'Création apprenant: prénom persiste');
+expectSame('Potter', $apprenant['nom'] ?? null, 'Création apprenant: nom persiste');
+expectSame('École de magie', $apprenant['origine'] ?? null, 'Création apprenant: origine persiste');
+info('- Assertions apprenant OK (prénom/nom/origine)');
+
+// Test mise à jour apprenant
+$updateSuccess = ApprenantProvider::update($apprenantId, [
+    'entreprise_id' => $entrepriseId, // Association avec l'entreprise créée plus haut
+    'statut_bpf' => 'En formation',
+]);
+
+expectTrue($updateSuccess, 'Mise à jour apprenant: doit réussir');
+$apprenantMisAJour = ApprenantProvider::getById($apprenantId);
+expectSame($entrepriseId, (int)($apprenantMisAJour['entreprise_id'] ?? 0), 'Mise à jour apprenant: entreprise_id persiste');
+expectSame('En formation', $apprenantMisAJour['statut_bpf'] ?? null, 'Mise à jour apprenant: statut_bpf persiste');
+info('- Mise à jour apprenant OK (entreprise_id/statut_bpf)');
+
+// Test création responsable/formateur
+$responsableId = ResponsableFormateurProvider::create([
+    'civilite' => 'Madame',
+    'prenom' => 'Minerva',
+    'nom' => 'McGonagall',
+    'fonction' => 'Directrice adjointe',
+    'email' => 'mcgonagall@poudlard.com',
+    'telephone' => '01 98 76 54 32',
+    'role_type' => 'responsable_pedagogique',
+    'sous_traitant' => 'Non',
+    'adresse_postale' => 'Château de Poudlard',
+    'rue' => 'Grande Salle',
+    'code_postal' => '12345',
+    'ville' => 'Écosse',
+]);
+
+expectTrue($responsableId > 0, 'Création responsable: id > 0');
+info("- Responsable créé: id={$responsableId}");
+
+$responsable = ResponsableFormateurProvider::getById($responsableId);
+expectTrue(is_array($responsable), 'Création responsable: getById retourne un array');
+expectSame('Minerva', $responsable['prenom'] ?? null, 'Création responsable: prénom persiste');
+expectSame('McGonagall', $responsable['nom'] ?? null, 'Création responsable: nom persiste');
+expectSame('responsable_pedagogique', $responsable['role_type'] ?? null, 'Création responsable: role_type persiste');
+info('- Assertions responsable OK (prénom/nom/role_type)');
+
+// Test compétences formateur
+$competences = ['Métamorphose', 'Direction pédagogique', 'Gestion de classe'];
+FormateurCompetenceProvider::saveCompetences($responsableId, $competences);
+
+$competencesRecuperees = FormateurCompetenceProvider::getCompetencesByFormateurId($responsableId);
+expectSame(3, count($competencesRecuperees), 'Compétences formateur: doit avoir 3 compétences');
+expectTrue(in_array('Métamorphose', $competencesRecuperees, true), 'Compétences formateur: contient Métamorphose');
+expectTrue(in_array('Direction pédagogique', $competencesRecuperees, true), 'Compétences formateur: contient Direction pédagogique');
+info('- Compétences formateur OK (3 compétences sauvegardées)');
+
+// Test coûts formateur (après création des compétences car ils sont dans la même table)
+$couts = [
+    'cout_jour_ht' => 850.00,
+    'cout_heure_ht' => 125.00,
+    'heures_par_jour' => 6.80,
+    'tva_rate' => 20.00,
+];
+FormateurCompetenceProvider::saveCouts($responsableId, $couts);
+
+$coutsRecuperes = FormateurCompetenceProvider::getCoutsByFormateurId($responsableId);
+expectTrue(is_array($coutsRecuperes), 'Coûts formateur: getCoutsByFormateurId retourne un array');
+expectSame(850.0, (float)($coutsRecuperes['cout_jour_ht'] ?? 0), 'Coûts formateur: cout_jour_ht persiste');
+expectSame(125.0, (float)($coutsRecuperes['cout_heure_ht'] ?? 0), 'Coûts formateur: cout_heure_ht persiste');
+expectSame(6.8, (float)($coutsRecuperes['heures_par_jour'] ?? 0), 'Coûts formateur: heures_par_jour persiste');
+expectSame(20.0, (float)($coutsRecuperes['tva_rate'] ?? 0), 'Coûts formateur: tva_rate persiste');
+info('- Coûts formateur OK (850€/jour, 125€/h, 6.8h/jour, TVA 20%)');
+
+info('--- Tests de récupération de listes ---');
+
+$tousApprenants = ApprenantProvider::getAll();
+expectTrue(is_array($tousApprenants), 'Liste apprenants: getAll retourne un array');
+expectTrue(count($tousApprenants) >= 1, 'Liste apprenants: contient au moins 1 apprenant');
+info("- Liste apprenants: " . count($tousApprenants) . " apprenant(s) trouvé(s)");
+
+$tousResponsables = ResponsableFormateurProvider::getAll();
+expectTrue(is_array($tousResponsables), 'Liste responsables: getAll retourne un array');
+expectTrue(count($tousResponsables) >= 1, 'Liste responsables: contient au moins 1 responsable');
+info("- Liste responsables: " . count($tousResponsables) . " responsable(s) trouvé(s)");
+
 $elapsedMs = (microtime(true) - $start) * 1000;
-info(sprintf('OK (%.1f ms)', $elapsedMs));
+info(sprintf('OK - Tous les tests passés (%.1f ms)', $elapsedMs));
