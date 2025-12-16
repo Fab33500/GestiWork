@@ -161,4 +161,54 @@ class ResponsableFormateurProvider
 
         return $wpdb->get_results($sql, ARRAY_A) ?: [];
     }
+
+    /**
+     * Recherche des responsables/formateurs avec filtres.
+     *
+     * @param array $filters Filtres possibles: query, role_type, sous_traitant
+     */
+    public static function search(array $filters = []): array
+    {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'gw_responsables_formateurs';
+
+        $where = ['1=1'];
+        $params = [];
+
+        // Recherche textuelle (nom, prénom, email, fonction)
+        $query = isset($filters['query']) ? trim((string) $filters['query']) : '';
+        if ($query !== '') {
+            $like = '%' . $wpdb->esc_like($query) . '%';
+            $where[] = '(nom LIKE %s OR prenom LIKE %s OR email LIKE %s OR fonction LIKE %s)';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        // Filtre par rôle
+        $roleType = isset($filters['role_type']) ? trim((string) $filters['role_type']) : '';
+        if ($roleType !== '') {
+            $where[] = 'role_type = %s';
+            $params[] = $roleType;
+        }
+
+        // Filtre par sous-traitant
+        $sousTraitant = isset($filters['sous_traitant']) ? trim((string) $filters['sous_traitant']) : '';
+        if ($sousTraitant !== '') {
+            $where[] = 'sous_traitant = %s';
+            $params[] = $sousTraitant;
+        }
+
+        $whereSql = 'WHERE ' . implode(' AND ', $where);
+
+        $sql = "SELECT * FROM {$table} {$whereSql} ORDER BY nom, prenom";
+
+        if (!empty($params)) {
+            $sql = $wpdb->prepare($sql, $params);
+        }
+
+        return $wpdb->get_results($sql, ARRAY_A) ?: [];
+    }
 }

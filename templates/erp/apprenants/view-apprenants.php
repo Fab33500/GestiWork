@@ -9,7 +9,20 @@ if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
 
-$apprenants = ApprenantProvider::getAll();
+// Récupérer les filtres de recherche
+$searchFilters = [];
+if (!empty($_GET['gw_apprenants_query'])) {
+    $searchFilters['query'] = sanitize_text_field(wp_unslash((string) $_GET['gw_apprenants_query']));
+}
+if (!empty($_GET['gw_apprenants_entreprise'])) {
+    $searchFilters['entreprise'] = sanitize_text_field(wp_unslash((string) $_GET['gw_apprenants_entreprise']));
+}
+if (!empty($_GET['gw_apprenants_origine'])) {
+    $searchFilters['origine'] = sanitize_text_field(wp_unslash((string) $_GET['gw_apprenants_origine']));
+}
+
+// Utiliser search() si des filtres sont présents, sinon getAll()
+$apprenants = !empty($searchFilters) ? ApprenantProvider::search($searchFilters) : ApprenantProvider::getAll();
 
 $gwApprenantsResetUrl = home_url('/gestiwork/apprenants/');
 

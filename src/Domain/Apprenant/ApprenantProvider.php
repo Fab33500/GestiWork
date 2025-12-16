@@ -163,4 +163,60 @@ class ApprenantProvider
 
         return $wpdb->get_results($sql, ARRAY_A) ?: [];
     }
+
+    /**
+     * Recherche des apprenants avec filtres.
+     *
+     * @param array $filters Filtres possibles: query, entreprise, origine
+     */
+    public static function search(array $filters = []): array
+    {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'gw_apprenants';
+        $tiersTable = $wpdb->prefix . 'gw_tiers';
+
+        $where = ['1=1'];
+        $params = [];
+
+        // Recherche textuelle (nom, prénom, email)
+        $query = isset($filters['query']) ? trim((string) $filters['query']) : '';
+        if ($query !== '') {
+            $like = '%' . $wpdb->esc_like($query) . '%';
+            $where[] = '(a.nom LIKE %s OR a.prenom LIKE %s OR a.email LIKE %s)';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        // Filtre par entreprise (recherche dans le nom de l'entreprise liée)
+        $entreprise = isset($filters['entreprise']) ? trim((string) $filters['entreprise']) : '';
+        if ($entreprise !== '') {
+            $like = '%' . $wpdb->esc_like($entreprise) . '%';
+            $where[] = '(t.raison_sociale LIKE %s OR t.nom LIKE %s)';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        // Filtre par origine
+        $origine = isset($filters['origine']) ? trim((string) $filters['origine']) : '';
+        if ($origine !== '') {
+            $where[] = 'a.origine = %s';
+            $params[] = $origine;
+        }
+
+        $whereSql = 'WHERE ' . implode(' AND ', $where);
+
+        // Jointure avec la table tiers pour filtrer par entreprise
+        $sql = "SELECT a.* FROM {$table} a 
+                LEFT JOIN {$tiersTable} t ON a.entreprise_id = t.id 
+                {$whereSql} 
+                ORDER BY a.nom, a.prenom";
+
+        if (!empty($params)) {
+            $sql = $wpdb->prepare($sql, $params);
+        }
+
+        return $wpdb->get_results($sql, ARRAY_A) ?: [];
+    }
 }

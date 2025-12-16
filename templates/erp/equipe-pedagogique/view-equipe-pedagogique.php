@@ -9,7 +9,20 @@ if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
 
-$formateurs = ResponsableFormateurProvider::getAll();
+// Récupérer les filtres de recherche
+$searchFilters = [];
+if (!empty($_GET['gw_formateurs_query'])) {
+    $searchFilters['query'] = sanitize_text_field(wp_unslash((string) $_GET['gw_formateurs_query']));
+}
+if (!empty($_GET['gw_formateurs_role'])) {
+    $searchFilters['role_type'] = sanitize_text_field(wp_unslash((string) $_GET['gw_formateurs_role']));
+}
+if (!empty($_GET['gw_formateurs_sous_traitant'])) {
+    $searchFilters['sous_traitant'] = sanitize_text_field(wp_unslash((string) $_GET['gw_formateurs_sous_traitant']));
+}
+
+// Utiliser search() si des filtres sont présents, sinon getAll()
+$formateurs = !empty($searchFilters) ? ResponsableFormateurProvider::search($searchFilters) : ResponsableFormateurProvider::getAll();
 
 $gwEquipePedagogiqueResetUrl = home_url('/gestiwork/equipe-pedagogique/');
 
