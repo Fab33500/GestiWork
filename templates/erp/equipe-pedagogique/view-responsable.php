@@ -7,8 +7,17 @@ if (! current_user_can('manage_options')) {
 }
 
 $responsableId = isset($_GET['gw_responsable_id']) ? (int) $_GET['gw_responsable_id'] : 0;
+$mode = isset($_GET['mode']) ? (string) $_GET['mode'] : '';
+
+$isCreate = ($mode === 'create');
 
 $backUrl = home_url('/gestiwork/equipe-pedagogique/');
+
+$editUrl = add_query_arg([
+    'gw_view' => 'Responsable',
+    'gw_responsable_id' => $responsableId,
+    'mode' => 'edit',
+], home_url('/gestiwork/'));
 
 $responsables = [
     1 => [
@@ -63,6 +72,27 @@ $responsables = [
 
 $responsable = isset($responsables[$responsableId]) ? $responsables[$responsableId] : null;
 
+$responsableDefaults = [
+    'civilite' => '',
+    'prenom' => '',
+    'nom' => '',
+    'fonction' => '',
+    'email' => '',
+    'telephone' => '',
+    'role' => '',
+    'sous_traitant' => '',
+    'nda_sous_traitant' => '',
+    'adresse_postale' => '',
+    'rue' => '',
+    'code_postal' => '',
+    'ville' => '',
+    'competences' => [],
+];
+
+if ($isCreate) {
+    $responsable = $responsableDefaults;
+}
+
 $responsableLabel = '';
 if (is_array($responsable)) {
     $responsableLabel = trim((string) ($responsable['prenom'] ?? '') . ' ' . (string) ($responsable['nom'] ?? ''));
@@ -74,7 +104,11 @@ if (is_array($responsable)) {
     <div class="gw-flex-between">
         <div>
             <h2 class="gw-section-title"><?php esc_html_e('Fiche formateur / responsable pédagogique', 'gestiwork'); ?></h2>
-            <?php if ($responsableLabel !== '') : ?>
+            <?php if ($isCreate) : ?>
+                <p class="gw-section-description">
+                    <?php esc_html_e('Créer un nouveau formateur', 'gestiwork'); ?>
+                </p>
+            <?php elseif ($responsableLabel !== '') : ?>
                 <p class="gw-section-description">
                     <?php
                     echo esc_html(
@@ -93,14 +127,25 @@ if (is_array($responsable)) {
             <a class="gw-button gw-button--secondary" href="<?php echo esc_url($backUrl); ?>">
                 <?php esc_html_e('Retour à l’équipe pédagogique', 'gestiwork'); ?>
             </a>
+            <?php if (! $isCreate && $responsableId > 0) : ?>
+                <a class="gw-button gw-button--primary" href="<?php echo esc_url($editUrl); ?>" onclick="return false;">
+                    <?php esc_html_e('Modifier', 'gestiwork'); ?>
+                </a>
+                <button type="button" class="gw-button gw-button--secondary" style="border-color:#d63638; color:#d63638; background:#fff;" onclick="return false;">
+                    <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                    <?php esc_html_e('Supprimer', 'gestiwork'); ?>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
-    <div class="gw-settings-tabs" role="tablist">
-        <button type="button" class="gw-settings-tab gw-settings-tab--active" data-gw-tab="informations_generales">
-            <?php esc_html_e('Informations générales', 'gestiwork'); ?>
-        </button>
-    </div>
+    <?php if (! $isCreate) : ?>
+        <div class="gw-settings-tabs" role="tablist">
+            <button type="button" class="gw-settings-tab gw-settings-tab--active" data-gw-tab="informations_generales">
+                <?php esc_html_e('Informations générales', 'gestiwork'); ?>
+            </button>
+        </div>
+    <?php endif; ?>
 
     <div class="gw-settings-panels">
         <div class="gw-settings-panel gw-settings-panel--active" data-gw-tab-panel="informations_generales">
@@ -227,6 +272,28 @@ if (is_array($responsable)) {
                         <p class="gw-section-description gw-mt-6"><?php esc_html_e('Données fictives : 0 tâche planifiée pour ce formateur.', 'gestiwork'); ?></p>
                         <div class="gw-mt-6">
                             <a class="gw-link-button" href="#"><?php esc_html_e('Voir les tâches', 'gestiwork'); ?></a>
+                        </div>
+                    </div>
+
+                    <div class="gw-card">
+                        <div class="gw-flex-between-center">
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Coût du formateur', 'gestiwork'); ?></h3>
+                            <a href="#" onclick="return false;" style="text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                                <span class="dashicons dashicons-edit" aria-hidden="true"></span>
+                                <?php esc_html_e('Modifier', 'gestiwork'); ?>
+                            </a>
+                        </div>
+
+                        <div style="margin-top: 12px;">
+                            <div style="font-size: 22px; font-weight: 700; color: var(--gw-color-text);">
+                                <?php esc_html_e('0,00 € HT / jour', 'gestiwork'); ?>
+                            </div>
+                            <div class="gw-section-description" style="margin-top:6px;">
+                                <?php esc_html_e('(soit 0,00 € HT / heure)', 'gestiwork'); ?>
+                            </div>
+                            <div class="gw-section-description" style="margin-top:6px;">
+                                <?php esc_html_e('Taux de TVA : 20%', 'gestiwork'); ?>
+                            </div>
                         </div>
                     </div>
                 </div>

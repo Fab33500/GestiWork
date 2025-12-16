@@ -930,6 +930,18 @@
     color: #fff;
 }
 
+.gw-button--cta {
+    text-decoration: none !important;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.gw-button--cta:hover,
+.gw-button--cta:focus {
+    background: var(--gw-color-accent);
+    border-color: var(--gw-color-accent);
+    color: #fff;
+}
+
 .gw-link-button {
     border: none;
     background: none;
@@ -1029,12 +1041,44 @@
     .gw-table--tiers td:nth-child(6) {
         display: none;
     }
+
+    .gw-table--apprenants th:nth-child(3),
+    .gw-table--apprenants th:nth-child(4),
+    .gw-table--apprenants th:nth-child(5),
+    .gw-table--apprenants td:nth-child(3),
+    .gw-table--apprenants td:nth-child(4),
+    .gw-table--apprenants td:nth-child(5) {
+        display: none;
+    }
+
+    .gw-table--formateurs th:nth-child(3),
+    .gw-table--formateurs th:nth-child(5),
+    .gw-table--formateurs th:nth-child(6),
+    .gw-table--formateurs th:nth-child(7),
+    .gw-table--formateurs td:nth-child(3),
+    .gw-table--formateurs td:nth-child(5),
+    .gw-table--formateurs td:nth-child(6),
+    .gw-table--formateurs td:nth-child(7) {
+        display: none;
+    }
 }
 
 @media (max-width: 600px) {
     /* Sur mobile, on masque aussi la colonne "Type" pour ne garder que Nom + Actions */
     .gw-table--tiers th:nth-child(2),
     .gw-table--tiers td:nth-child(2) {
+        display: none;
+    }
+
+    .gw-table--apprenants th:nth-child(1),
+    .gw-table--apprenants td:nth-child(1) {
+        display: none;
+    }
+
+    .gw-table--formateurs th:nth-child(1),
+    .gw-table--formateurs td:nth-child(1),
+    .gw-table--formateurs th:nth-child(4),
+    .gw-table--formateurs td:nth-child(4) {
         display: none;
     }
 }

@@ -224,11 +224,11 @@ $cancelEditUrl = add_query_arg([
         </div>
     </div>
 
-    <div class="gw-settings-tabs" role="tablist">
-        <button type="button" class="gw-settings-tab<?php echo $activeTab === 'informations_generales' ? ' gw-settings-tab--active' : ''; ?>" data-gw-tab="informations_generales">
-            <?php esc_html_e('Informations générales', 'gestiwork'); ?>
-        </button>
-        <?php if (! $isCreate) : ?>
+    <?php if (! $isCreate) : ?>
+        <div class="gw-settings-tabs" role="tablist">
+            <button type="button" class="gw-settings-tab<?php echo $activeTab === 'informations_generales' ? ' gw-settings-tab--active' : ''; ?>" data-gw-tab="informations_generales">
+                <?php esc_html_e('Informations générales', 'gestiwork'); ?>
+            </button>
             <button type="button" class="gw-settings-tab<?php echo $activeTab === 'historique_commercial' ? ' gw-settings-tab--active' : ''; ?>" data-gw-tab="historique_commercial">
                 <?php esc_html_e('Historique commercial', 'gestiwork'); ?>
             </button>
@@ -241,8 +241,8 @@ $cancelEditUrl = add_query_arg([
             <button type="button" class="gw-settings-tab<?php echo $activeTab === 'taches_activites' ? ' gw-settings-tab--active' : ''; ?>" data-gw-tab="taches_activites">
                 <?php esc_html_e('Tâches et activités', 'gestiwork'); ?>
             </button>
-        <?php endif; ?>
-    </div>
+        </div>
+    <?php endif; ?>
 
     <div class="gw-settings-panels">
         <div class="gw-settings-panel<?php echo $activeTab === 'informations_generales' ? ' gw-settings-panel--active' : ''; ?>" data-gw-tab-panel="informations_generales">

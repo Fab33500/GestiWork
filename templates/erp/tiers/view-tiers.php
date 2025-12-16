@@ -52,30 +52,24 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
 ?>
 
 <section class="gw-section gw-section-dashboard">
-    <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
-    <p class="gw-section-description">
-        <?php esc_html_e(
-            'Gérez vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
-            'gestiwork'
-        ); ?>
-    </p>
-
-    <div class="gw-settings-group">
-        <h3 class="gw-section-subtitle"><?php esc_html_e('Nouveau tiers', 'gestiwork'); ?></h3>
-        <p class="gw-section-description">
-            <?php esc_html_e(
-                'Créez une nouvelle fiche tiers (client, entreprise, financeur ou organisme donneur d\'ordre). La création détaillée sera disponible prochainement.',
-                'gestiwork'
-            ); ?>
-        </p>
-
-        <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
-            <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
-        </a>
+    <div class="gw-flex-header">
+        <div>
+            <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
+            <p class="gw-section-description">
+                <?php esc_html_e(
+                    'Gérez vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
+                    'gestiwork'
+                ); ?>
+            </p>
+        </div>
+        <div class="gw-flex-end">
+            <a class="gw-button gw-button--secondary gw-button--cta" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
+                <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
+            </a>
+        </div>
     </div>
 
     <div class="gw-settings-group">
-        <h3 class="gw-section-subtitle"><?php esc_html_e('Vue d’ensemble des tiers', 'gestiwork'); ?></h3>
         <p class="gw-section-description">
             <?php esc_html_e(
                 'Consultez la liste des tiers et affinez les résultats grâce à la recherche avancée.',
@@ -142,7 +136,7 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                 ?>
             </div>
             <div class="gw-settings-field gw-settings-field--full">
-                <p class="gw-settings-label"><?php esc_html_e('Tiers récents', 'gestiwork'); ?></p>
+                <p class="gw-settings-label"><?php esc_html_e('Liste des Tiers', 'gestiwork'); ?></p>
                 <?php if ($tiersTotalPages > 1) : ?>
                     <p class="gw-section-description gw-section-description--compact">
                         <?php echo esc_html(sprintf(__('Page %d sur %d — %d résultat(s).', 'gestiwork'), $tiersPage, $tiersTotalPages, $tiersTotal)); ?>
@@ -221,9 +215,6 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                                         <td>
                                             <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
                                                 <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-                                            </a>
-                                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
-                                                <span class="dashicons dashicons-edit" aria-hidden="true"></span>
                                             </a>
                                         </td>
                                     </tr>
