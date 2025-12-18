@@ -105,6 +105,76 @@ class AssetsLoader
             );
         }
 
+        if ($currentView === 'client') {
+            wp_enqueue_script(
+                'gestiwork-tiers-client',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-tiers-client.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-tiers-client', 'GWTiersClient', [
+                'i18n' => [
+                    'confirmDeleteContact' => __('Supprimer ce contact ?', 'gestiwork'),
+                    'confirmDeleteTier' => __('Supprimer définitivement ce client et tous ses contacts ?', 'gestiwork'),
+                ],
+            ]);
+        }
+
+        if ($currentView === 'apprenant') {
+            wp_enqueue_script(
+                'gestiwork-apprenant',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-apprenant.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-apprenant', 'GWApprenant', [
+                'i18n' => [
+                    'confirmDeleteApprenant' => __('Supprimer définitivement cet apprenant ?', 'gestiwork'),
+                ],
+            ]);
+        }
+
+        if ($currentView === 'responsable') {
+            wp_enqueue_script(
+                'gestiwork-responsable',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-responsable.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-responsable', 'GWResponsable', [
+                'i18n' => [
+                    'confirmDeleteFormateur' => __('Supprimer définitivement ce formateur / responsable pédagogique ?', 'gestiwork'),
+                ],
+            ]);
+        }
+
+        if ($currentView === 'settings') {
+            wp_enqueue_media();
+
+            wp_enqueue_script(
+                'gestiwork-settings',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-settings.js',
+                ['gestiwork-ui', 'gestiwork-form-utils'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-settings', 'GWSettings', [
+                'pdfPreviewBaseUrl' => home_url('/gestiwork/pdf-preview/'),
+                'i18n' => [
+                    'pdfModelNameRequired' => __('Veuillez saisir un nom de modèle avant de continuer.', 'gestiwork'),
+                    'pdfDeleteTemplateConfirm' => __('Êtes-vous sûr de vouloir supprimer le modèle "%s" ?', 'gestiwork'),
+                    'pdfDuplicatePrompt' => __('Nouveau nom pour le modèle dupliqué :', 'gestiwork'),
+                ],
+            ]);
+        }
+
         if (in_array($currentView, $viewsWithForms, true)) {
             wp_enqueue_script(
                 'gestiwork-geo-cp-ville',

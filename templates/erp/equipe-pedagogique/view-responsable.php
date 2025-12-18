@@ -102,6 +102,15 @@ if (is_array($responsable)) {
                 <a class="gw-button gw-button--primary" href="<?php echo esc_url($editUrl); ?>">
                     <?php esc_html_e('Modifier', 'gestiwork'); ?>
                 </a>
+                <form method="post" action="" class="gw-form-inline">
+                    <input type="hidden" name="gw_action" value="gw_formateur_delete" />
+                    <input type="hidden" name="responsable_id" value="<?php echo (int) $responsableId; ?>" />
+                    <?php wp_nonce_field('gw_formateur_delete', 'gw_nonce'); ?>
+                    <button type="submit" class="gw-button gw-button--secondary gw-formateur-delete gw-delete-button">
+                        <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                        <?php esc_html_e('Supprimer', 'gestiwork'); ?>
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
     </div>
@@ -263,10 +272,10 @@ if (is_array($responsable)) {
                         <div class="gw-flex-between-center">
                             <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Compétences', 'gestiwork'); ?></h3>
                             <?php if ($isEdit && $responsableId > 0) : ?>
-                                <a href="#" onclick="return false;" data-gw-modal-target="gw-modal-competences" style="text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                                <button type="button" class="gw-link-button" data-gw-modal-target="gw-modal-competences" style="text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
                                     <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                     <?php esc_html_e('Gérer les compétences', 'gestiwork'); ?>
-                                </a>
+                                </button>
                             <?php endif; ?>
                         </div>
                         <?php if ($isCreate) : ?>
@@ -291,10 +300,10 @@ if (is_array($responsable)) {
                         <div class="gw-flex-between-center">
                             <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Coût du formateur', 'gestiwork'); ?></h3>
                             <?php if ($isEdit && $responsableId > 0) : ?>
-                                <a href="#" onclick="return false;" data-gw-modal-target="gw-modal-cout-formateur" style="text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                                <button type="button" class="gw-link-button" data-gw-modal-target="gw-modal-cout-formateur" style="text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
                                     <span class="dashicons dashicons-edit" aria-hidden="true"></span>
                                     <?php esc_html_e('Modifier', 'gestiwork'); ?>
-                                </a>
+                                </button>
                             <?php endif; ?>
                         </div>
 

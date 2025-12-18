@@ -58,6 +58,9 @@ class ResponsableFormateurController
             case 'gw_formateur_update':
                 self::handleUpdate();
                 break;
+            case 'gw_formateur_delete':
+                self::handleDelete();
+                break;
             case 'gw_formateur_competences':
                 self::handleCompetences();
                 break;
@@ -178,6 +181,43 @@ class ResponsableFormateurController
                 'gw_view' => 'responsable',
                 'gw_responsable_id' => $responsableId,
                 'mode' => 'edit',
+                'gw_error' => '1',
+            ], home_url('/gestiwork/'));
+        }
+
+        wp_redirect($redirectUrl);
+        exit;
+    }
+
+    private static function handleDelete(): void
+    {
+        if (!wp_verify_nonce($_POST['gw_nonce'] ?? '', 'gw_formateur_delete')) {
+            wp_die(__('Erreur de sécurité. Veuillez réessayer.', 'gestiwork'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Vous n\'avez pas les permissions nécessaires.', 'gestiwork'));
+        }
+
+        $responsableId = (int) ($_POST['responsable_id'] ?? 0);
+        if ($responsableId <= 0) {
+            wp_die(__('ID du responsable manquant.', 'gestiwork'));
+        }
+
+        $competencesDeleted = FormateurCompetenceProvider::deleteByFormateurId($responsableId);
+        $responsableDeleted = false;
+        if ($competencesDeleted) {
+            $responsableDeleted = ResponsableFormateurProvider::delete($responsableId);
+        }
+
+        if ($competencesDeleted && $responsableDeleted) {
+            $redirectUrl = add_query_arg([
+                'gw_deleted' => '1',
+            ], home_url('/gestiwork/equipe-pedagogique/'));
+        } else {
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'responsable',
+                'gw_responsable_id' => $responsableId,
                 'gw_error' => '1',
             ], home_url('/gestiwork/'));
         }

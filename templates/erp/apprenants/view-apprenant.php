@@ -116,6 +116,15 @@ if (is_array($apprenant)) {
                 <a class="gw-button gw-button--primary" href="<?php echo esc_url($editUrl); ?>">
                     <?php esc_html_e('Modifier', 'gestiwork'); ?>
                 </a>
+                <form method="post" action="" class="gw-form-inline">
+                    <input type="hidden" name="gw_action" value="gw_apprenant_delete" />
+                    <input type="hidden" name="apprenant_id" value="<?php echo (int) $apprenantId; ?>" />
+                    <?php wp_nonce_field('gw_apprenant_delete', 'gw_nonce'); ?>
+                    <button type="submit" class="gw-button gw-button--secondary gw-apprenant-delete gw-delete-button">
+                        <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                        <?php esc_html_e('Supprimer l\'apprenant', 'gestiwork'); ?>
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
     </div>
@@ -266,10 +275,10 @@ if (is_array($apprenant)) {
                         <div class="gw-flex-between-center">
                             <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Entreprises associées', 'gestiwork'); ?></h3>
                             <?php if ($isEdit && $apprenantId > 0) : ?>
-                                <a href="#" onclick="return false;" data-gw-modal-target="gw-modal-associer-entreprise" style="text-decoration:none; font-size:13px;">
+                                <button type="button" class="gw-link-button" data-gw-modal-target="gw-modal-associer-entreprise" style="text-decoration:none; font-size:13px;">
                                     <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                     <?php esc_html_e('Associer une entreprise', 'gestiwork'); ?>
-                                </a>
+                                </button>
                             <?php endif; ?>
                         </div>
 
@@ -319,15 +328,15 @@ if (is_array($apprenant)) {
                                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                                             <div style="min-width:0;">
                                                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                                    <a href="<?php echo esc_url($entrepriseUrl); ?>" onclick="return false;" style="text-decoration:none; font-weight:600; color: var(--gw-color-primary);">
+                                                    <span style="text-decoration:none; font-weight:600; color: var(--gw-color-primary);">
                                                         <?php echo esc_html($entrepriseNom !== '' ? $entrepriseNom : '-'); ?>
-                                                    </a>
+                                                    </span>
                                                 </div>
                                             </div>
 
                                             <?php if ($isEdit && $apprenantId > 0) : ?>
                                                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-                                                    <button type="button" class="gw-link-button" style="font-size:13px; color:#d63638;" onclick="return false;">
+                                                    <button type="button" class="gw-link-button" style="font-size:13px; color:#d63638;">
                                                         <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:4px;"></span>
                                                         <?php esc_html_e('Dissocier', 'gestiwork'); ?>
                                                     </button>
@@ -351,9 +360,9 @@ if (is_array($apprenant)) {
                                             <?php if (trim($entrepriseEmail) !== '') : ?>
                                                 <div style="display:flex; align-items:center; gap:8px;">
                                                     <span class="dashicons dashicons-email" aria-hidden="true" style="color: var(--gw-color-muted);"></span>
-                                                    <a href="mailto:<?php echo esc_attr($entrepriseEmail); ?>" onclick="return false;" style="text-decoration:none; color: var(--gw-color-primary);">
+                                                    <span style="text-decoration:none; color: var(--gw-color-primary);">
                                                         <?php echo esc_html($entrepriseEmail); ?>
-                                                    </a>
+                                                    </span>
                                                 </div>
                                             <?php endif; ?>
                                         </div>

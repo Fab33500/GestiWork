@@ -57,6 +57,9 @@ class ApprenantController
             case 'gw_apprenant_update':
                 self::handleUpdate();
                 break;
+            case 'gw_apprenant_delete':
+                self::handleDelete();
+                break;
             case 'gw_apprenant_associer_entreprise':
                 self::handleAssocierEntreprise();
                 break;
@@ -155,6 +158,39 @@ class ApprenantController
                 'gw_view' => 'apprenant',
                 'gw_apprenant_id' => $apprenantId,
                 'mode' => 'edit',
+                'gw_error' => '1',
+            ], home_url('/gestiwork/'));
+        }
+
+        wp_redirect($redirectUrl);
+        exit;
+    }
+
+    private static function handleDelete(): void
+    {
+        if (!wp_verify_nonce($_POST['gw_nonce'] ?? '', 'gw_apprenant_delete')) {
+            wp_die(__('Erreur de sécurité. Veuillez réessayer.', 'gestiwork'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Vous n\'avez pas les permissions nécessaires.', 'gestiwork'));
+        }
+
+        $apprenantId = (int) ($_POST['apprenant_id'] ?? 0);
+        if ($apprenantId <= 0) {
+            wp_die(__('ID de l\'apprenant manquant.', 'gestiwork'));
+        }
+
+        $success = ApprenantProvider::delete($apprenantId);
+
+        if ($success) {
+            $redirectUrl = add_query_arg([
+                'gw_deleted' => '1',
+            ], home_url('/gestiwork/apprenants/'));
+        } else {
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'apprenant',
+                'gw_apprenant_id' => $apprenantId,
                 'gw_error' => '1',
             ], home_url('/gestiwork/'));
         }
