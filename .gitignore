@@ -11,3 +11,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+/tools/
+
+/tests/run.php

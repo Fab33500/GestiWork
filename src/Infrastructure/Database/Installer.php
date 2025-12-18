@@ -41,8 +41,12 @@ class Installer
         $tableOptions      = $wpdb->prefix . 'gw_options';
         $tableTiers        = $wpdb->prefix . 'gw_tiers';
         $tableTierContacts = $wpdb->prefix . 'gw_tier_contacts';
+        $tableTierFinanceurs = $wpdb->prefix . 'gw_tier_financeurs';
         $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
         $tablePdfShortcodes = $wpdb->prefix . 'gw_pdf_shortcodes';
+        $tableApprenants = $wpdb->prefix . 'gw_apprenants';
+        $tableResponsablesFormateurs = $wpdb->prefix . 'gw_responsables_formateurs';
+        $tableFormateurCompetences = $wpdb->prefix . 'gw_formateur_competences';
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
@@ -125,14 +129,12 @@ adresse1 VARCHAR(255) NOT NULL DEFAULT '',
 adresse2 VARCHAR(255) NOT NULL DEFAULT '',
 cp VARCHAR(20) NOT NULL DEFAULT '',
 ville VARCHAR(100) NOT NULL DEFAULT '',
-deleted_at DATETIME NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY  (id),
 KEY type (type),
 KEY statut (statut),
 KEY ville (ville),
-KEY deleted_at (deleted_at)
 ) {$charsetCollate};";
 
         dbDelta($sqlTiers);
@@ -147,16 +149,28 @@ prenom VARCHAR(190) NOT NULL DEFAULT '',
 mail VARCHAR(190) NOT NULL DEFAULT '',
 tel1 VARCHAR(50) NOT NULL DEFAULT '',
 tel2 VARCHAR(50) NOT NULL DEFAULT '',
-deleted_at DATETIME NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY  (id),
 KEY tier_id (tier_id),
 KEY mail (mail),
-KEY deleted_at (deleted_at)
 ) {$charsetCollate};";
 
         dbDelta($sqlTierContacts);
+
+        $sqlTierFinanceurs = "CREATE TABLE {$tableTierFinanceurs} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+financeur_id BIGINT(20) UNSIGNED NOT NULL,
+entreprise_id BIGINT(20) UNSIGNED NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY financeur_entreprise (financeur_id, entreprise_id),
+KEY financeur_id (financeur_id),
+KEY entreprise_id (entreprise_id)
+) {$charsetCollate};";
+
+        dbDelta($sqlTierFinanceurs);
 
         $sqlPdfTemplates = "CREATE TABLE {$tablePdfTemplates} (
 id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -206,6 +220,11 @@ KEY is_active (is_active)
 ) {$charsetCollate};";
 
         dbDelta($sqlPdfShortcodes);
+
+        // Créer les tables des apprenants et responsables/formateurs
+        self::createApprenantsTable($wpdb, $tableApprenants, $charsetCollate);
+        self::createResponsablesFormateursTable($wpdb, $tableResponsablesFormateurs, $charsetCollate);
+        self::createFormateurCompetencesTable($wpdb, $tableFormateurCompetences, $charsetCollate);
 
         // Alimenter la table des shortcodes avec le catalogue de référence
         ShortcodeSeeder::seed();
@@ -269,6 +288,66 @@ KEY is_active (is_active)
             }
         }
 
+        // === Migration table formateur_competences : ajout heures_par_jour ===
+        $tableFormateurCompetences = $wpdb->prefix . 'gw_formateur_competences';
+
+        $tableExistsFC = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableFormateurCompetences)
+        );
+
+        if ($tableExistsFC === $tableFormateurCompetences) {
+            $existingFCColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tableFormateurCompetences}", 0);
+
+            if (!in_array('heures_par_jour', $existingFCColumns, true)) {
+                $wpdb->query("ALTER TABLE {$tableFormateurCompetences} ADD COLUMN heures_par_jour DECIMAL(4,2) NOT NULL DEFAULT 7.00 AFTER cout_heure_ht");
+            }
+        }
+
+        $tiersTable = $wpdb->prefix . 'gw_tiers';
+        $tiersContactsTable = $wpdb->prefix . 'gw_tier_contacts';
+        $tiersFinanceursTable = $wpdb->prefix . 'gw_tier_financeurs';
+
+        $tableExistsFinanceurs = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tiersFinanceursTable)
+        );
+
+        if ($tableExistsFinanceurs !== $tiersFinanceursTable) {
+            $charsetCollate = $wpdb->get_charset_collate();
+            $sqlTierFinanceurs = "CREATE TABLE {$tiersFinanceursTable} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+financeur_id BIGINT(20) UNSIGNED NOT NULL,
+entreprise_id BIGINT(20) UNSIGNED NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY financeur_entreprise (financeur_id, entreprise_id),
+KEY financeur_id (financeur_id),
+KEY entreprise_id (entreprise_id)
+) {$charsetCollate};";
+
+            dbDelta($sqlTierFinanceurs);
+        }
+
+        foreach ([$tiersTable, $tiersContactsTable] as $table) {
+            $tableExists = $wpdb->get_var(
+                $wpdb->prepare('SHOW TABLES LIKE %s', $table)
+            );
+
+            if ($tableExists !== $table) {
+                continue;
+            }
+
+            $existingColumns = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+            if (in_array('deleted_at', $existingColumns, true)) {
+                $indexes = $wpdb->get_col("SHOW INDEX FROM {$table} WHERE Key_name = 'deleted_at'", 0);
+                if (!empty($indexes)) {
+                    $wpdb->query("DROP INDEX deleted_at ON {$table}");
+                }
+
+                $wpdb->query("ALTER TABLE {$table} DROP COLUMN deleted_at");
+            }
+        }
+
         self::migrateLegacyLegalForms($wpdb);
     }
 
@@ -311,5 +390,91 @@ KEY is_active (is_active)
         }
 
         \update_option($optionKey, '1');
+    }
+
+    /**
+     * Crée la table des apprenants.
+     */
+    private static function createApprenantsTable(\wpdb $wpdb, string $tableName, string $charsetCollate): void
+    {
+        $sql = "CREATE TABLE {$tableName} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+civilite VARCHAR(30) NOT NULL DEFAULT '',
+prenom VARCHAR(190) NOT NULL DEFAULT '',
+nom VARCHAR(190) NOT NULL DEFAULT '',
+nom_naissance VARCHAR(190) NOT NULL DEFAULT '',
+date_naissance DATE NULL,
+email VARCHAR(190) NOT NULL DEFAULT '',
+telephone VARCHAR(50) NOT NULL DEFAULT '',
+entreprise_id BIGINT(20) UNSIGNED NULL,
+origine VARCHAR(50) NOT NULL DEFAULT '',
+statut_bpf VARCHAR(50) NOT NULL DEFAULT '',
+adresse1 VARCHAR(255) NOT NULL DEFAULT '',
+adresse2 VARCHAR(255) NOT NULL DEFAULT '',
+cp VARCHAR(20) NOT NULL DEFAULT '',
+ville VARCHAR(100) NOT NULL DEFAULT '',
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY email (email),
+KEY entreprise_id (entreprise_id),
+KEY origine (origine)
+) {$charsetCollate};";
+
+        dbDelta($sql);
+    }
+
+    /**
+     * Crée la table des responsables/formateurs.
+     */
+    private static function createResponsablesFormateursTable(\wpdb $wpdb, string $tableName, string $charsetCollate): void
+    {
+        $sql = "CREATE TABLE {$tableName} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+civilite VARCHAR(30) NOT NULL DEFAULT '',
+prenom VARCHAR(190) NOT NULL DEFAULT '',
+nom VARCHAR(190) NOT NULL DEFAULT '',
+fonction VARCHAR(190) NOT NULL DEFAULT '',
+email VARCHAR(190) NOT NULL DEFAULT '',
+telephone VARCHAR(50) NOT NULL DEFAULT '',
+role_type VARCHAR(50) NOT NULL DEFAULT '',
+sous_traitant VARCHAR(10) NOT NULL DEFAULT 'Non',
+nda_sous_traitant VARCHAR(50) NOT NULL DEFAULT '',
+adresse_postale VARCHAR(255) NOT NULL DEFAULT '',
+rue VARCHAR(255) NOT NULL DEFAULT '',
+code_postal VARCHAR(20) NOT NULL DEFAULT '',
+ville VARCHAR(100) NOT NULL DEFAULT '',
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY email (email),
+KEY role_type (role_type),
+KEY sous_traitant (sous_traitant)
+) {$charsetCollate};";
+
+        dbDelta($sql);
+    }
+
+    /**
+     * Crée la table des compétences et coûts des formateurs.
+     */
+    private static function createFormateurCompetencesTable(\wpdb $wpdb, string $tableName, string $charsetCollate): void
+    {
+        $sql = "CREATE TABLE {$tableName} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+formateur_id BIGINT(20) UNSIGNED NOT NULL,
+competence VARCHAR(190) NOT NULL DEFAULT '',
+cout_jour_ht DECIMAL(10,2) NULL,
+cout_heure_ht DECIMAL(10,2) NULL,
+heures_par_jour DECIMAL(4,2) NOT NULL DEFAULT 7.00,
+tva_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+KEY formateur_id (formateur_id),
+KEY competence (competence)
+) {$charsetCollate};";
+
+        dbDelta($sql);
     }
 }

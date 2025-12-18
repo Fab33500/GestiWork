@@ -28,20 +28,32 @@ if ($gw_view === '' && isset($_GET['gw_view'])) {
     $gw_view = (string) $_GET['gw_view'];
 }
 
-if ($gw_view === 'Aide') {
+$gw_view_normalized = strtolower(trim((string) $gw_view));
+
+if ($gw_view_normalized === 'aide') {
     $active_view = 'aide';
-} elseif ($is_admin && $gw_view === 'settings') {
+} elseif ($is_admin && $gw_view_normalized === 'settings') {
     $active_view = 'settings';
-} elseif ($is_admin && $gw_view === 'Tiers') {
+} elseif ($is_admin && $gw_view_normalized === 'tiers') {
     $active_view = 'tiers';
-} elseif ($is_admin && $gw_view === 'Client') {
+} elseif ($is_admin && $gw_view_normalized === 'client') {
     $active_view = 'client';
+} elseif ($is_admin && $gw_view_normalized === 'apprenants') {
+    $active_view = 'apprenants';
+} elseif ($is_admin && $gw_view_normalized === 'equipe-pedagogique') {
+    $active_view = 'equipe_pedagogique';
+} elseif ($is_admin && $gw_view_normalized === 'apprenant') {
+    $active_view = 'apprenant';
+} elseif ($is_admin && $gw_view_normalized === 'responsable') {
+    $active_view = 'responsable';
 }
 
 $dashboard_url = home_url('/gestiwork/');
 $settings_url  = $is_admin ? home_url('/gestiwork/settings/general/') : $dashboard_url;
-$help_url      = home_url('/gestiwork/Aide/');
+$help_url      = home_url('/gestiwork/aide/');
 $tiers_url     = $is_admin ? home_url('/gestiwork/Tiers/') : $dashboard_url;
+$apprenants_url = $is_admin ? home_url('/gestiwork/apprenants/') : $dashboard_url;
+$equipe_pedagogique_url = $is_admin ? home_url('/gestiwork/equipe-pedagogique/') : $dashboard_url;
 
 $nav_items = [
     [
@@ -68,6 +80,18 @@ if ($is_admin) {
         'url'   => $tiers_url,
         'active'=> $active_view === 'tiers',
     ];
+
+    $nav_items[] = [
+        'label' => __('Stagiaires', 'gestiwork'),
+        'url'   => $apprenants_url,
+        'active'=> $active_view === 'apprenants',
+    ];
+
+    $nav_items[] = [
+        'label' => __('Équipe pédagogique', 'gestiwork'),
+        'url'   => $equipe_pedagogique_url,
+        'active'=> $active_view === 'equipe_pedagogique',
+    ];
 }
 
 $layout_mode = $is_admin ? 'gw-layout--with-nav' : 'gw-layout--full';
@@ -80,6 +104,14 @@ if ($active_view === 'settings' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/tiers/view-tiers.php';
 } elseif ($active_view === 'client' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/tiers/view-client.php';
+} elseif ($active_view === 'apprenants' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenants.php';
+} elseif ($active_view === 'equipe_pedagogique' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-equipe-pedagogique.php';
+} elseif ($active_view === 'apprenant' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/apprenants/view-apprenant.php';
+} elseif ($active_view === 'responsable' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/equipe-pedagogique/view-responsable.php';
 } else {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/dashboard/view-dashboard.php';
 }

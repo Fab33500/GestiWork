@@ -50,7 +50,7 @@ class TierContactProvider
 
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT * FROM {$tableName} WHERE id = %d AND deleted_at IS NULL LIMIT 1",
+                "SELECT * FROM {$tableName} WHERE id = %d LIMIT 1",
                 $contactId
             ),
             ARRAY_A
@@ -86,7 +86,7 @@ class TierContactProvider
 
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$tableName} WHERE tier_id = %d AND deleted_at IS NULL ORDER BY id DESC",
+                "SELECT * FROM {$tableName} WHERE tier_id = %d ORDER BY id DESC",
                 $tierId
             ),
             ARRAY_A
@@ -224,39 +224,6 @@ class TierContactProvider
                 "DELETE FROM {$tableName} WHERE tier_id = %d",
                 $tierId
             )
-        );
-
-        return $ok !== false;
-    }
-
-    public static function softDelete(int $contactId): bool
-    {
-        global $wpdb;
-
-        if ($contactId <= 0) {
-            return false;
-        }
-
-        if (!($wpdb instanceof wpdb)) {
-            return false;
-        }
-
-        $tableName = $wpdb->prefix . 'gw_tier_contacts';
-
-        $tableExists = $wpdb->get_var(
-            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
-        );
-
-        if ($tableExists !== $tableName) {
-            return false;
-        }
-
-        $ok = $wpdb->update(
-            $tableName,
-            ['deleted_at' => current_time('mysql')],
-            ['id' => $contactId],
-            ['%s'],
-            ['%d']
         );
 
         return $ok !== false;

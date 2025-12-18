@@ -85,9 +85,6 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 ?>
 <section class="gw-section gw-section-settings">
     <h2 class="gw-section-title"><?php esc_html_e('Paramètres GestiWork', 'gestiwork'); ?></h2>
-    <p class="gw-section-description">
-        <?php esc_html_e('Les paramètres ci-dessous sont organisés en trois onglets. Pour l’instant, tout est décrit en dur sans sauvegarde : il s’agit de la maquette fonctionnelle de la future page de configuration.', 'gestiwork'); ?>
-    </p>
 
     <div class="gw-settings-tabs" role="tablist">
         <button  type="button" class="gw-settings-tab<?php echo $gw_active_tab === 'general' ? ' gw-settings-tab--active' : ''; ?>" data-gw-tab="general">
@@ -189,16 +186,16 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     </div>
                     <div class="gw-settings-field gw-settings-field-logo">
                         <p class="gw-settings-label"><?php esc_html_e('Logo GestiWork', 'gestiwork'); ?></p>
-                        <form method="post" action="" class="gw-m-0" style="padding:0;">
+                        <form method="post" action="" class="gw-m-0 gw-p-0">
                             <?php wp_nonce_field('gw_save_of_logo', 'gw_settings_nonce_logo'); ?>
                             <input type="hidden" name="gw_settings_action" value="save_of_logo" />
                             <input type="hidden" id="gw_logo_id" name="gw_logo_id" value="<?php echo isset($ofIdentity['logo_id']) ? (int) $ofIdentity['logo_id'] : 0; ?>" />
 
-                            <div class="gw-mb-8" style="text-align:center;">
+                            <div class="gw-mb-8 gw-text-center">
                                 <?php if (!empty($gwLogoUrl)) : ?>
-                                    <img id="gw-logo-preview" src="<?php echo esc_url($gwLogoUrl); ?>" alt="<?php echo esc_attr($ofIdentity['raison_sociale'] ?? ''); ?>" style="max-width: 96px; max-height: 64px; height: auto; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); background: #fff; padding: 4px; display: inline-block;">
+                                    <img id="gw-logo-preview" src="<?php echo esc_url($gwLogoUrl); ?>" alt="<?php echo esc_attr($ofIdentity['raison_sociale'] ?? ''); ?>" class="gw-logo-preview">
                                 <?php else : ?>
-                                    <img id="gw-logo-preview" src="" alt="" style="display:none; max-width: 96px; max-height: 64px; height: auto; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); background: #fff; padding: 4px;">
+                                    <img id="gw-logo-preview" src="" alt="" class="gw-logo-preview-hidden">
                                     <p class="gw-settings-placeholder"><?php esc_html_e('Sélection d’un logo dédié pour l’ERP (différent du logo du thème WordPress).', 'gestiwork'); ?></p>
                                 <?php endif; ?>
                             </div>
@@ -211,7 +208,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 </div>
             </div>
 
-            <div class="gw-settings-group" id="gw-settings-group-description-editor" style="display: none;">
+            <div class="gw-settings-group gw-display-none" id="gw-settings-group-description-editor">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('1.x Description (présentation OF)', 'gestiwork'); ?></h4>
                 <form method="post" action="">
                     <?php wp_nonce_field('gw_save_of_description', 'gw_settings_nonce_description'); ?>
@@ -402,9 +399,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <?php
                             $enabled = !empty($options['enable_client_contract_number']);
                             if ($enabled) {
-                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('un champ dédié au numéro de contrat client est présent sur les documents.', 'gestiwork');
+                                echo '<span class="gw-color-warning">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('un champ dédié au numéro de contrat client est présent sur les documents.', 'gestiwork');
                             } else {
-                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucun numéro de contrat client spécifique n’est affiché sur les documents.', 'gestiwork');
+                                echo '<span class="gw-color-error">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucun numéro de contrat client spécifique n’est affiché sur les documents.', 'gestiwork');
                             }
                             ?>
                         </p>
@@ -415,9 +412,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <?php
                             $enabled = !empty($options['enable_document_validity_period']);
                             if ($enabled) {
-                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('une date de validité peut être définie et affichée sur les devis à signer.', 'gestiwork');
+                                echo '<span class="gw-color-warning">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('une date de validité peut être définie et affichée sur les devis à signer.', 'gestiwork');
                             } else {
-                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucune date de validité spécifique n’est gérée sur les devis.', 'gestiwork');
+                                echo '<span class="gw-color-error">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucune date de validité spécifique n’est gérée sur les devis.', 'gestiwork');
                             }
                             ?>
                         </p>
@@ -428,9 +425,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <?php
                             $enabled = !empty($options['enable_trainer_status_activity_code']);
                             if ($enabled) {
-                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('vous pourrez renseigner pour chaque formateur son statut (salarié, indépendant, etc.).', 'gestiwork');
+                                echo '<span class="gw-color-warning">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('vous pourrez renseigner pour chaque formateur son statut (salarié, indépendant, etc.).', 'gestiwork');
                             } else {
-                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucun statut ni code d’activité spécifique n’est demandé pour les formateurs.', 'gestiwork');
+                                echo '<span class="gw-color-error">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucun statut ni code d’activité spécifique n’est demandé pour les formateurs.', 'gestiwork');
                             }
                             ?>
                         </p>
@@ -441,9 +438,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <?php
                             $enabled = !empty($options['enable_free_text_duration']);
                             if ($enabled) {
-                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('Permet de definir le decoupage de la session (journée, 1/2journée)', 'gestiwork');
+                                echo '<span class="gw-color-warning">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('Permet de definir le decoupage de la session (journée, 1/2journée)', 'gestiwork');
                             } else {
-                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('Pas de decoupage sessions', 'gestiwork');
+                                echo '<span class="gw-color-error">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('Pas de decoupage sessions', 'gestiwork');
                             }
                             ?>
                         </p>
@@ -454,9 +451,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <?php
                             $enabled = !empty($options['enable_signature_image']);
                             if ($enabled) {
-                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('une image de signature du responsable peut être téléversée et affichée sur certains documents.', 'gestiwork');
+                                echo '<span class="gw-color-warning">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('une image de signature du responsable peut être téléversée et affichée sur certains documents.', 'gestiwork');
                             } else {
-                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucune image de signature n’est affichée sur les documents.', 'gestiwork');
+                                echo '<span class="gw-color-error">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('aucune image de signature n’est affichée sur les documents.', 'gestiwork');
                             }
                             ?>
                         </p>
@@ -467,9 +464,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <?php
                             $enabled = !empty($options['enable_impersonation_login']);
                             if ($enabled) {
-                                echo '<span style="font-weight:600;color:var(--gw-color-warning);">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('les responsables autorisés peuvent se connecter à la place d’un autre utilisateur depuis l’interface.', 'gestiwork');
+                                echo '<span class="gw-color-warning">' . esc_html__('Activé', 'gestiwork') . '</span> – ' . esc_html__('les responsables autorisés peuvent se connecter à la place d’un autre utilisateur depuis l’interface.', 'gestiwork');
                             } else {
-                                echo '<span style="font-weight:600;color:var(--gw-color-error);">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('la connexion en tant qu’un autre utilisateur est désactivée.', 'gestiwork');
+                                echo '<span class="gw-color-error">' . esc_html__('Désactivé', 'gestiwork') . '</span> – ' . esc_html__('la connexion en tant qu’un autre utilisateur est désactivée.', 'gestiwork');
                             }
                             ?>
                         </p>
@@ -590,11 +587,11 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
 
                 <div class="gw-settings-group">
                     <?php if ($currentPdfTemplate) : ?>
-                        <h4 class="gw-section-subtitle" style="color:#d63638;">3.1a <?php esc_html_e(' : vous etes en train de modifier : ', 'gestiwork'); ?></h4>
+                        <h4 class="gw-section-subtitle gw-color-error-title">3.1a <?php esc_html_e(' : vous etes en train de modifier : ', 'gestiwork'); ?></h4>
                     <?php else : ?>
                         <h4 class="gw-section-subtitle"><?php esc_html_e('3.1 Nom du modèle PDF', 'gestiwork'); ?></h4>
                     <?php endif; ?>
-                    <div class="gw-settings-grid" style="grid-template-columns: 1fr;">
+                    <div class="gw-settings-grid gw-grid-1fr">
                         <div class="gw-settings-field">
                             <?php if ($currentPdfTemplate) : ?>
                                 <p class="gw-pdf-current-template-name">
@@ -603,8 +600,8 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                 <input type="hidden" name="gw_pdf_model_name" value="<?php echo esc_attr($currentPdfTemplate['name']); ?>" />
                             <?php else : ?>
                                 <p class="gw-settings-label"><?php esc_html_e('Nom du modèle PDF ', 'gestiwork'); ?></p>
-                                <div class="gw-pdf-model-name-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
-                                    <input type="text" class="gw-modal-input" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" style="max-width:260px;" />
+                                <div class="gw-pdf-model-name-actions">
+                                    <input type="text" class="gw-modal-input gw-pdf-input-width-260" id="gw_pdf_model_name" name="gw_pdf_model_name" value="" placeholder="<?php esc_attr_e('Saisissez un nom pour le modèle', 'gestiwork'); ?>" />
                                     <button type="button" class="gw-button gw-button--secondary" id="gw_pdf_create_btn">
                                         <?php esc_html_e('Créer', 'gestiwork'); ?>
                                     </button>
@@ -650,9 +647,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     </div>
                 </div>
 
-                <div class="gw-settings-group gw-settings-group--pdf-layout" id="gw-pdf-layout-group" style="<?php echo $currentPdfTemplate ? '' : 'display:none;'; ?>">
+                <div class="gw-settings-group gw-settings-group--pdf-layout<?php echo $currentPdfTemplate ? '' : ' gw-display-none'; ?>" id="gw-pdf-layout-group">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('3.2 Mise en forme PDF', 'gestiwork'); ?></h4>
-                <button type="button" class="gw-button gw-button--secondary" id="gw-toggle-pdf-layout" style="margin-bottom: 8px;">
+                <button type="button" class="gw-button gw-button--secondary gw-mb-8-settings" id="gw-toggle-pdf-layout">
                     <?php esc_html_e('Afficher / masquer les réglages de mise en forme', 'gestiwork'); ?>
                 </button>
                 <?php
@@ -677,22 +674,22 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 $fontOptions = ['sans-serif', 'times', 'courier', 'helvetica', 'serif', 'monospace'];
                 $fontSizeOptions = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24];
                 ?>
-                <div class="gw-settings-grid gw-pdf-layout-grid" id="gw-pdf-layout-body" style="display:none;">
+                <div class="gw-settings-grid gw-pdf-layout-grid gw-display-none" id="gw-pdf-layout-body">
                     <div class="gw-settings-field gw-pdf-layout-block gw-pdf-layout-block--dimensions">
                         <p class="gw-settings-label"><?php esc_html_e('Dimensions et marges', 'gestiwork'); ?></p>
-                        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+                        <div class="gw-flex-gap-24">
                             <div>
                                 <p class="gw-settings-placeholder"><?php esc_html_e('Marges (en millimètres)', 'gestiwork'); ?></p>
-                                <p><label for="gw_pdf_margin_top"><?php esc_html_e('Haut', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_top" name="gw_pdf_margin_top" value="<?php echo esc_attr($pdfMarginTop); ?>" style="width:80px;" step="0.1" /></p>
-                                <p><label for="gw_pdf_margin_bottom"><?php esc_html_e('Bas', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_bottom" name="gw_pdf_margin_bottom" value="<?php echo esc_attr($pdfMarginBottom); ?>" style="width:80px;" step="0.1" /></p>
-                                <p><label for="gw_pdf_margin_left"><?php esc_html_e('Gauche', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_left" name="gw_pdf_margin_left" value="<?php echo esc_attr($pdfMarginLeft); ?>" style="width:80px;" step="0.1" /></p>
-                                <p><label for="gw_pdf_margin_right"><?php esc_html_e('Droite', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_right" name="gw_pdf_margin_right" value="<?php echo esc_attr($pdfMarginRight); ?>" style="width:80px;" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_top"><?php esc_html_e('Haut', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_top" name="gw_pdf_margin_top" value="<?php echo esc_attr($pdfMarginTop); ?>" class="gw-input-width-80" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_bottom"><?php esc_html_e('Bas', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_bottom" name="gw_pdf_margin_bottom" value="<?php echo esc_attr($pdfMarginBottom); ?>" class="gw-input-width-80" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_left"><?php esc_html_e('Gauche', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_left" name="gw_pdf_margin_left" value="<?php echo esc_attr($pdfMarginLeft); ?>" class="gw-input-width-80" step="0.1" /></p>
+                                <p><label for="gw_pdf_margin_right"><?php esc_html_e('Droite', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_margin_right" name="gw_pdf_margin_right" value="<?php echo esc_attr($pdfMarginRight); ?>" class="gw-input-width-80" step="0.1" /></p>
                             </div>
                             <div>
                                 <p class="gw-settings-placeholder"><?php esc_html_e('Hauteurs (en millimètres)', 'gestiwork'); ?></p>
-                                <p><label for="gw_pdf_header_height"><?php esc_html_e('En-tête', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_header_height" name="gw_pdf_header_height" value="<?php echo esc_attr($pdfHeaderHeight); ?>" style="width:80px;" step="0.1" /></p>
-                                <p><label for="gw_pdf_footer_height"><?php esc_html_e('Pied de page', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_footer_height" name="gw_pdf_footer_height" value="<?php echo esc_attr($pdfFooterHeight); ?>" style="width:80px;" step="0.1" /></p>
-                                <p class="gw-settings-placeholder" style="margin-top:8px;">
+                                <p><label for="gw_pdf_header_height"><?php esc_html_e('En-tête', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_header_height" name="gw_pdf_header_height" value="<?php echo esc_attr($pdfHeaderHeight); ?>" class="gw-input-width-80" step="0.1" /></p>
+                                <p><label for="gw_pdf_footer_height"><?php esc_html_e('Pied de page', 'gestiwork'); ?></label> <input type="number" id="gw_pdf_footer_height" name="gw_pdf_footer_height" value="<?php echo esc_attr($pdfFooterHeight); ?>" class="gw-input-width-80" step="0.1" /></p>
+                                <p class="gw-settings-placeholder gw-mt-8">
                                     <?php esc_html_e('Hauteur du corps calculée à partir du format de page et des marges.', 'gestiwork'); ?>
                                 </p>
                             </div>
@@ -704,13 +701,13 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                         <div class="gw-pdf-layout-block--typo-title">
                             <p>
                                 <label for="gw_pdf_font_title" class="top"><?php esc_html_e('Police des titres', 'gestiwork'); ?></label>
-                                <select id="gw_pdf_font_title" name="gw_pdf_font_title" style="max-width:180px;">
+                                <select id="gw_pdf_font_title" name="gw_pdf_font_title" class="gw-select-width-180">
                                     <?php foreach ($fontOptions as $font) : ?>
                                         <option value="<?php echo esc_attr($font); ?>"<?php selected($pdfFontTitle, $font); ?>><?php echo esc_html($font); ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <label for="gw_pdf_font_title_size" style="margin-left:12px;"><?php esc_html_e('Taille', 'gestiwork'); ?></label>
-                                <select id="gw_pdf_font_title_size" name="gw_pdf_font_title_size" style="width:70px;">
+                                <label for="gw_pdf_font_title_size" class="gw-ml-12"><?php esc_html_e('Taille', 'gestiwork'); ?></label>
+                                <select id="gw_pdf_font_title_size" name="gw_pdf_font_title_size" class="gw-input-width-70">
                                     <?php foreach ($fontSizeOptions as $size) : ?>
                                         <option value="<?php echo esc_attr($size); ?>"<?php selected($pdfFontTitleSize, $size); ?>><?php echo esc_html($size); ?>pt</option>
                                     <?php endforeach; ?>
@@ -718,13 +715,13 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             </p>
                             <p>
                                 <label for="gw_pdf_font_body" class="top"><?php esc_html_e('Police du texte courant', 'gestiwork'); ?></label>
-                                <select id="gw_pdf_font_body" name="gw_pdf_font_body" style="max-width:180px;">
+                                <select id="gw_pdf_font_body" name="gw_pdf_font_body" class="gw-select-width-180">
                                     <?php foreach ($fontOptions as $font) : ?>
                                         <option value="<?php echo esc_attr($font); ?>"<?php selected($pdfFontBody, $font); ?>><?php echo esc_html($font); ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <label for="gw_pdf_font_body_size" style="margin-left:12px;"><?php esc_html_e('Taille', 'gestiwork'); ?></label>
-                                <select id="gw_pdf_font_body_size" name="gw_pdf_font_body_size" style="width:70px;">
+                                <label for="gw_pdf_font_body_size" class="gw-ml-12"><?php esc_html_e('Taille', 'gestiwork'); ?></label>
+                                <select id="gw_pdf_font_body_size" name="gw_pdf_font_body_size" class="gw-input-width-70">
                                     <?php foreach ($fontSizeOptions as $size) : ?>
                                         <option value="<?php echo esc_attr($size); ?>"<?php selected($pdfFontBodySize, $size); ?>><?php echo esc_html($size); ?>pt</option>
                                     <?php endforeach; ?>
@@ -732,23 +729,23 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             </p>
                             <p>
                                 <label for="gw_pdf_color_title" class="top"><?php esc_html_e('Couleur des titres de document', 'gestiwork'); ?></label>
-                                <input type="color" id="gw_pdf_color_title" name="gw_pdf_color_title" value="<?php echo esc_attr($pdfColorTitle); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" />
-                                <input type="text" id="gw_pdf_color_title_text" value="<?php echo esc_attr($pdfColorTitle); ?>" style="width:80px;margin-left:8px;" data-color-target="gw_pdf_color_title" />
+                                <input type="color" id="gw_pdf_color_title" name="gw_pdf_color_title" value="<?php echo esc_attr($pdfColorTitle); ?>" class="gw-color-picker" />
+                                <input type="text" id="gw_pdf_color_title_text" value="<?php echo esc_attr($pdfColorTitle); ?>" class="gw-color-text-input" data-color-target="gw_pdf_color_title" />
                             </p>
                             <p>
                                 <label for="gw_pdf_color_other_titles" class="top"><?php esc_html_e('Couleur des autres titres', 'gestiwork'); ?></label>
-                                <input type="color" id="gw_pdf_color_other_titles" name="gw_pdf_color_other_titles" value="<?php echo esc_attr($pdfColorOtherTitles); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" />
-                                <input type="text" id="gw_pdf_color_other_titles_text" value="<?php echo esc_attr($pdfColorOtherTitles); ?>" style="width:80px;margin-left:8px;" data-color-target="gw_pdf_color_other_titles" />
+                                <input type="color" id="gw_pdf_color_other_titles" name="gw_pdf_color_other_titles" value="<?php echo esc_attr($pdfColorOtherTitles); ?>" class="gw-color-picker" />
+                                <input type="text" id="gw_pdf_color_other_titles_text" value="<?php echo esc_attr($pdfColorOtherTitles); ?>" class="gw-color-text-input" data-color-target="gw_pdf_color_other_titles" />
                             </p>
                             <p>
                                 <label for="gw_pdf_header_bg_color" class="top"><?php esc_html_e('Fond de l\'en-tête', 'gestiwork'); ?></label>
-                                <input type="color" id="gw_pdf_header_bg_color_picker" value="<?php echo ($pdfHeaderBgColor !== 'transparent' ? esc_attr($pdfHeaderBgColor) : '#ffffff'); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" data-bg-target="gw_pdf_header_bg_color" />
-                                <input type="text" id="gw_pdf_header_bg_color" name="gw_pdf_header_bg_color" value="<?php echo esc_attr($pdfHeaderBgColor); ?>" style="width:100px;margin-left:8px;" placeholder="transparent" />
+                                <input type="color" id="gw_pdf_header_bg_color_picker" value="<?php echo ($pdfHeaderBgColor !== 'transparent' ? esc_attr($pdfHeaderBgColor) : '#ffffff'); ?>" class="gw-color-picker" data-bg-target="gw_pdf_header_bg_color" />
+                                <input type="text" id="gw_pdf_header_bg_color" name="gw_pdf_header_bg_color" value="<?php echo esc_attr($pdfHeaderBgColor); ?>" class="gw-input-width-100 gw-ml-8" placeholder="transparent" />
                             </p>
                             <p>
                                 <label for="gw_pdf_footer_bg_color" class="top"><?php esc_html_e('Fond du pied de page', 'gestiwork'); ?></label>
-                                <input type="color" id="gw_pdf_footer_bg_color_picker" value="<?php echo ($pdfFooterBgColor !== 'transparent' ? esc_attr($pdfFooterBgColor) : '#ffffff'); ?>" style="width:60px;height:32px;padding:2px;cursor:pointer;" data-bg-target="gw_pdf_footer_bg_color" />
-                                <input type="text" id="gw_pdf_footer_bg_color" name="gw_pdf_footer_bg_color" value="<?php echo esc_attr($pdfFooterBgColor); ?>" style="width:100px;margin-left:8px;" placeholder="transparent" />
+                                <input type="color" id="gw_pdf_footer_bg_color_picker" value="<?php echo ($pdfFooterBgColor !== 'transparent' ? esc_attr($pdfFooterBgColor) : '#ffffff'); ?>" class="gw-color-picker" data-bg-target="gw_pdf_footer_bg_color" />
+                                <input type="text" id="gw_pdf_footer_bg_color" name="gw_pdf_footer_bg_color" value="<?php echo esc_attr($pdfFooterBgColor); ?>" class="gw-input-width-100 gw-ml-8" placeholder="transparent" />
                             </p>
                         </div>
                     </div>
@@ -756,12 +753,12 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     <div class="gw-settings-field">
                         <p class="gw-settings-label"><?php esc_html_e('Feuille de style personnalisée (CSS)', 'gestiwork'); ?></p>
                         <p class="gw-settings-placeholder"><?php esc_html_e('La feuille de style s\'appliquera après les réglages ci-dessus.', 'gestiwork'); ?></p>
-                        <textarea id="gw_pdf_custom_css" name="gw_pdf_custom_css" rows="8" style="width:100%; max-width:100%;"><?php echo esc_textarea($pdfCustomCss); ?></textarea>
+                        <textarea id="gw_pdf_custom_css" name="gw_pdf_custom_css" rows="8" class="gw-textarea-settings"><?php echo esc_textarea($pdfCustomCss); ?></textarea>
                     </div>
                 </div>
             </div>
 
-            <div class="gw-settings-group" id="gw-pdf-header-footer-group" style="<?php echo $currentPdfTemplate ? '' : 'display:none;'; ?>">
+            <div class="gw-settings-group<?php echo $currentPdfTemplate ? '' : ' gw-display-none'; ?>" id="gw-pdf-header-footer-group">
                 <h4 class="gw-section-subtitle"><?php esc_html_e('3.3 En-tête & pied de page', 'gestiwork'); ?></h4>
                 <div class="gw-settings-grid">
                     <div class="gw-settings-field">
@@ -781,9 +778,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 </div>
             </div>
 
-            <div class="gw-settings-group" id="gw-pdf-editor" style="display: none;">
+            <div class="gw-settings-group gw-display-none" id="gw-pdf-editor">
                 <h4 class="gw-section-subtitle" id="gw-pdf-editor-title"><?php esc_html_e('3.x Édition du gabarit PDF (en-tête / pied de page)', 'gestiwork'); ?></h4>
-                <p class="gw-settings-placeholder" style="margin-top:4px;">
+                <p class="gw-settings-placeholder gw-mt-4">
                     <?php esc_html_e('Astuce : dans le contenu de l\'en-tête, vous pouvez utiliser les marqueurs [ZONE1], [ZONE2], [ZONE3] pour répartir le contenu dans les trois zones (gauche / centre / droite).', 'gestiwork'); ?>
                 </p>
                 <div class="gw-settings-grid">
@@ -804,12 +801,12 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             );
                         }
                         ?>
-                        <div class="gw-pdf-editor-switch" style="margin-top: 12px;">
-                            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-switch-to-footer" style="display:inline-flex;align-items:center;gap:6px;">
+                        <div class="gw-pdf-editor-switch gw-mt-12">
+                            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-switch-to-footer" class="gw-display-inline-flex gw-gap-6">
                                 <span class="dashicons dashicons-arrow-down-alt"></span>
                                 <?php esc_html_e('Passer au pied de page', 'gestiwork'); ?>
                             </button>
-                            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-switch-to-header" style="display:none;align-items:center;gap:6px;">
+                            <button type="button" class="gw-button gw-button--secondary" id="gw-pdf-switch-to-header" class="gw-display-none gw-gap-6">
                                 <span class="dashicons dashicons-arrow-up-alt"></span>
                                 <?php esc_html_e('Passer à l\'en-tête', 'gestiwork'); ?>
                             </button>
@@ -828,7 +825,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                         <span class="dashicons dashicons-arrow-down-alt2"></span>
                                     </button>
                                 </p>
-                                <ul class="gw-pdf-shortcodes-list" data-group="<?php echo esc_attr($groupKey); ?>" style="display:none;">
+                                <ul class="gw-pdf-shortcodes-list gw-display-none" data-group="<?php echo esc_attr($groupKey); ?>">
                                     <?php foreach ($shortcodes as $sc) : ?>
                                         <li>
                                             <code class="gw-pdf-shortcode-insert" data-shortcode="[<?php echo esc_attr($sc['code']); ?>]" title="<?php echo esc_attr($sc['description']); ?>">
@@ -843,9 +840,9 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                 </div>
             </div>
 
-            <div class="gw-settings-group" id="gw-pdf-actions-group" style="<?php echo $currentPdfTemplate ? '' : 'display:none;'; ?>">
+            <div class="gw-settings-group<?php echo $currentPdfTemplate ? '' : ' gw-display-none'; ?>" id="gw-pdf-actions-group">
                 <div class="gw-settings-grid">
-                    <div class="gw-settings-field" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                    <div class="gw-settings-field gw-display-flex gw-gap-8 gw-flex-wrap gw-justify-end">
                         <a href="<?php echo esc_url(home_url('/gestiwork/settings/pdf/')); ?>" class="gw-button gw-button--secondary">
                             <?php esc_html_e('Annuler les modifications PDF', 'gestiwork'); ?>
                         </a>
@@ -858,14 +855,14 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
             </form>
 
             <!-- Formulaire caché pour la suppression de modèle -->
-            <form method="post" action="" id="gw-pdf-delete-form" style="display:none;">
+            <form method="post" action="" id="gw-pdf-delete-form" class="gw-display-none">
                 <input type="hidden" name="gw_settings_action" value="delete_pdf_template" />
                 <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_delete_template_id" value="0" />
                 <?php wp_nonce_field('gw_save_pdf_template', 'gw_settings_nonce_pdf'); ?>
             </form>
 
             <!-- Formulaire caché pour la duplication de modèle -->
-            <form method="post" action="" id="gw-pdf-duplicate-form" style="display:none;">
+            <form method="post" action="" id="gw-pdf-duplicate-form" class="gw-display-none">
                 <input type="hidden" name="gw_settings_action" value="duplicate_pdf_template" />
                 <input type="hidden" name="gw_pdf_template_id" id="gw_pdf_duplicate_template_id" value="0" />
                 <input type="hidden" name="gw_pdf_duplicate_name" id="gw_pdf_duplicate_name" value="" />
@@ -889,7 +886,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                     </p>
                     <div class="gw-modal-grid">
                         <div class="gw-modal-field">
-                            <label for="gw_raison_sociale"><?php esc_html_e('Nom (raison sociale)', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_raison_sociale"><?php esc_html_e('Nom (raison sociale)', 'gestiwork'); ?> <span class="gw-required-asterisk gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_raison_sociale" name="gw_raison_sociale" value="<?php echo isset($ofIdentity['raison_sociale']) ? esc_attr($ofIdentity['raison_sociale']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
@@ -902,15 +899,15 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             </button>
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_representant_nom"><?php esc_html_e('Nom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_representant_nom"><?php esc_html_e('Nom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_representant_nom" name="gw_representant_nom" value="<?php echo isset($ofIdentity['representant_nom']) ? esc_attr($ofIdentity['representant_nom']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_email_contact"><?php esc_html_e('E-mail de contact', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_email_contact"><?php esc_html_e('E-mail de contact', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="email" class="gw-modal-input" id="gw_email_contact" name="gw_email_contact" value="<?php echo isset($ofIdentity['email_contact']) ? esc_attr($ofIdentity['email_contact']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_representant_prenom"><?php esc_html_e('Prénom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_representant_prenom"><?php esc_html_e('Prénom du représentant légal', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_representant_prenom" name="gw_representant_prenom" value="<?php echo isset($ofIdentity['representant_prenom']) ? esc_attr($ofIdentity['representant_prenom']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
@@ -918,7 +915,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <input type="url" class="gw-modal-input" id="gw_site_internet" name="gw_site_internet" value="<?php echo isset($ofIdentity['site_internet']) ? esc_attr($ofIdentity['site_internet']) : ''; ?>" />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_telephone_fixe"><?php esc_html_e('Téléphone fixe', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_telephone_fixe"><?php esc_html_e('Téléphone fixe', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input
                                 type="text"
                                 class="gw-modal-input"
@@ -931,7 +928,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_telephone_portable"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_telephone_portable"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input
                                 type="text"
                                 class="gw-modal-input"
@@ -944,20 +941,20 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_adresse"><?php esc_html_e('Adresse', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_adresse"><?php esc_html_e('Adresse', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <textarea class="gw-modal-textarea" id="gw_adresse" name="gw_adresse" required><?php echo isset($ofIdentity['adresse']) ? esc_textarea($ofIdentity['adresse']) : ''; ?></textarea>
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_code_postal"><?php esc_html_e('Code postal', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_code_postal"><?php esc_html_e('Code postal', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_code_postal" name="gw_code_postal" value="<?php echo isset($ofIdentity['code_postal']) ? esc_attr($ofIdentity['code_postal']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_ville"><?php esc_html_e('Ville', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_ville"><?php esc_html_e('Ville', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_ville" name="gw_ville" value="<?php echo isset($ofIdentity['ville']) ? esc_attr($ofIdentity['ville']) : ''; ?>" required />
                         </div>
                         
                         <div class="gw-modal-field">
-                            <label for="gw_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input
                                 type="text"
                                 class="gw-modal-input"
@@ -973,7 +970,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             </small>
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_code_ape"><?php esc_html_e('Code APE (NAF)', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_code_ape"><?php esc_html_e('Code APE (NAF)', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_code_ape" name="gw_code_ape" value="<?php echo isset($ofIdentity['code_ape']) ? esc_attr($ofIdentity['code_ape']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
@@ -989,7 +986,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <input type="text" class="gw-modal-input" id="gw_capital_social" name="gw_capital_social" value="<?php echo isset($ofIdentity['capital_social']) ? esc_attr($ofIdentity['capital_social']) : ''; ?>" />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_nda"><?php esc_html_e('NDA (numéro de déclaration d’activité)', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_nda"><?php esc_html_e('NDA (numéro de déclaration d’activité)', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input type="text" class="gw-modal-input" id="gw_nda" name="gw_nda" value="<?php echo isset($ofIdentity['nda']) ? esc_attr($ofIdentity['nda']) : ''; ?>" required />
                         </div>
                         <div class="gw-modal-field">
@@ -1042,11 +1039,11 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                 <option value="assujetti" <?php selected($regimeActuel, 'assujetti'); ?>><?php esc_html_e('Assujetti', 'gestiwork'); ?></option>
                             </select>
                         </div>
-                        <div class="gw-modal-field gw-modal-tva-card" id="gw_tva_card"<?php if (!$showTvaCard) : ?> style="display: none;"<?php endif; ?>>
+                        <div class="gw-modal-field gw-modal-tva-card<?php if (!$showTvaCard) : echo ' gw-display-none'; endif; ?>" id="gw_tva_card">
                             <label for="gw_tva_intracom"><?php esc_html_e('TVA intracommunautaire', 'gestiwork'); ?></label>
                             <input type="text" class="gw-modal-input" id="gw_tva_intracom" name="gw_tva_intracom" value="<?php echo isset($ofIdentity['tva_intracom']) ? esc_attr($ofIdentity['tva_intracom']) : ''; ?>" />
 
-                            <label for="gw_taux_tva" style="margin-top: 6px; display: block;"><?php esc_html_e('Taux de TVA par défaut', 'gestiwork'); ?></label>
+                            <label for="gw_taux_tva" class="gw-mt-6 gw-display-block"><?php esc_html_e('Taux de TVA par défaut', 'gestiwork'); ?></label>
                             <select class="gw-modal-input" id="gw_taux_tva" name="gw_taux_tva">
                                 <?php
                                 $taux_actuel = isset($ofIdentity['taux_tva']) ? (string) $ofIdentity['taux_tva'] : '20';
@@ -1078,7 +1075,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                 inputmode="text"
                                 pattern="[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}"
                                 maxlength="34"
-                                style="text-transform: uppercase;"
+class="gw-text-uppercase"
                                 value="<?php echo isset($ofIdentity['iban']) ? esc_attr($ofIdentity['iban']) : ''; ?>"
                             />
                             <small class="gw-modal-small-info">
@@ -1095,7 +1092,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                                 inputmode="text"
                                 pattern="[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?"
                                 maxlength="11"
-                                style="text-transform: uppercase;"
+class="gw-text-uppercase"
                                 value="<?php echo isset($ofIdentity['bic']) ? esc_attr($ofIdentity['bic']) : ''; ?>"
                             />
                             <small class="gw-modal-small-info">
@@ -1103,7 +1100,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             </small>
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_format_numero_devis"><?php esc_html_e('Format des numéros de devis / propositions', 'gestiwork'); ?> <span class="gw-required-asterisk" style="color:#d63638;">*</span></label>
+                            <label for="gw_format_numero_devis"><?php esc_html_e('Format des numéros de devis / propositions', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
                             <input
                                 type="text"
                                 class="gw-modal-input"
@@ -1145,7 +1142,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <div class="gw-modal-field">
                                 <label for="gw_first_year">
                                     <?php esc_html_e('Première année d’activité gérée', 'gestiwork'); ?>
-                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                    <span class="gw-required-asterisk" class="gw-color-error">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -1161,7 +1158,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <div class="gw-modal-field">
                                 <label for="gw_min_hours_between_signature_emails">
                                     <?php esc_html_e('Délai minimum entre deux e-mails de demande de signature (heures)', 'gestiwork'); ?>
-                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                    <span class="gw-required-asterisk" class="gw-color-error">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -1176,7 +1173,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <div class="gw-modal-field">
                                 <label for="gw_max_days_veille_alert">
                                     <?php esc_html_e('Délai maximum avant alerte sur la veille personnelle (jours)', 'gestiwork'); ?>
-                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                    <span class="gw-required-asterisk" class="gw-color-error">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -1191,7 +1188,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <div class="gw-modal-field">
                                 <label for="gw_token_validity_hours">
                                     <?php esc_html_e('Durée de validité du jeton de connexion (heures, 0 pour illimité)', 'gestiwork'); ?>
-                                    <span class="gw-required-asterisk" style="color:#d63638;">*</span>
+                                    <span class="gw-required-asterisk" class="gw-color-error">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -1298,590 +1295,3 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
     </div>
 </section>
 
-<script>
-    (function () {
-        // Logique spécifique Settings : gestion URL avec '/settings/tab/'
-        var tabs = document.querySelectorAll('.gw-settings-tab');
-        
-        if (tabs.length) {
-            tabs.forEach(function (tab) {
-                tab.addEventListener('click', function () {
-                    var target = tab.getAttribute('data-gw-tab');
-                    if (!target) {
-                        return;
-                    }
-
-                    // Mise à jour de l'URL pour refléter l'onglet actif, sans recharger la page
-                    try {
-                        if (typeof window !== 'undefined' && window.history && typeof window.history.replaceState === 'function') {
-                            var loc = window.location;
-                            var path = loc.pathname || '';
-                            var newPath = path;
-
-                            if (/\/settings\/[^/]+\/?$/.test(path)) {
-                                // Remplace le dernier segment après /settings/
-                                newPath = path.replace(/(\/settings\/)[^/]+\/?$/, '$1' + target + '/');
-                            } else if (/\/settings\/?$/.test(path)) {
-                                // Aucun segment de section encore présent
-                                newPath = path.replace(/\/settings\/?$/, '/settings/' + target + '/');
-                            }
-
-                            if (newPath && newPath !== path) {
-                                var newUrl = newPath + (loc.search || '') + (loc.hash || '');
-                                window.history.replaceState(null, '', newUrl);
-                            }
-                        }
-                    } catch (e) {
-                        // En cas d'erreur, on ne bloque pas le changement d'onglet
-                    }
-                });
-            });
-        }
-
-        // Formatage automatique des champs au blur
-        function gwFormatPhone(value) {
-            if (window.GWFormUtils && typeof window.GWFormUtils.gwFormatPhone === 'function') {
-                return window.GWFormUtils.gwFormatPhone(value);
-            }
-            return value ? String(value).trim() : '';
-        }
-
-        function gwFormatSiret(value) {
-            if (window.GWFormUtils && typeof window.GWFormUtils.gwFormatSiret === 'function') {
-                return window.GWFormUtils.gwFormatSiret(value);
-            }
-            return value ? String(value).trim() : '';
-        }
-
-        function gwNormalizeIban(value) {
-            if (!value) {
-                return '';
-            }
-            return value.toUpperCase().replace(/\s+/g, '');
-        }
-
-        function gwNormalizeBic(value) {
-            if (!value) {
-                return '';
-            }
-            return value.toUpperCase().replace(/\s+/g, '');
-        }
-
-        var telFixe = document.getElementById('gw_telephone_fixe');
-        if (telFixe) {
-            telFixe.addEventListener('blur', function () {
-                telFixe.value = gwFormatPhone(telFixe.value);
-            });
-        }
-
-        var telPortable = document.getElementById('gw_telephone_portable');
-        if (telPortable) {
-            telPortable.addEventListener('blur', function () {
-                telPortable.value = gwFormatPhone(telPortable.value);
-            });
-        }
-
-        var siretField = document.getElementById('gw_siret');
-        if (siretField) {
-            siretField.addEventListener('blur', function () {
-                siretField.value = gwFormatSiret(siretField.value);
-            });
-        }
-
-        var ibanField = document.getElementById('gw_iban');
-        if (ibanField) {
-            ibanField.addEventListener('blur', function () {
-                ibanField.value = gwNormalizeIban(ibanField.value);
-            });
-        }
-
-        var bicField = document.getElementById('gw_bic');
-        if (bicField) {
-            bicField.addEventListener('blur', function () {
-                bicField.value = gwNormalizeBic(bicField.value);
-            });
-        }
-
-        var regimeSelect = document.getElementById('gw_regime_tva');
-        var tvaCard = document.getElementById('gw_tva_card');
-        if (regimeSelect && tvaCard) {
-            var updateTvaCard = function () {
-                if (regimeSelect.value === 'assujetti') {
-                    tvaCard.style.display = '';
-                } else {
-                    tvaCard.style.display = 'none';
-                }
-            };
-            updateTvaCard();
-            regimeSelect.addEventListener('change', updateTvaCard);
-        }
-
-        // Gestion de la zone d'édition PDF (en-tête / pied de page)
-        var pdfEditorGroup = document.getElementById('gw-pdf-editor');
-        var pdfEditorTitle = document.getElementById('gw-pdf-editor-title');
-        var pdfEditorContext = document.getElementById('gw_pdf_editor_context');
-        var openPdfHeaderBtn = document.getElementById('gw-open-pdf-header-editor');
-        var openPdfFooterBtn = document.getElementById('gw-open-pdf-footer-editor');
-
-        function gwOpenPdfEditor(context) {
-            if (!pdfEditorGroup) {
-                return;
-            }
-
-            pdfEditorGroup.style.display = '';
-
-            if (pdfEditorContext) {
-                pdfEditorContext.value = context;
-            }
-
-            if (pdfEditorTitle) {
-                if (context === 'header') {
-                    pdfEditorTitle.textContent = 'Modifier l\'en-tête';
-                } else if (context === 'footer') {
-                    pdfEditorTitle.textContent = 'Modifier le pied de page';
-                }
-            }
-
-            if (typeof pdfEditorGroup.scrollIntoView === 'function') {
-                try {
-                    pdfEditorGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } catch (e) {
-                    // ignore
-                }
-            }
-        }
-
-        if (openPdfHeaderBtn) {
-            openPdfHeaderBtn.addEventListener('click', function () {
-                gwOpenPdfEditor('header');
-            });
-        }
-
-        if (openPdfFooterBtn) {
-            openPdfFooterBtn.addEventListener('click', function () {
-                gwOpenPdfEditor('footer');
-            });
-        }
-
-        // Ouverture / fermeture de la zone 3.2 Mise en forme PDF
-        var pdfLayoutToggle = document.getElementById('gw-toggle-pdf-layout');
-        var pdfLayoutBody = document.getElementById('gw-pdf-layout-body');
-        if (pdfLayoutToggle && pdfLayoutBody) {
-            pdfLayoutToggle.addEventListener('click', function () {
-                var current = pdfLayoutBody.style.display;
-                if (!current || current === 'none') {
-                    pdfLayoutBody.style.display = '';
-                } else {
-                    pdfLayoutBody.style.display = 'none';
-                }
-            });
-        }
-
-        // Affichage conditionnel des groupes avancés PDF (3.2 / 3.3)
-        var pdfLayoutGroup = document.getElementById('gw-pdf-layout-group');
-        var pdfHeaderFooterGroup = document.getElementById('gw-pdf-header-footer-group');
-        var pdfActionsGroup = document.getElementById('gw-pdf-actions-group');
-        var pdfCreateBtn = document.getElementById('gw_pdf_create_btn');
-        var pdfCancelBtn = document.getElementById('gw_pdf_cancel_btn');
-        var pdfModelNameInput = document.getElementById('gw_pdf_model_name');
-
-        if (pdfCreateBtn && pdfLayoutGroup && pdfHeaderFooterGroup && pdfActionsGroup && pdfModelNameInput) {
-            pdfCreateBtn.addEventListener('click', function () {
-                var name = pdfModelNameInput.value ? pdfModelNameInput.value.trim() : '';
-                if (name === '') {
-                    window.alert('<?php echo esc_js(__('Veuillez saisir un nom de modèle avant de continuer.', 'gestiwork')); ?>');
-                    pdfModelNameInput.focus();
-                    return;
-                }
-
-                // Afficher les groupes de réglages avancés pour permettre de configurer le modèle
-                pdfLayoutGroup.style.display = '';
-                pdfHeaderFooterGroup.style.display = '';
-                pdfActionsGroup.style.display = '';
-
-                // Ouvrir par défaut le bloc 3.2 si l'utilisateur ne l'a jamais ouvert
-                if (pdfLayoutBody && (!pdfLayoutBody.style.display || pdfLayoutBody.style.display === 'none')) {
-                    pdfLayoutBody.style.display = '';
-                }
-            });
-        }
-
-        if (pdfCancelBtn && pdfLayoutGroup && pdfHeaderFooterGroup && pdfActionsGroup && pdfModelNameInput) {
-            pdfCancelBtn.addEventListener('click', function () {
-                // Réinitialiser simplement le nom et masquer les groupes avancés.
-                pdfModelNameInput.value = '';
-                pdfLayoutGroup.style.display = 'none';
-                pdfHeaderFooterGroup.style.display = 'none';
-                pdfActionsGroup.style.display = 'none';
-            });
-        }
-
-        // Gestion de la suppression des modèles PDF
-        var pdfDeleteButtons = document.querySelectorAll('.gw-pdf-delete-template');
-        var pdfDeleteForm = document.getElementById('gw-pdf-delete-form');
-        var pdfDeleteTemplateId = document.getElementById('gw_pdf_delete_template_id');
-        if (pdfDeleteForm && pdfDeleteTemplateId && pdfDeleteButtons.length) {
-            pdfDeleteButtons.forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var templateId = btn.getAttribute('data-template-id');
-                    var templateName = btn.getAttribute('data-template-name');
-                    if (confirm('Êtes-vous sûr de vouloir supprimer le modèle "' + templateName + '" ?')) {
-                        pdfDeleteTemplateId.value = templateId;
-                        pdfDeleteForm.submit();
-                    }
-                });
-            });
-        }
-
-        // Gestion de la duplication des modèles PDF
-        var pdfDuplicateButtons = document.querySelectorAll('.gw-pdf-duplicate-template');
-        var pdfDuplicateForm = document.getElementById('gw-pdf-duplicate-form');
-        var pdfDuplicateTemplateId = document.getElementById('gw_pdf_duplicate_template_id');
-        var pdfDuplicateNameInput = document.getElementById('gw_pdf_duplicate_name');
-        if (pdfDuplicateForm && pdfDuplicateTemplateId && pdfDuplicateNameInput && pdfDuplicateButtons.length) {
-            pdfDuplicateButtons.forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var templateId = btn.getAttribute('data-template-id');
-                    var templateName = btn.getAttribute('data-template-name');
-                    var defaultName = templateName ? (templateName + ' (copie)') : '';
-                    var newName = window.prompt('Nouveau nom pour le modèle dupliqué :', defaultName);
-                    if (newName === null) {
-                        return; // Annulé
-                    }
-                    newName = newName.trim();
-                    if (newName === '') {
-                        return; // On ne crée pas sans nom
-                    }
-
-                    pdfDuplicateTemplateId.value = templateId;
-                    pdfDuplicateNameInput.value = newName;
-                    pdfDuplicateForm.submit();
-                });
-            });
-        }
-
-        // Synchronisation du contenu TinyMCE avec les champs cachés header/footer
-        var pdfHeaderHtmlInput = document.getElementById('gw_pdf_header_html');
-        var pdfFooterHtmlInput = document.getElementById('gw_pdf_footer_html');
-        var pdfTemplateForm = document.getElementById('gw-pdf-template-form');
-
-        function gwSyncTinyMceToHiddenField() {
-            var context = pdfEditorContext ? pdfEditorContext.value : 'header';
-            var editorContent = '';
-
-            // Récupérer le contenu de TinyMCE
-            if (typeof tinymce !== 'undefined' && tinymce.get('gw_pdf_editor')) {
-                editorContent = tinymce.get('gw_pdf_editor').getContent();
-            } else {
-                var textarea = document.getElementById('gw_pdf_editor');
-                if (textarea) {
-                    editorContent = textarea.value;
-                }
-            }
-
-            // Stocker dans le bon champ caché
-            if (context === 'header' && pdfHeaderHtmlInput) {
-                pdfHeaderHtmlInput.value = editorContent;
-            } else if (context === 'footer' && pdfFooterHtmlInput) {
-                pdfFooterHtmlInput.value = editorContent;
-            }
-        }
-
-        function gwLoadTinyMceFromHiddenField(context) {
-            var content = '';
-            if (context === 'header' && pdfHeaderHtmlInput) {
-                content = pdfHeaderHtmlInput.value;
-            } else if (context === 'footer' && pdfFooterHtmlInput) {
-                content = pdfFooterHtmlInput.value;
-            }
-
-            // Charger dans TinyMCE
-            if (typeof tinymce !== 'undefined' && tinymce.get('gw_pdf_editor')) {
-                tinymce.get('gw_pdf_editor').setContent(content);
-            } else {
-                var textarea = document.getElementById('gw_pdf_editor');
-                if (textarea) {
-                    textarea.value = content;
-                }
-            }
-        }
-
-        // Modifier gwOpenPdfEditor pour synchroniser avant de changer de contexte
-        var originalGwOpenPdfEditor = gwOpenPdfEditor;
-        gwOpenPdfEditor = function (context) {
-            // Sauvegarder le contenu actuel avant de changer de contexte
-            gwSyncTinyMceToHiddenField();
-            // Charger le nouveau contenu
-            gwLoadTinyMceFromHiddenField(context);
-            // Appeler la fonction originale
-            originalGwOpenPdfEditor(context);
-        };
-
-        // Synchroniser avant la soumission du formulaire
-        if (pdfTemplateForm) {
-            pdfTemplateForm.addEventListener('submit', function () {
-                gwSyncTinyMceToHiddenField();
-            });
-        }
-
-        // Toggle des groupes de shortcodes (afficher/masquer)
-        var shortcodeToggles = document.querySelectorAll('.gw-pdf-shortcodes-toggle');
-        shortcodeToggles.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var groupKey = btn.getAttribute('data-group');
-                var list = document.querySelector('.gw-pdf-shortcodes-list[data-group="' + groupKey + '"]');
-                var icon = btn.querySelector('.dashicons');
-                if (list) {
-                    if (list.style.display === 'none' || list.style.display === '') {
-                        list.style.display = 'block';
-                        if (icon) {
-                            icon.classList.remove('dashicons-arrow-down-alt2');
-                            icon.classList.add('dashicons-arrow-up-alt2');
-                        }
-                    } else {
-                        list.style.display = 'none';
-                        if (icon) {
-                            icon.classList.remove('dashicons-arrow-up-alt2');
-                            icon.classList.add('dashicons-arrow-down-alt2');
-                        }
-                    }
-                }
-            });
-        });
-
-        // Insertion des shortcodes dans TinyMCE au clic
-        var shortcodeInsertButtons = document.querySelectorAll('.gw-pdf-shortcode-insert');
-        shortcodeInsertButtons.forEach(function (code) {
-            code.style.cursor = 'pointer';
-            code.addEventListener('click', function () {
-                var shortcode = code.getAttribute('data-shortcode');
-                if (!shortcode) return;
-
-                // Insérer dans TinyMCE si disponible
-                if (typeof tinymce !== 'undefined' && tinymce.get('gw_pdf_editor')) {
-                    tinymce.get('gw_pdf_editor').insertContent(shortcode);
-                    tinymce.get('gw_pdf_editor').focus();
-                } else {
-                    // Fallback sur le textarea
-                    var textarea = document.getElementById('gw_pdf_editor');
-                    if (textarea) {
-                        var start = textarea.selectionStart;
-                        var end = textarea.selectionEnd;
-                        var text = textarea.value;
-                        textarea.value = text.substring(0, start) + shortcode + text.substring(end);
-                        textarea.selectionStart = textarea.selectionEnd = start + shortcode.length;
-                        textarea.focus();
-                    }
-                }
-            });
-        });
-
-        // Boutons pour basculer entre en-tête et pied de page
-        var switchToFooterBtn = document.getElementById('gw-pdf-switch-to-footer');
-        var switchToHeaderBtn = document.getElementById('gw-pdf-switch-to-header');
-
-        if (switchToFooterBtn && switchToHeaderBtn) {
-            switchToFooterBtn.addEventListener('click', function () {
-                gwOpenPdfEditor('footer');
-                switchToFooterBtn.style.display = 'none';
-                switchToHeaderBtn.style.display = 'inline-flex';
-            });
-
-            switchToHeaderBtn.addEventListener('click', function () {
-                gwOpenPdfEditor('header');
-                switchToHeaderBtn.style.display = 'none';
-                switchToFooterBtn.style.display = 'inline-flex';
-            });
-        }
-
-        // Synchronisation des color pickers avec les champs texte
-        var colorInputs = document.querySelectorAll('input[type="color"]');
-        colorInputs.forEach(function (colorInput) {
-            var textInput = document.querySelector('input[data-color-target="' + colorInput.id + '"]');
-            if (textInput) {
-                // Quand le color picker change, mettre à jour le champ texte
-                colorInput.addEventListener('input', function () {
-                    textInput.value = colorInput.value;
-                });
-
-                // Quand le champ texte change, mettre à jour le color picker
-                textInput.addEventListener('input', function () {
-                    var val = textInput.value.trim();
-                    // Valider le format hex
-                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                        colorInput.value = val;
-                    }
-                });
-
-                // Au blur, corriger le format si nécessaire
-                textInput.addEventListener('blur', function () {
-                    var val = textInput.value.trim();
-                    if (!/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                        textInput.value = colorInput.value;
-                    }
-                });
-            }
-        });
-
-        // Synchronisation des color pickers pour les fonds (supportent "transparent")
-        var bgColorPickers = document.querySelectorAll('input[data-bg-target]');
-        bgColorPickers.forEach(function (picker) {
-            var targetId = picker.getAttribute('data-bg-target');
-            var textInput = document.getElementById(targetId);
-            if (textInput) {
-                // Quand le color picker change, mettre à jour le champ texte
-                picker.addEventListener('input', function () {
-                    textInput.value = picker.value;
-                });
-
-                // Quand le champ texte change, mettre à jour le color picker si c'est un hex valide
-                textInput.addEventListener('input', function () {
-                    var val = textInput.value.trim();
-                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                        picker.value = val;
-                    }
-                    // Si "transparent" ou vide, on laisse tel quel
-                });
-            }
-        });
-
-        // Icônes d'aperçu PDF par modèle dans la liste "Modèles existants"
-        var pdfPreviewButtons = document.querySelectorAll('.gw-pdf-preview-template');
-        if (pdfPreviewButtons && pdfPreviewButtons.length) {
-            pdfPreviewButtons.forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var templateId = btn.getAttribute('data-template-id') || '0';
-                    if (templateId === '0' || templateId === '') {
-                        return;
-                    }
-
-                    var previewUrl = '<?php echo esc_url(home_url('/gestiwork/pdf-preview/')); ?>?template_id=' + templateId;
-                    window.open(previewUrl, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
-                });
-            });
-        }
-
-        // Validation du formulaire d'identité au moment de la soumission
-        var identityModal = document.getElementById('gw-modal-general');
-        if (identityModal) {
-            var identityForm = identityModal.querySelector('form');
-            var identityError = document.getElementById('gw_identity_error');
-            if (identityForm && identityError) {
-                identityForm.addEventListener('submit', function (e) {
-                    // Champs strictement obligatoires (non vides)
-                    var requiredFieldIds = [
-                        'gw_raison_sociale',
-                        'gw_email_contact',
-                        'gw_adresse',
-                        'gw_code_postal',
-                        'gw_ville',
-                        'gw_siret',
-                        'gw_code_ape',
-                        'gw_nda',
-                        'gw_format_numero_devis'
-                    ];
-
-                    var requiredFields = requiredFieldIds
-                        .map(function (id) { return document.getElementById(id); })
-                        .filter(function (el) { return !!el; });
-
-                    var missingRequired = requiredFields.some(function (field) {
-                        return field.value.trim() === '';
-                    });
-
-                    var telFixeField = document.getElementById('gw_telephone_fixe');
-                    var telPortableField = document.getElementById('gw_telephone_portable');
-                    var hasAtLeastOnePhone = false;
-                    if (telFixeField && telFixeField.value.trim() !== '') {
-                        hasAtLeastOnePhone = true;
-                    }
-                    if (telPortableField && telPortableField.value.trim() !== '') {
-                        hasAtLeastOnePhone = true;
-                    }
-
-                    if (missingRequired || !hasAtLeastOnePhone) {
-                        e.preventDefault();
-
-                        if (missingRequired && !hasAtLeastOnePhone) {
-                            identityError.textContent = 'Merci de renseigner tous les champs obligatoires marqués d’une astérisque rouge (*) et au moins un numéro de téléphone (fixe ou portable).';
-                        } else if (missingRequired) {
-                            identityError.textContent = 'Merci de renseigner tous les champs obligatoires marqués d’une astérisque rouge (*).';
-                        } else {
-                            identityError.textContent = 'Merci de renseigner au moins un numéro de téléphone (fixe ou portable).';
-                        }
-
-                        identityError.style.display = '';
-                        identityError.focus && identityError.focus();
-                    } else {
-                        // Tout est OK, on masque le message d'erreur éventuel et on laisse le formulaire se soumettre
-                        identityError.textContent = '';
-                        identityError.style.display = 'none';
-                    }
-                });
-            }
-        }
-
-        // Ouverture de la section d'édition de la description (présentation OF)
-        var openDescBtn = document.getElementById('gw-open-description-editor');
-        var descSection = document.getElementById('gw-settings-group-description-editor');
-        if (openDescBtn && descSection) {
-            openDescBtn.addEventListener('click', function () {
-                descSection.style.display = '';
-                if (typeof descSection.scrollIntoView === 'function') {
-                    descSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        }
-
-        // Sélection du logo GestiWork via la médiathèque WordPress
-        var logoSelectButton = document.getElementById('gw-logo-select-button');
-        var logoIdInput = document.getElementById('gw_logo_id');
-        var logoPreview = document.getElementById('gw-logo-preview');
-        if (logoSelectButton && logoIdInput && logoPreview) {
-            var gwLogoFrame = null;
-
-            logoSelectButton.addEventListener('click', function (e) {
-                e.preventDefault();
-
-                // Vérifier la disponibilité de wp.media au moment du clic
-                if (typeof wp === 'undefined' || !wp.media || typeof wp.media !== 'function') {
-                    return;
-                }
-
-                if (gwLogoFrame) {
-                    gwLogoFrame.open();
-                    return;
-                }
-
-                gwLogoFrame = wp.media({
-                    title: 'Choisir un logo GestiWork',
-                    button: { text: 'Utiliser ce logo' },
-                    multiple: false
-                });
-
-                gwLogoFrame.on('select', function () {
-                    var attachment = gwLogoFrame.state().get('selection').first();
-                    if (!attachment) {
-                        return;
-                    }
-
-                    var data = attachment.toJSON();
-                    logoIdInput.value = data.id || 0;
-
-                    if (data.url) {
-                        logoPreview.src = data.url;
-                        logoPreview.style.display = 'inline-block';
-                    }
-
-                    // Soumettre automatiquement le formulaire pour enregistrer le logo
-                    var form = logoSelectButton.closest('form');
-                    if (form && typeof form.submit === 'function') {
-                        form.submit();
-                    }
-                });
-
-                gwLogoFrame.open();
-            });
-        }
-    })();
-</script>

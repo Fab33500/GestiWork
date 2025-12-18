@@ -44,6 +44,87 @@
         });
     }
 
+    function bindChecklists() {
+        if (!document || typeof document.querySelectorAll !== 'function') {
+            return;
+        }
+
+        var checklists = document.querySelectorAll('[data-gw-checklist]');
+        if (!checklists || !checklists.length) {
+            return;
+        }
+
+        var normalize = function (value) {
+            return String(value || '').toLowerCase().trim();
+        };
+
+        var forEachNode = function (nodes, cb) {
+            if (!nodes) {
+                return;
+            }
+            for (var i = 0; i < nodes.length; i++) {
+                cb(nodes[i]);
+            }
+        };
+
+        forEachNode(checklists, function (checklist) {
+            var searchInput = checklist.querySelector('[data-gw-checklist-search]');
+            var allButton = checklist.querySelector('[data-gw-checklist-all]');
+            var noneButton = checklist.querySelector('[data-gw-checklist-none]');
+            var items = checklist.querySelectorAll('[data-gw-checklist-item]');
+
+            var applyFilter = function () {
+                var query = normalize(searchInput ? searchInput.value : '');
+                forEachNode(items, function (item) {
+                    var text = item.getAttribute('data-gw-checklist-text') || item.textContent || '';
+                    var visible = query === '' || normalize(text).indexOf(query) !== -1;
+                    item.style.display = visible ? '' : 'none';
+                });
+            };
+
+            var setAll = function (checked) {
+                forEachNode(items, function (item) {
+                    if (item.style.display === 'none') {
+                        return;
+                    }
+                    var input = item.querySelector('input[type="checkbox"]');
+                    if (!input || input.disabled) {
+                        return;
+                    }
+                    input.checked = checked;
+                });
+            };
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyFilter);
+            }
+            if (allButton) {
+                allButton.addEventListener('click', function () {
+                    setAll(true);
+                });
+            }
+            if (noneButton) {
+                noneButton.addEventListener('click', function () {
+                    setAll(false);
+                });
+            }
+
+            applyFilter();
+        });
+    }
+
+    function setNumericInputAttributes(input, maxLength) {
+        if (!input) {
+            return;
+        }
+        if (typeof maxLength === 'number') {
+            input.maxLength = maxLength;
+        }
+        input.setAttribute('inputmode', 'numeric');
+        var count = typeof maxLength === 'number' ? maxLength : 5;
+        input.setAttribute('pattern', '[0-9]{' + count + '}');
+    }
+
     function bindSettingsGeneral() {
         var telFixe = document.getElementById('gw_telephone_fixe');
         var telPortable = document.getElementById('gw_telephone_portable');
@@ -98,6 +179,11 @@
         var tierCreateType = document.getElementById('gw_tier_create_type');
         var tierViewType = document.getElementById('gw_tier_view_type');
 
+        var createFinanceurEntreprisesCard = document.getElementById('gw_tier_create_financeur_entreprises_card');
+        var createEntrepriseFinanceursCard = document.getElementById('gw_tier_create_entreprise_financeurs_card');
+        var viewFinanceurEntreprisesCard = document.getElementById('gw_tier_view_financeur_entreprises_card');
+        var viewEntrepriseFinanceursCard = document.getElementById('gw_tier_view_entreprise_financeurs_card');
+
         var hasTierCreate = !!tierCreateType;
         var hasTierView = !!tierViewType;
 
@@ -125,6 +211,16 @@
 
             var updateCreate = function () {
                 setTierRequiredByType(tierCreateType.value, createFields);
+
+                if (createFinanceurEntreprisesCard) {
+                    createFinanceurEntreprisesCard.classList.toggle('gw-display-none', tierCreateType.value !== 'financeur');
+                }
+                if (createEntrepriseFinanceursCard) {
+                    createEntrepriseFinanceursCard.classList.toggle(
+                        'gw-display-none',
+                        !(tierCreateType.value === 'entreprise' || tierCreateType.value === 'client_entreprise')
+                    );
+                }
             };
 
             updateCreate();
@@ -151,6 +247,16 @@
 
             var updateView = function () {
                 setTierRequiredByType(tierViewType.value, viewFields);
+
+                if (viewFinanceurEntreprisesCard) {
+                    viewFinanceurEntreprisesCard.classList.toggle('gw-display-none', tierViewType.value !== 'financeur');
+                }
+                if (viewEntrepriseFinanceursCard) {
+                    viewEntrepriseFinanceursCard.classList.toggle(
+                        'gw-display-none',
+                        !(tierViewType.value === 'entreprise' || tierViewType.value === 'client_entreprise')
+                    );
+                }
             };
 
             updateView();
@@ -165,13 +271,31 @@
         bindPhoneBlur(contactTel2);
     }
 
+    function bindApprenantForm() {
+        var telField = document.getElementById('gw_apprenant_telephone');
+        var cpField = document.getElementById('gw_apprenant_cp');
+
+        bindPhoneBlur(telField);
+        setNumericInputAttributes(cpField, 5);
+    }
+
+    function bindResponsableForm() {
+        var telField = document.getElementById('gw_responsable_telephone');
+        var cpField = document.getElementById('gw_responsable_code_postal');
+
+        bindPhoneBlur(telField);
+        setNumericInputAttributes(cpField, 5);
+    }
+
     var api = {
         gwFormatPhone: gwFormatPhone,
         gwFormatSiret: gwFormatSiret,
         formatPhone: gwFormatPhone,
         formatSiret: gwFormatSiret,
         bindSettingsGeneral: bindSettingsGeneral,
-        bindTierClient: bindTierClient
+        bindTierClient: bindTierClient,
+        bindApprenantForm: bindApprenantForm,
+        bindResponsableForm: bindResponsableForm
     };
 
     window.GWFormUtils = window.GWFormUtils || api;
@@ -179,6 +303,9 @@
     function init() {
         bindSettingsGeneral();
         bindTierClient();
+        bindApprenantForm();
+        bindResponsableForm();
+        bindChecklists();
     }
 
     if (document) {

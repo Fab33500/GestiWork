@@ -52,77 +52,93 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
 ?>
 
 <section class="gw-section gw-section-dashboard">
-    <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
-    <p class="gw-section-description">
-        <?php esc_html_e(
-            'Cet écran regroupera à terme tous vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
-            'gestiwork'
-        ); ?>
-    </p>
-
-    <div class="gw-settings-group">
-        <h3 class="gw-section-subtitle"><?php esc_html_e('Nouveau tiers', 'gestiwork'); ?></h3>
-        <p class="gw-section-description">
-            <?php esc_html_e(
-                'Ce formulaire sert de maquette pour la création d’un tiers (client particulier, entreprise, financeur ou organisme donneur d\'ordre). La logique d’enregistrement sera branchée ultérieurement.',
-                'gestiwork'
-            ); ?>
-        </p>
-
-        <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
-            <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
-        </a>
+    <div class="gw-flex-header">
+        <div>
+            <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
+            <p class="gw-section-description">
+                <?php esc_html_e(
+                    'Gérez vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
+                    'gestiwork'
+                ); ?>
+            </p>
+        </div>
+        <div class="gw-flex-end">
+            <a class="gw-button gw-button--secondary gw-button--cta" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
+                <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
+            </a>
+        </div>
     </div>
 
     <div class="gw-settings-group">
-        <h3 class="gw-section-subtitle"><?php esc_html_e('Vue d’ensemble des tiers', 'gestiwork'); ?></h3>
         <p class="gw-section-description">
             <?php esc_html_e(
-                'Pour l’instant, cette page présente un exemple de mise en forme. La prochaine étape consistera à brancher ce tableau sur la base de données (table gw_tiers).',
+                'Consultez la liste des tiers et affinez les résultats grâce à la recherche avancée.',
                 'gestiwork'
             ); ?>
         </p>
 
         <div class="gw-settings-grid">
-            <div class="gw-settings-field" style="grid-column: 1 / -1;">
+            <div class="gw-settings-field gw-settings-field--full">
                 <p class="gw-settings-label"><?php esc_html_e('Recherche avancée', 'gestiwork'); ?></p>
-                <form method="get" action="" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; align-items: end;">
-                    <div>
-                        <label class="gw-settings-placeholder" for="gw_tiers_search_query"><?php esc_html_e('Recherche (nom, e-mail, téléphone...)', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tiers_search_query" name="gw_tiers_query" class="gw-modal-input" value="<?php echo esc_attr($requestQuery); ?>" placeholder="Entreprise, Dupont..." />
-                    </div>
-                    <div>
-                        <label class="gw-settings-placeholder" for="gw_tiers_search_type"><?php esc_html_e('Type de tiers', 'gestiwork'); ?></label>
-                        <select id="gw_tiers_search_type" name="gw_tiers_type" class="gw-modal-input">
-                            <option value="" <?php selected($requestType, ''); ?>><?php esc_html_e('Tous', 'gestiwork'); ?></option>
-                            <option value="client_particulier" <?php selected($requestType, 'client_particulier'); ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
-                            <option value="entreprise" <?php selected($requestType, 'entreprise'); ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
-                            <option value="financeur" <?php selected($requestType, 'financeur'); ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
-                            <option value="of_donneur_ordre" <?php selected($requestType, 'of_donneur_ordre'); ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="gw-settings-placeholder" for="gw_tiers_search_status"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
-                        <select id="gw_tiers_search_status" name="gw_tiers_statut" class="gw-modal-input">
-                            <option value="" <?php selected($requestStatut, ''); ?>><?php esc_html_e('Tous', 'gestiwork'); ?></option>
-                            <option value="prospect" <?php selected($requestStatut, 'prospect'); ?>><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
-                            <option value="client" <?php selected($requestStatut, 'client'); ?>><?php esc_html_e('Client', 'gestiwork'); ?></option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="gw-settings-placeholder" for="gw_tiers_search_city"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
-                        <input type="text" id="gw_tiers_search_city" name="gw_tiers_ville" class="gw-modal-input" value="<?php echo esc_attr($requestVille); ?>" placeholder="Paris" />
-                    </div>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                        <a class="gw-button gw-button--secondary" href="<?php echo esc_url($currentResetUrl); ?>"><?php esc_html_e('Réinitialiser', 'gestiwork'); ?></a>
-                        <button type="submit" class="gw-button gw-button--primary"><?php esc_html_e('Rechercher', 'gestiwork'); ?></button>
-                    </div>
-                </form>
+                <?php
+                $gw_search_action_url = '';
+                $gw_search_reset_url = $currentResetUrl;
+                $gw_search_submit_label = __('Rechercher', 'gestiwork');
+                $gw_search_fields = [
+                    [
+                        'type' => 'text',
+                        'id' => 'gw_tiers_search_query',
+                        'name' => 'gw_tiers_query',
+                        'label' => __('Recherche (nom, e-mail, téléphone...)', 'gestiwork'),
+                        'value' => $requestQuery,
+                        'placeholder' => __('Entreprise, Dupont...', 'gestiwork'),
+                    ],
+                    [
+                        'type' => 'select',
+                        'id' => 'gw_tiers_search_type',
+                        'name' => 'gw_tiers_type',
+                        'label' => __('Type de tiers', 'gestiwork'),
+                        'value' => $requestType,
+                        'options' => [
+                            '' => __('Tous', 'gestiwork'),
+                            'client_particulier' => __('Particulier', 'gestiwork'),
+                            'entreprise' => __('Entreprise', 'gestiwork'),
+                            'financeur' => __('Financeur / OPCO', 'gestiwork'),
+                            'of_donneur_ordre' => __('OF donneur d\'ordre', 'gestiwork'),
+                        ],
+                    ],
+                    [
+                        'type' => 'select',
+                        'id' => 'gw_tiers_search_status',
+                        'name' => 'gw_tiers_statut',
+                        'label' => __('Statut', 'gestiwork'),
+                        'value' => $requestStatut,
+                        'options' => [
+                            '' => __('Tous', 'gestiwork'),
+                            'prospect' => __('Prospect', 'gestiwork'),
+                            'client' => __('Client', 'gestiwork'),
+                        ],
+                    ],
+                    [
+                        'type' => 'text',
+                        'id' => 'gw_tiers_search_city',
+                        'name' => 'gw_tiers_ville',
+                        'label' => __('Ville', 'gestiwork'),
+                        'value' => $requestVille,
+                        'placeholder' => __('Paris', 'gestiwork'),
+                    ],
+                ];
+
+                $partial = GW_PLUGIN_DIR . 'templates/erp/partials/advanced-search.php';
+                if (is_readable($partial)) {
+                    require $partial;
+                }
+                ?>
             </div>
-            <div class="gw-settings-field" style="grid-column: 1 / -1;">
-                <p class="gw-settings-label"><?php esc_html_e('Tiers récents', 'gestiwork'); ?></p>
+            <div class="gw-settings-field gw-settings-field--full">
+                <p class="gw-settings-label"><?php esc_html_e('Liste des Tiers', 'gestiwork'); ?></p>
                 <?php if ($tiersTotalPages > 1) : ?>
-                    <p class="gw-section-description" style="margin-top: -4px;">
+                    <p class="gw-section-description gw-section-description--compact">
                         <?php echo esc_html(sprintf(__('Page %d sur %d — %d résultat(s).', 'gestiwork'), $tiersPage, $tiersTotalPages, $tiersTotal)); ?>
                     </p>
                 <?php endif; ?>
@@ -200,15 +216,12 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                                             <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Voir le tiers', 'gestiwork'); ?>">
                                                 <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
                                             </a>
-                                            <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'gw_tier_id' => $tierId, 'mode' => 'edit'], home_url('/gestiwork/'))); ?>" title="<?php esc_attr_e('Modifier le tiers', 'gestiwork'); ?>">
-                                                <span class="dashicons dashicons-edit" aria-hidden="true"></span>
-                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else : ?>
                                 <tr>
-                                    <td colspan="7" style="color: var(--gw-color-muted); font-style: italic;">
+                                    <td colspan="7" class="gw-table-empty">
                                         <?php esc_html_e('Aucun tiers enregistré.', 'gestiwork'); ?>
                                     </td>
                                 </tr>
@@ -217,7 +230,7 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                     </table>
                 </div>
                 <?php if ($tiersTotalPages > 1) : ?>
-                    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 12px;">
+                    <div class="gw-pagination">
                         <?php
                         $queryArgs = $_GET;
                         unset($queryArgs['gw_tiers_page']);
@@ -236,13 +249,4 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
         </div>
     </div>
 
-    <div class="gw-settings-group">
-        <h3 class="gw-section-subtitle"><?php esc_html_e('Ce qui sera possible prochainement', 'gestiwork'); ?></h3>
-        <ul class="gw-list">
-            <li><?php esc_html_e('Ajouter un nouveau tiers (client, financeur, OF) via un formulaire dédié.', 'gestiwork'); ?></li>
-            <li><?php esc_html_e('Rechercher un tiers par nom, type ou ville.', 'gestiwork'); ?></li>
-            <li><?php esc_html_e('Accéder à la fiche détaillée d’un tiers (coordonnées complètes, historique des formations, etc.).', 'gestiwork'); ?></li>
-            <li><?php esc_html_e('Sélectionner un client ou financeur lors de la création de devis, conventions et convocations.', 'gestiwork'); ?></li>
-        </ul>
-    </div>
 </section>

@@ -74,7 +74,25 @@ class AssetsLoader
         // Assets conditionnels selon la vue active
         $currentView = self::getCurrentView();
         
-        $viewsWithForms = ['settings', 'client'];
+        $viewsWithForms = ['settings', 'client', 'apprenant', 'responsable'];
+
+        // Assets spécifiques à la vue Aide
+        if ($currentView === 'aide') {
+            wp_enqueue_style(
+                'gestiwork-aide',
+                GW_PLUGIN_URL . 'assets/css/gw-aide.css',
+                ['gestiwork-layout'],
+                GW_VERSION
+            );
+
+            wp_enqueue_script(
+                'gestiwork-aide',
+                GW_PLUGIN_URL . 'assets/js/gw-aide.js',
+                [],
+                GW_VERSION,
+                true
+            );
+        }
 
         // gw-form-utils nécessaire sur Settings et Client (formulaires avec formatage)
         if (in_array($currentView, $viewsWithForms, true)) {
@@ -85,6 +103,76 @@ class AssetsLoader
                 GW_VERSION,
                 true
             );
+        }
+
+        if ($currentView === 'client') {
+            wp_enqueue_script(
+                'gestiwork-tiers-client',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-tiers-client.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-tiers-client', 'GWTiersClient', [
+                'i18n' => [
+                    'confirmDeleteContact' => __('Supprimer ce contact ?', 'gestiwork'),
+                    'confirmDeleteTier' => __('Supprimer définitivement ce client et tous ses contacts ?', 'gestiwork'),
+                ],
+            ]);
+        }
+
+        if ($currentView === 'apprenant') {
+            wp_enqueue_script(
+                'gestiwork-apprenant',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-apprenant.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-apprenant', 'GWApprenant', [
+                'i18n' => [
+                    'confirmDeleteApprenant' => __('Supprimer définitivement cet apprenant ?', 'gestiwork'),
+                ],
+            ]);
+        }
+
+        if ($currentView === 'responsable') {
+            wp_enqueue_script(
+                'gestiwork-responsable',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-responsable.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-responsable', 'GWResponsable', [
+                'i18n' => [
+                    'confirmDeleteFormateur' => __('Supprimer définitivement ce formateur / responsable pédagogique ?', 'gestiwork'),
+                ],
+            ]);
+        }
+
+        if ($currentView === 'settings') {
+            wp_enqueue_media();
+
+            wp_enqueue_script(
+                'gestiwork-settings',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-settings.js',
+                ['gestiwork-ui', 'gestiwork-form-utils'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-settings', 'GWSettings', [
+                'pdfPreviewBaseUrl' => home_url('/gestiwork/pdf-preview/'),
+                'i18n' => [
+                    'pdfModelNameRequired' => __('Veuillez saisir un nom de modèle avant de continuer.', 'gestiwork'),
+                    'pdfDeleteTemplateConfirm' => __('Êtes-vous sûr de vouloir supprimer le modèle "%s" ?', 'gestiwork'),
+                    'pdfDuplicatePrompt' => __('Nouveau nom pour le modèle dupliqué :', 'gestiwork'),
+                ],
+            ]);
         }
 
         if (in_array($currentView, $viewsWithForms, true)) {
@@ -108,6 +196,14 @@ class AssetsLoader
                 'settings_identity' => [
                     'cp' => '#gw_code_postal',
                     'ville' => '#gw_ville',
+                ],
+                'apprenant_create' => [
+                    'cp' => '#gw_apprenant_cp',
+                    'ville' => '#gw_apprenant_ville',
+                ],
+                'responsable_create' => [
+                    'cp' => '#gw_responsable_code_postal',
+                    'ville' => '#gw_responsable_ville',
                 ],
             ];
 
@@ -190,6 +286,8 @@ class AssetsLoader
             case 'client':
             case 'tiers':
             case 'aide':
+            case 'apprenant':
+            case 'responsable':
                 return $view;
             default:
                 return 'dashboard';

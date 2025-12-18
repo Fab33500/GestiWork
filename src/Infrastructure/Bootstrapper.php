@@ -61,6 +61,14 @@ class Bootstrapper
             \GestiWork\UI\Controller\TiersController::register();
         }
 
+        if (class_exists(\GestiWork\UI\Controller\ApprenantController::class)) {
+            \GestiWork\UI\Controller\ApprenantController::register();
+        }
+
+        if (class_exists(\GestiWork\UI\Controller\ResponsableFormateurController::class)) {
+            \GestiWork\UI\Controller\ResponsableFormateurController::register();
+        }
+
     }
 
     public static function onActivation(): void

@@ -56,7 +56,7 @@ if (! defined('GW_PLUGIN_URL')) {
 }
 
 if (! defined('GW_VERSION')) {
-    define('GW_VERSION', '0.4.0');
+    define('GW_VERSION', '0.5.0');
 }
 
 // Chargement de l'autoloader Composer si disponible
