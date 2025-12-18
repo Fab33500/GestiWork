@@ -70,6 +70,12 @@ class TiersController
 
         $type = isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier';
 
+        $validationError = self::validateTierPayload($type, $_POST);
+        if ($validationError !== null) {
+            self::redirectWithError('validation', null, $validationError);
+            return;
+        }
+
         $data = [
             'type' => $type,
             'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
@@ -123,6 +129,12 @@ class TiersController
         }
 
         $type = isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier';
+
+        $validationError = self::validateTierPayload($type, $_POST);
+        if ($validationError !== null) {
+            self::redirectWithError('validation', $tierId, $validationError);
+            return;
+        }
 
         $data = [
             'type' => $type,
@@ -215,6 +227,12 @@ class TiersController
             return;
         }
 
+        $validationError = self::validateTierContactPayload($_POST);
+        if ($validationError !== null) {
+            self::redirectWithError('validation', $tierId, $validationError);
+            return;
+        }
+
         $data = [
             'civilite' => isset($_POST['civilite']) ? sanitize_text_field((string) $_POST['civilite']) : 'non_renseigne',
             'fonction' => isset($_POST['fonction']) ? sanitize_text_field((string) $_POST['fonction']) : '',
@@ -261,6 +279,12 @@ class TiersController
         $existing = TierContactProvider::getById($contactId);
         if (!is_array($existing) || (int) ($existing['tier_id'] ?? 0) !== $tierId) {
             self::redirectWithError('invalid_id', $tierId);
+            return;
+        }
+
+        $validationError = self::validateTierContactPayload($_POST);
+        if ($validationError !== null) {
+            self::redirectWithError('validation', $tierId, $validationError);
             return;
         }
 
@@ -327,9 +351,131 @@ class TiersController
         self::redirectWithError('contact_delete_failed', $tierId);
     }
 
-    private static function redirectWithError(string $errorType, ?int $tierId = null): void
+    private static function validatePhone(?string $value): bool
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return true;
+        }
+        $digits = preg_replace('/\D+/', '', $value);
+        return is_string($digits) && strlen($digits) === 10;
+    }
+
+    private static function validateSiretOrSiren(?string $value): bool
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return true;
+        }
+        $digits = preg_replace('/\D+/', '', $value);
+        if (!is_string($digits)) {
+            return false;
+        }
+        $len = strlen($digits);
+        return $len === 9 || $len === 14;
+    }
+
+    private static function validateCp(?string $value): bool
+    {
+        $value = trim((string) $value);
+        return $value !== '' && preg_match('/^[0-9]{5}$/', $value) === 1;
+    }
+
+    private static function validateTierPayload(string $type, array $post): ?string
+    {
+        $type = strtolower(trim($type));
+
+        $isParticulier = ($type === 'client_particulier');
+
+        $nom = isset($post['nom']) ? trim((string) $post['nom']) : '';
+        $prenom = isset($post['prenom']) ? trim((string) $post['prenom']) : '';
+        $raisonSociale = isset($post['raison_sociale']) ? trim((string) $post['raison_sociale']) : '';
+        $siret = isset($post['siret']) ? trim((string) $post['siret']) : '';
+
+        $email = isset($post['email']) ? sanitize_email((string) $post['email']) : '';
+        $tel = isset($post['telephone']) ? trim((string) $post['telephone']) : '';
+        $telMobile = isset($post['telephone_portable']) ? trim((string) $post['telephone_portable']) : '';
+        $adresse1 = isset($post['adresse1']) ? trim((string) $post['adresse1']) : '';
+        $cp = isset($post['cp']) ? trim((string) $post['cp']) : '';
+        $ville = isset($post['ville']) ? trim((string) $post['ville']) : '';
+
+        if ($isParticulier) {
+            if ($nom === '' || $prenom === '') {
+                return 'Merci de renseigner le nom et le prénom.';
+            }
+        } else {
+            if ($raisonSociale === '' || $siret === '') {
+                return 'Merci de renseigner la raison sociale et le SIRET/SIREN.';
+            }
+        }
+
+        if ($email === '' || !is_email($email)) {
+            return 'Merci de renseigner une adresse e-mail valide.';
+        }
+
+        if ($adresse1 === '' || $ville === '') {
+            return 'Merci de renseigner l\'adresse (ligne 1) et la ville.';
+        }
+
+        if (!self::validateCp($cp)) {
+            return 'Merci de renseigner un code postal valide (5 chiffres).';
+        }
+
+        if ($tel === '' && $telMobile === '') {
+            return 'Merci de renseigner au moins un numéro de téléphone (fixe ou portable).';
+        }
+
+        if (!self::validatePhone($tel) || !self::validatePhone($telMobile)) {
+            return 'Merci de renseigner un numéro de téléphone valide (10 chiffres).';
+        }
+
+        if (!$isParticulier && !self::validateSiretOrSiren($siret)) {
+            return 'Merci de renseigner un SIRET/SIREN valide (9 ou 14 chiffres).';
+        }
+
+        return null;
+    }
+
+    private static function validateTierContactPayload(array $post): ?string
+    {
+        $civilite = isset($post['civilite']) ? trim((string) $post['civilite']) : 'non_renseigne';
+        $fonction = isset($post['fonction']) ? trim((string) $post['fonction']) : '';
+        $nom = isset($post['nom']) ? trim((string) $post['nom']) : '';
+        $prenom = isset($post['prenom']) ? trim((string) $post['prenom']) : '';
+        $mail = isset($post['mail']) ? sanitize_email((string) $post['mail']) : '';
+        $tel1 = isset($post['tel1']) ? trim((string) $post['tel1']) : '';
+        $tel2 = isset($post['tel2']) ? trim((string) $post['tel2']) : '';
+
+        if ($civilite === '' || $civilite === 'non_renseigne') {
+            return 'Merci de renseigner la civilité.';
+        }
+
+        if ($fonction === '' || $nom === '' || $prenom === '') {
+            return 'Merci de renseigner la fonction, le nom et le prénom.';
+        }
+
+        if ($mail === '' || !is_email($mail)) {
+            return 'Merci de renseigner une adresse e-mail valide.';
+        }
+
+        if ($tel1 === '' && $tel2 === '') {
+            return 'Merci de renseigner au moins un numéro de téléphone.';
+        }
+
+        if (!self::validatePhone($tel1) || !self::validatePhone($tel2)) {
+            return 'Merci de renseigner un numéro de téléphone valide (10 chiffres).';
+        }
+
+        return null;
+    }
+
+    private static function redirectWithError(string $errorType, ?int $tierId = null, ?string $errorMessage = null): void
     {
         $args = ['gw_error' => $errorType];
+
+        if ($errorMessage !== null && $errorMessage !== '') {
+            $args['gw_error_msg'] = $errorMessage;
+        }
         
         if ($tierId && $tierId > 0) {
             $args['gw_view'] = 'Client';

@@ -76,6 +76,19 @@ class ApprenantController
             wp_die(__('Vous n\'avez pas les permissions nécessaires.', 'gestiwork'));
         }
 
+        $validationError = self::validateApprenantPayload($_POST);
+        if ($validationError !== null) {
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'apprenant',
+                'mode' => 'create',
+                'gw_error' => 'validation',
+                'gw_error_msg' => $validationError,
+            ], home_url('/gestiwork/'));
+
+            wp_safe_redirect($redirectUrl);
+            exit;
+        }
+
         $data = [
             'civilite' => sanitize_text_field($_POST['civilite'] ?? ''),
             'prenom' => sanitize_text_field($_POST['prenom'] ?? ''),
@@ -113,6 +126,66 @@ class ApprenantController
         exit;
     }
 
+    private static function validatePhone(?string $value): bool
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return false;
+        }
+        $digits = preg_replace('/\D+/', '', $value);
+        return is_string($digits) && strlen($digits) === 10;
+    }
+
+    private static function validateCp(?string $value): bool
+    {
+        $value = trim((string) $value);
+        return $value !== '' && preg_match('/^[0-9]{5}$/', $value) === 1;
+    }
+
+    private static function validateApprenantPayload(array $post): ?string
+    {
+        $civilite = isset($post['civilite']) ? trim((string) $post['civilite']) : '';
+        $prenom = isset($post['prenom']) ? trim((string) $post['prenom']) : '';
+        $nom = isset($post['nom']) ? trim((string) $post['nom']) : '';
+        $nomNaissance = isset($post['nom_naissance']) ? trim((string) $post['nom_naissance']) : '';
+        $dateNaissance = isset($post['date_naissance']) ? trim((string) $post['date_naissance']) : '';
+        $email = isset($post['email']) ? sanitize_email((string) $post['email']) : '';
+        $telephone = isset($post['telephone']) ? trim((string) $post['telephone']) : '';
+        $adresse1 = isset($post['adresse1']) ? trim((string) $post['adresse1']) : '';
+        $cp = isset($post['cp']) ? trim((string) $post['cp']) : '';
+        $ville = isset($post['ville']) ? trim((string) $post['ville']) : '';
+
+        if ($civilite === '') {
+            return 'Merci de renseigner la civilité.';
+        }
+
+        if ($prenom === '' || $nom === '' || $nomNaissance === '') {
+            return 'Merci de renseigner le prénom, le nom et le nom de naissance.';
+        }
+
+        if ($dateNaissance === '') {
+            return 'Merci de renseigner la date de naissance.';
+        }
+
+        if ($email === '' || !is_email($email)) {
+            return 'Merci de renseigner une adresse e-mail valide.';
+        }
+
+        if (!self::validatePhone($telephone)) {
+            return 'Merci de renseigner un numéro de téléphone valide (10 chiffres).';
+        }
+
+        if ($adresse1 === '' || $ville === '') {
+            return 'Merci de renseigner l\'adresse (ligne 1) et la ville.';
+        }
+
+        if (!self::validateCp($cp)) {
+            return 'Merci de renseigner un code postal valide (5 chiffres).';
+        }
+
+        return null;
+    }
+
     private static function handleUpdate(): void
     {
         if (!wp_verify_nonce($_POST['gw_nonce'] ?? '', 'gw_apprenant_manage')) {
@@ -126,6 +199,20 @@ class ApprenantController
         $apprenantId = (int) ($_POST['apprenant_id'] ?? 0);
         if ($apprenantId <= 0) {
             wp_die(__('ID de l\'apprenant manquant.', 'gestiwork'));
+        }
+
+        $validationError = self::validateApprenantPayload($_POST);
+        if ($validationError !== null) {
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'apprenant',
+                'gw_apprenant_id' => $apprenantId,
+                'mode' => 'edit',
+                'gw_error' => 'validation',
+                'gw_error_msg' => $validationError,
+            ], home_url('/gestiwork/'));
+
+            wp_safe_redirect($redirectUrl);
+            exit;
         }
 
         $data = [

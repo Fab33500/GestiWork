@@ -1117,7 +1117,7 @@ class="gw-text-uppercase"
                         </div>
                     </div>
                 </div>
-                <p id="gw_identity_error" class="gw-modal-error-info" style="display:none; color:#d63638; font-size:12px; margin: 4px 16px 0 16px;"></p>
+                <p id="gw_identity_error" class="gw-modal-error-info gw-display-none"></p>
                 <div class="gw-modal-footer">
                     <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-general"><?php esc_html_e('Annuler', 'gestiwork'); ?></button>
                     <button type="submit" class="gw-button gw-button--primary" id="gw_identity_submit"><?php esc_html_e('Enregistrer', 'gestiwork'); ?></button>

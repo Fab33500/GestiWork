@@ -87,6 +87,23 @@ if (is_array($apprenant)) {
 ?>
 
 <section class="gw-section gw-section-dashboard">
+    <?php if (isset($_GET['gw_error']) && (string) $_GET['gw_error'] === 'validation') : ?>
+        <div class="notice notice-error gw-notice-spacing">
+            <p>
+                <?php
+                if (isset($_GET['gw_error_msg']) && $_GET['gw_error_msg'] !== '') {
+                    echo esc_html((string) $_GET['gw_error_msg']);
+                } else {
+                    esc_html_e('Merci de vérifier les champs du formulaire.', 'gestiwork');
+                }
+                ?>
+            </p>
+        </div>
+    <?php elseif (isset($_GET['gw_error']) && $_GET['gw_error'] !== '') : ?>
+        <div class="notice notice-error gw-notice-spacing">
+            <p><?php esc_html_e('Une erreur est survenue lors de l\'enregistrement.', 'gestiwork'); ?></p>
+        </div>
+    <?php endif; ?>
     <div class="gw-flex-between">
         <div>
             <h2 class="gw-section-title"><?php esc_html_e('Fiche apprenant', 'gestiwork'); ?></h2>
@@ -243,6 +260,10 @@ if (is_array($apprenant)) {
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_apprenant_ville"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_apprenant_ville" name="ville" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['ville'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
+                                </div>
+
+                                <div class="gw-full-width">
+                                    <p id="gw_apprenant_error" class="gw-modal-error-info gw-display-none"></p>
                                 </div>
 
                                 <?php if ($isCreate || $isEdit) : ?>

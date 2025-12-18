@@ -692,6 +692,12 @@
     margin-bottom: 12px;
 }
 
+ .gw-modal-error-info {
+     color: var(--gw-color-error);
+     font-size: 12px;
+     margin: 4px 16px 0 16px;
+ }
+
 .gw-modal-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

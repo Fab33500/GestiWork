@@ -283,8 +283,27 @@
         var telField = document.getElementById('gw_responsable_telephone');
         var cpField = document.getElementById('gw_responsable_code_postal');
 
+        var sousTraitantSelect = document.getElementById('gw_responsable_sous_traitant');
+        var ndaField = document.getElementById('gw_responsable_nda_sous_traitant');
+        var ndaWrapper = document.getElementById('gw_responsable_field_nda_sous_traitant');
+
         bindPhoneBlur(telField);
         setNumericInputAttributes(cpField, 5);
+
+        if (sousTraitantSelect && ndaField && ndaWrapper && typeof ndaWrapper.classList !== 'undefined') {
+            var updateNdaVisibility = function () {
+                var show = sousTraitantSelect.value === 'Oui';
+
+                ndaWrapper.classList.toggle('gw-display-none', !show);
+                ndaField.disabled = !show;
+                if (!show) {
+                    ndaField.required = false;
+                }
+            };
+
+            updateNdaVisibility();
+            sousTraitantSelect.addEventListener('change', updateNdaVisibility);
+        }
     }
 
     var api = {

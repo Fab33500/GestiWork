@@ -166,6 +166,13 @@ $cancelEditUrl = add_query_arg([
                 case 'nonce':
                     esc_html_e('Erreur de sécurité : veuillez recharger la page et réessayer.', 'gestiwork');
                     break;
+                case 'validation':
+                    if (isset($_GET['gw_error_msg']) && $_GET['gw_error_msg'] !== '') {
+                        echo esc_html((string) $_GET['gw_error_msg']);
+                    } else {
+                        esc_html_e('Merci de vérifier les champs du formulaire.', 'gestiwork');
+                    }
+                    break;
                 case 'invalid_id':
                     esc_html_e('Erreur : identifiant de tiers invalide.', 'gestiwork');
                     break;
@@ -362,6 +369,10 @@ $cancelEditUrl = add_query_arg([
                                 <div id="gw_tier_create_field_forme_juridique">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_forme_juridique"><?php esc_html_e('Forme juridique', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_create_forme_juridique" name="forme_juridique" class="gw-modal-input" />
+                                </div>
+
+                                <div class="gw-full-width">
+                                    <p id="gw_tier_create_error" class="gw-modal-error-info gw-display-none"></p>
                                 </div>
 
                                 <div class="gw-full-width gw-mt-6">
@@ -1248,6 +1259,7 @@ $cancelEditUrl = add_query_arg([
                     </div>
                 </div>
             </div>
+            <p id="gw_client_contact_error" class="gw-modal-error-info gw-display-none"></p>
             <div class="gw-modal-footer">
                 <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-client-contacts"><?php esc_html_e('Annuler', 'gestiwork'); ?></button>
                 <button type="submit" class="gw-button gw-button--primary">
@@ -1305,6 +1317,7 @@ $cancelEditUrl = add_query_arg([
                     </div>
                 </div>
             </div>
+            <p id="gw_client_contact_edit_error" class="gw-modal-error-info gw-display-none"></p>
             <div class="gw-modal-footer">
                 <button type="button" class="gw-button gw-button--secondary" data-gw-modal-close="gw-modal-client-contact-edit"><?php esc_html_e('Annuler', 'gestiwork'); ?></button>
                 <button type="submit" class="gw-button gw-button--primary">

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace GestiWork\UI\Controller;
 
+use GestiWork\Domain\Validation\FormValidationCatalog;
 use GestiWork\Domain\Tiers\LegalFormCatalog;
 use GestiWork\UI\Router\GestiWorkRouter;
 
@@ -103,6 +104,23 @@ class AssetsLoader
                 GW_VERSION,
                 true
             );
+
+            wp_enqueue_script(
+                'gestiwork-form-validation',
+                GW_PLUGIN_URL . 'assets/js/gw-form-validation.js',
+                ['gestiwork-form-utils'],
+                GW_VERSION,
+                true
+            );
+
+            wp_localize_script('gestiwork-form-validation', 'GWFormValidation', [
+                'i18n' => [
+                    'requiredOnly' => __('Merci de renseigner tous les champs obligatoires marqués d’une astérisque rouge (*).', 'gestiwork'),
+                    'groupOnly' => __('Merci de renseigner les informations requises.', 'gestiwork'),
+                    'requiredAndGroup' => __('Merci de renseigner tous les champs obligatoires marqués d’une astérisque rouge (*) et les informations requises.', 'gestiwork'),
+                ],
+                'rules' => FormValidationCatalog::rules(),
+            ]);
         }
 
         if ($currentView === 'client') {

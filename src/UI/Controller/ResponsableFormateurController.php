@@ -80,6 +80,19 @@ class ResponsableFormateurController
             wp_die(__('Vous n\'avez pas les permissions nécessaires.', 'gestiwork'));
         }
 
+        $validationError = self::validateResponsablePayload($_POST);
+        if ($validationError !== null) {
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'responsable',
+                'mode' => 'create',
+                'gw_error' => 'validation',
+                'gw_error_msg' => $validationError,
+            ], home_url('/gestiwork/'));
+
+            wp_safe_redirect($redirectUrl);
+            exit;
+        }
+
         $data = [
             'civilite' => sanitize_text_field($_POST['civilite'] ?? ''),
             'prenom' => sanitize_text_field($_POST['prenom'] ?? ''),
@@ -137,6 +150,73 @@ class ResponsableFormateurController
         exit;
     }
 
+    private static function validatePhone(?string $value): bool
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return false;
+        }
+        $digits = preg_replace('/\D+/', '', $value);
+        return is_string($digits) && strlen($digits) === 10;
+    }
+
+    private static function validateCp(?string $value): bool
+    {
+        $value = trim((string) $value);
+        return $value !== '' && preg_match('/^[0-9]{5}$/', $value) === 1;
+    }
+
+    private static function validateResponsablePayload(array $post): ?string
+    {
+        $roleType = isset($post['role_type']) ? trim((string) $post['role_type']) : '';
+        $civilite = isset($post['civilite']) ? trim((string) $post['civilite']) : '';
+        $prenom = isset($post['prenom']) ? trim((string) $post['prenom']) : '';
+        $nom = isset($post['nom']) ? trim((string) $post['nom']) : '';
+        $fonction = isset($post['fonction']) ? trim((string) $post['fonction']) : '';
+        $email = isset($post['email']) ? sanitize_email((string) $post['email']) : '';
+        $telephone = isset($post['telephone']) ? trim((string) $post['telephone']) : '';
+        $sousTraitant = isset($post['sous_traitant']) ? trim((string) $post['sous_traitant']) : '';
+        $nda = isset($post['nda_sous_traitant']) ? trim((string) $post['nda_sous_traitant']) : '';
+        $adressePostale = isset($post['adresse_postale']) ? trim((string) $post['adresse_postale']) : '';
+        $rue = isset($post['rue']) ? trim((string) $post['rue']) : '';
+        $cp = isset($post['code_postal']) ? trim((string) $post['code_postal']) : '';
+        $ville = isset($post['ville']) ? trim((string) $post['ville']) : '';
+
+        if ($roleType === '') {
+            return 'Merci de sélectionner le type de membre.';
+        }
+
+        if ($civilite === '' || $prenom === '' || $nom === '' || $fonction === '') {
+            return 'Merci de renseigner la civilité, le prénom, le nom et la fonction.';
+        }
+
+        if ($email === '' || !is_email($email)) {
+            return 'Merci de renseigner une adresse e-mail valide.';
+        }
+
+        if (!self::validatePhone($telephone)) {
+            return 'Merci de renseigner un numéro de téléphone valide (10 chiffres).';
+        }
+
+        if ($sousTraitant !== 'Oui' && $sousTraitant !== 'Non') {
+            return 'Merci de sélectionner si la personne est sous-traitante.';
+        }
+
+        if ($sousTraitant === 'Oui' && $nda === '') {
+            return 'Merci de renseigner le NDA de l’organisme du sous-traitant.';
+        }
+
+        if ($adressePostale === '' || $ville === '') {
+            return 'Merci de renseigner l\'adresse (ligne 1) et la ville.';
+        }
+
+        if (!self::validateCp($cp)) {
+            return 'Merci de renseigner un code postal valide (5 chiffres).';
+        }
+
+        return null;
+    }
+
     private static function handleUpdate(): void
     {
         if (!wp_verify_nonce($_POST['gw_nonce'] ?? '', 'gw_formateur_manage')) {
@@ -150,6 +230,20 @@ class ResponsableFormateurController
         $responsableId = (int) ($_POST['responsable_id'] ?? 0);
         if ($responsableId <= 0) {
             wp_die(__('ID du responsable manquant.', 'gestiwork'));
+        }
+
+        $validationError = self::validateResponsablePayload($_POST);
+        if ($validationError !== null) {
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'responsable',
+                'gw_responsable_id' => $responsableId,
+                'mode' => 'edit',
+                'gw_error' => 'validation',
+                'gw_error_msg' => $validationError,
+            ], home_url('/gestiwork/'));
+
+            wp_safe_redirect($redirectUrl);
+            exit;
         }
 
         $data = [

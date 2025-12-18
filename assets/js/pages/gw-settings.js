@@ -475,66 +475,6 @@
             });
         }
 
-        // Validation du formulaire d'identité au moment de la soumission
-        var identityModal = document.getElementById('gw-modal-general');
-        if (identityModal) {
-            var identityForm = identityModal.querySelector('form');
-            var identityError = document.getElementById('gw_identity_error');
-            if (identityForm && identityError) {
-                identityForm.addEventListener('submit', function (e) {
-                    // Champs strictement obligatoires (non vides)
-                    var requiredFieldIds = [
-                        'gw_raison_sociale',
-                        'gw_email_contact',
-                        'gw_adresse',
-                        'gw_code_postal',
-                        'gw_ville',
-                        'gw_siret',
-                        'gw_code_ape',
-                        'gw_nda',
-                        'gw_format_numero_devis'
-                    ];
-
-                    var requiredFields = requiredFieldIds
-                        .map(function (id) { return document.getElementById(id); })
-                        .filter(function (el) { return !!el; });
-
-                    var missingRequired = requiredFields.some(function (field) {
-                        return field.value.trim() === '';
-                    });
-
-                    var telFixeField = document.getElementById('gw_telephone_fixe');
-                    var telPortableField = document.getElementById('gw_telephone_portable');
-                    var hasAtLeastOnePhone = false;
-                    if (telFixeField && telFixeField.value.trim() !== '') {
-                        hasAtLeastOnePhone = true;
-                    }
-                    if (telPortableField && telPortableField.value.trim() !== '') {
-                        hasAtLeastOnePhone = true;
-                    }
-
-                    if (missingRequired || !hasAtLeastOnePhone) {
-                        e.preventDefault();
-
-                        if (missingRequired && !hasAtLeastOnePhone) {
-                            identityError.textContent = 'Merci de renseigner tous les champs obligatoires marqués d’une astérisque rouge (*) et au moins un numéro de téléphone (fixe ou portable).';
-                        } else if (missingRequired) {
-                            identityError.textContent = 'Merci de renseigner tous les champs obligatoires marqués d’une astérisque rouge (*).';
-                        } else {
-                            identityError.textContent = 'Merci de renseigner au moins un numéro de téléphone (fixe ou portable).';
-                        }
-
-                        identityError.style.display = '';
-                        identityError.focus && identityError.focus();
-                    } else {
-                        // Tout est OK, on masque le message d'erreur éventuel et on laisse le formulaire se soumettre
-                        identityError.textContent = '';
-                        identityError.style.display = 'none';
-                    }
-                });
-            }
-        }
-
         // Ouverture de la section d'édition de la description (présentation OF)
         var openDescBtn = document.getElementById('gw-open-description-editor');
         var descSection = document.getElementById('gw-settings-group-description-editor');
