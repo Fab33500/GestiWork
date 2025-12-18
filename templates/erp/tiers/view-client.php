@@ -120,7 +120,8 @@ $clientApprenantsCount = is_array($clientApprenants) ? count($clientApprenants) 
 
 $entreprises = array_merge(
     TierProvider::listByType('entreprise', 2000),
-    TierProvider::listByType('client_entreprise', 2000)
+    TierProvider::listByType('client_entreprise', 2000),
+    TierProvider::listByType('entreprise_independant', 2000)
 );
 $financeurs = TierProvider::listByType('financeur', 2000);
 
@@ -129,7 +130,7 @@ $linkedFinanceurs = [];
 if (!$isCreate && $clientId > 0) {
     if (($clientData['type'] ?? '') === 'financeur') {
         $linkedEntreprises = TierFinanceurProvider::getEntreprisesByFinanceurId($clientId);
-    } elseif (($clientData['type'] ?? '') === 'entreprise' || ($clientData['type'] ?? '') === 'client_entreprise') {
+    } elseif (($clientData['type'] ?? '') === 'entreprise' || ($clientData['type'] ?? '') === 'client_entreprise' || ($clientData['type'] ?? '') === 'entreprise_independant') {
         $linkedFinanceurs = TierFinanceurProvider::getFinanceursByEntrepriseId($clientId);
     }
 }
@@ -333,6 +334,7 @@ $cancelEditUrl = add_query_arg([
                                     <select id="gw_tier_create_type" name="type" class="gw-modal-input">
                                         <?php $prefillType = isset($prefill['type']) && $prefill['type'] !== '' ? (string) $prefill['type'] : 'client_particulier'; ?>
                                         <option value="entreprise"<?php echo $prefillType === 'entreprise' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
+                                        <option value="entreprise_independant"<?php echo $prefillType === 'entreprise_independant' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise (sans salarié)', 'gestiwork'); ?></option>
                                         <option value="client_particulier"<?php echo $prefillType === 'client_particulier' ? ' selected' : ''; ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
                                         <option value="financeur"<?php echo $prefillType === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
                                         <option value="of_donneur_ordre"<?php echo $prefillType === 'of_donneur_ordre' ? ' selected' : ''; ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
@@ -641,6 +643,7 @@ $cancelEditUrl = add_query_arg([
                                     <label class="gw-settings-placeholder" for="gw_tier_view_type"><?php esc_html_e('Catégorie', 'gestiwork'); ?></label>
                                     <select id="gw_tier_view_type" name="type" class="gw-modal-input"<?php echo $isEdit ? '' : ' disabled'; ?>>
                                         <option value="entreprise"<?php echo $clientData['type'] === 'entreprise' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
+                                        <option value="entreprise_independant"<?php echo $clientData['type'] === 'entreprise_independant' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise (sans salarié)', 'gestiwork'); ?></option>
                                         <option value="client_particulier"<?php echo $clientData['type'] === 'client_particulier' ? ' selected' : ''; ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
                                         <option value="financeur"<?php echo $clientData['type'] === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
                                         <option value="of_donneur_ordre"<?php echo $clientData['type'] === 'of_donneur_ordre' ? ' selected' : ''; ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>

@@ -99,11 +99,11 @@ class FormValidationCatalog
                 ],
                 'fields' => [
                     'gw_tier_create_nom' => [
-                        'requiredIf' => ['field' => 'gw_tier_create_type', 'equals' => 'client_particulier'],
+                        'requiredIf' => ['field' => 'gw_tier_create_type', 'equals' => ['client_particulier', 'entreprise_independant']],
                         'label' => 'Nom',
                     ],
                     'gw_tier_create_prenom' => [
-                        'requiredIf' => ['field' => 'gw_tier_create_type', 'equals' => 'client_particulier'],
+                        'requiredIf' => ['field' => 'gw_tier_create_type', 'equals' => ['client_particulier', 'entreprise_independant']],
                         'label' => 'Prénom',
                     ],
                     'gw_tier_create_raison_sociale' => [

@@ -103,6 +103,7 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                             '' => __('Tous', 'gestiwork'),
                             'client_particulier' => __('Particulier', 'gestiwork'),
                             'entreprise' => __('Entreprise', 'gestiwork'),
+                            'entreprise_independant' => __('Entreprise (sans salarié)', 'gestiwork'),
                             'financeur' => __('Financeur / OPCO', 'gestiwork'),
                             'of_donneur_ordre' => __('OF donneur d\'ordre', 'gestiwork'),
                         ],
@@ -184,6 +185,8 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                                         $typeLabel = __('Particulier', 'gestiwork');
                                     } elseif ($tierType === 'entreprise') {
                                         $typeLabel = __('Entreprise', 'gestiwork');
+                                    } elseif ($tierType === 'entreprise_independant') {
+                                        $typeLabel = __('Entreprise (sans salarié)', 'gestiwork');
                                     } elseif ($tierType === 'financeur') {
                                         $typeLabel = __('Financeur', 'gestiwork');
                                     } elseif ($tierType === 'of_donneur_ordre') {

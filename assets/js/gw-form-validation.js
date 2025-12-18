@@ -25,10 +25,20 @@
 
         var currentValue = normalizeValue(field.value);
         if (typeof condition.equals !== 'undefined') {
+            if (Array.isArray(condition.equals)) {
+                return condition.equals.some(function (val) {
+                    return currentValue === String(val);
+                });
+            }
             return currentValue === String(condition.equals);
         }
 
         if (typeof condition.notEquals !== 'undefined') {
+            if (Array.isArray(condition.notEquals)) {
+                return condition.notEquals.every(function (val) {
+                    return currentValue !== String(val);
+                });
+            }
             return currentValue !== String(condition.notEquals);
         }
 

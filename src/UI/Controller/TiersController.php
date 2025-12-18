@@ -80,7 +80,8 @@ class TiersController
             return;
         }
 
-        if (strtolower(trim($type)) === 'client_particulier') {
+        $normalizedType = strtolower(trim($type));
+        if ($normalizedType === 'client_particulier' || $normalizedType === 'entreprise_independant') {
             $email = isset($_POST['email']) ? sanitize_email((string) $_POST['email']) : '';
             if ($email !== '' && is_email($email)) {
                 $existingTier = TierProvider::getByEmail($email);
@@ -137,7 +138,7 @@ class TiersController
 
         $newId = TierProvider::create($data);
         if ($newId > 0) {
-            if ($type === 'client_particulier') {
+            if ($type === 'client_particulier' || $type === 'entreprise_independant') {
                 $apprenantEmail = (string) ($data['email'] ?? '');
                 $apprenant = $apprenantEmail !== '' ? ApprenantProvider::getByEmail($apprenantEmail) : null;
 
@@ -205,7 +206,7 @@ class TiersController
             if ($type === 'financeur') {
                 $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
                 TierFinanceurProvider::setEntreprisesForFinanceur($newId, $entrepriseIds);
-            } elseif ($type === 'entreprise' || $type === 'client_entreprise') {
+            } elseif ($type === 'entreprise' || $type === 'client_entreprise' || $type === 'entreprise_independant') {
                 $financeurIds = isset($_POST['financeur_ids']) && is_array($_POST['financeur_ids']) ? array_map('intval', $_POST['financeur_ids']) : [];
                 TierFinanceurProvider::setFinanceursForEntreprise($newId, $financeurIds);
             }
@@ -383,7 +384,7 @@ class TiersController
             if ($type === 'financeur') {
                 $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
                 TierFinanceurProvider::setEntreprisesForFinanceur($tierId, $entrepriseIds);
-            } elseif ($type === 'entreprise' || $type === 'client_entreprise') {
+            } elseif ($type === 'entreprise' || $type === 'client_entreprise' || $type === 'entreprise_independant') {
                 $financeurIds = isset($_POST['financeur_ids']) && is_array($_POST['financeur_ids']) ? array_map('intval', $_POST['financeur_ids']) : [];
                 TierFinanceurProvider::setFinanceursForEntreprise($tierId, $financeurIds);
             }
@@ -609,6 +610,7 @@ class TiersController
         $type = strtolower(trim($type));
 
         $isParticulier = ($type === 'client_particulier');
+        $isIndependant = ($type === 'entreprise_independant');
 
         $nom = isset($post['nom']) ? trim((string) $post['nom']) : '';
         $prenom = isset($post['prenom']) ? trim((string) $post['prenom']) : '';
@@ -623,6 +625,13 @@ class TiersController
         $ville = isset($post['ville']) ? trim((string) $post['ville']) : '';
 
         if ($isParticulier) {
+            if ($nom === '' || $prenom === '') {
+                return 'Merci de renseigner le nom et le prénom.';
+            }
+        } elseif ($isIndependant) {
+            if ($raisonSociale === '' || $siret === '') {
+                return 'Merci de renseigner la raison sociale et le SIRET/SIREN.';
+            }
             if ($nom === '' || $prenom === '') {
                 return 'Merci de renseigner le nom et le prénom.';
             }

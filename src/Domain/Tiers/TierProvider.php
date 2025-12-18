@@ -132,6 +132,41 @@ class TierProvider
         return is_array($row) ? $row : null;
     }
 
+    public static function getEntrepriseIndependantByEmail(string $email): ?array
+    {
+        global $wpdb;
+
+        $email = trim(strtolower($email));
+        if ($email === '' || !is_email($email)) {
+            return null;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return null;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tiers';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return null;
+        }
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$tableName} WHERE type = %s AND LOWER(email) = %s LIMIT 1",
+                'entreprise_independant',
+                $email
+            ),
+            ARRAY_A
+        );
+
+        return is_array($row) ? $row : null;
+    }
+
     public static function listByType(string $type, int $limit = 500): array
     {
         global $wpdb;

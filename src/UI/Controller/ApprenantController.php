@@ -112,12 +112,15 @@ class ApprenantController
             exit;
         }
 
-        $tierParticulierId = null;
-        $tierParticulier = $email !== '' ? TierProvider::getClientParticulierByEmail($email) : null;
-        if (is_array($tierParticulier)) {
-            $tierId = (int) ($tierParticulier['id'] ?? 0);
+        $tierAutoLinkId = null;
+        $tierAutoLink = $email !== '' ? TierProvider::getClientParticulierByEmail($email) : null;
+        if (!is_array($tierAutoLink) && $email !== '') {
+            $tierAutoLink = TierProvider::getEntrepriseIndependantByEmail($email);
+        }
+        if (is_array($tierAutoLink)) {
+            $tierId = (int) ($tierAutoLink['id'] ?? 0);
             if ($tierId > 0) {
-                $tierParticulierId = $tierId;
+                $tierAutoLinkId = $tierId;
             }
         }
 
@@ -129,7 +132,7 @@ class ApprenantController
             'date_naissance' => sanitize_text_field($_POST['date_naissance'] ?? '') ?: null,
             'email' => $email,
             'telephone' => sanitize_text_field($_POST['telephone'] ?? ''),
-            'entreprise_id' => $tierParticulierId !== null ? $tierParticulierId : (!empty($_POST['entreprise_id']) ? (int) $_POST['entreprise_id'] : null),
+            'entreprise_id' => $tierAutoLinkId !== null ? $tierAutoLinkId : (!empty($_POST['entreprise_id']) ? (int) $_POST['entreprise_id'] : null),
             'origine' => sanitize_text_field($_POST['origine'] ?? ''),
             'statut_bpf' => sanitize_text_field($_POST['statut_bpf'] ?? ''),
             'adresse1' => sanitize_text_field($_POST['adresse1'] ?? ''),
