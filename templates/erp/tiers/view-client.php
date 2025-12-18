@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 use GestiWork\Domain\Tiers\TierProvider;
 use GestiWork\Domain\Tiers\TierContactProvider;
+use GestiWork\Domain\Tiers\TierFinanceurProvider;
 
 if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
@@ -89,6 +90,30 @@ $tierContacts = [];
 if (is_array($dbClientData) && $clientId > 0) {
     $tierContacts = TierContactProvider::listByTierId($clientId);
 }
+
+$entreprises = array_merge(
+    TierProvider::listByType('entreprise', 2000),
+    TierProvider::listByType('client_entreprise', 2000)
+);
+$financeurs = TierProvider::listByType('financeur', 2000);
+
+$linkedEntreprises = [];
+$linkedFinanceurs = [];
+if (!$isCreate && $clientId > 0) {
+    if (($clientData['type'] ?? '') === 'financeur') {
+        $linkedEntreprises = TierFinanceurProvider::getEntreprisesByFinanceurId($clientId);
+    } elseif (($clientData['type'] ?? '') === 'entreprise' || ($clientData['type'] ?? '') === 'client_entreprise') {
+        $linkedFinanceurs = TierFinanceurProvider::getFinanceursByEntrepriseId($clientId);
+    }
+}
+
+$selectedEntrepriseIds = array_map(static function (array $row): int {
+    return (int) ($row['id'] ?? 0);
+}, is_array($linkedEntreprises) ? $linkedEntreprises : []);
+
+$selectedFinanceurIds = array_map(static function (array $row): int {
+    return (int) ($row['id'] ?? 0);
+}, is_array($linkedFinanceurs) ? $linkedFinanceurs : []);
 
 $viewUrl = add_query_arg([
     'gw_view' => 'Client',
@@ -211,11 +236,11 @@ $cancelEditUrl = add_query_arg([
                 </a>
             <?php endif; ?>
             <?php if (! $isCreate && $clientId > 0) : ?>
-                <form method="post" action="" style="margin:0;">
+                <form method="post" action="" class="gw-form-inline">
                     <input type="hidden" name="gw_action" value="gw_tier_delete" />
                     <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
                     <?php wp_nonce_field('gw_tier_delete', 'gw_nonce'); ?>
-                    <button type="submit" class="gw-button gw-button--secondary gw-tier-delete" style="border-color:#d63638; color:#d63638; background:#fff;">
+                    <button type="submit" class="gw-button gw-button--secondary gw-tier-delete gw-delete-button">
                         <span class="dashicons dashicons-trash" aria-hidden="true"></span>
                         <?php esc_html_e('Supprimer le client', 'gestiwork'); ?>
                     </button>
@@ -262,7 +287,7 @@ $cancelEditUrl = add_query_arg([
                             </div>
                         </div>
 
-                        <form method="post" action="" class="gw-mt-12">
+                        <form method="post" action="" class="gw-mt-12" id="gw_tier_create_form">
                             <input type="hidden" name="gw_action" value="gw_tier_create" />
                             <?php wp_nonce_field('gw_tier_create', 'gw_nonce'); ?>
                             <div class="gw-grid-2">
@@ -349,16 +374,90 @@ $cancelEditUrl = add_query_arg([
                     </div>
 
                     <div class="gw-grid-layout">
+                        <div class="gw-card gw-display-none" id="gw_tier_create_financeur_entreprises_card">
+                            <div class="gw-flex-between-center">
+                                <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Entreprises associées', 'gestiwork'); ?></h3>
+                            </div>
+                            <div class="gw-mt-10 gw-color-muted-text gw-button-small">
+                                <?php esc_html_e('Sélectionnez les entreprises à associer. Les associations seront enregistrées lors de la création du financeur.', 'gestiwork'); ?>
+                            </div>
+                            <div class="gw-checklist-container" data-gw-checklist>
+                                <input type="text" class="gw-modal-input" data-gw-checklist-search placeholder="<?php echo esc_attr__('Rechercher...', 'gestiwork'); ?>" />
+                                <div class="gw-checklist-buttons">
+                                    <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-all><?php esc_html_e('Tout sélectionner', 'gestiwork'); ?></button>
+                                    <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-none><?php esc_html_e('Tout désélectionner', 'gestiwork'); ?></button>
+                                </div>
+                                <div class="gw-checklist-items">
+                                    <?php foreach ($entreprises as $entreprise) : ?>
+                                        <?php
+                                        $eid = (int) ($entreprise['id'] ?? 0);
+                                        $label = trim((string) ($entreprise['raison_sociale'] ?? ''));
+                                        if ($label === '') {
+                                            $label = trim(((string) ($entreprise['prenom'] ?? '')) . ' ' . ((string) ($entreprise['nom'] ?? '')));
+                                        }
+                                        if ($label === '') {
+                                            $label = (string) $eid;
+                                        }
+                                        $labelSearch = function_exists('mb_strtolower') ? mb_strtolower($label) : strtolower($label);
+                                        $inputId = 'gw_tier_create_entreprise_' . $eid;
+                                        ?>
+                                        <label data-gw-checklist-item data-gw-checklist-text="<?php echo esc_attr($labelSearch); ?>" for="<?php echo esc_attr($inputId); ?>" class="gw-checklist-item">
+                                            <input id="<?php echo esc_attr($inputId); ?>" type="checkbox" name="entreprise_ids[]" value="<?php echo (int) $eid; ?>" form="gw_tier_create_form" />
+                                            <span><?php echo esc_html($label); ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gw-card gw-display-none" id="gw_tier_create_entreprise_financeurs_card">
+                            <div class="gw-flex-between-center">
+                                <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Financeurs / OPCO associés', 'gestiwork'); ?></h3>
+                            </div>
+                            <div class="gw-mt-10 gw-color-muted-text gw-button-small">
+                                <?php esc_html_e('Sélectionnez les financeurs à associer. Les associations seront enregistrées lors de la création de l\'entreprise.', 'gestiwork'); ?>
+                            </div>
+                            <div class="gw-checklist-container" data-gw-checklist>
+                                <input type="text" class="gw-modal-input" data-gw-checklist-search placeholder="<?php echo esc_attr__('Rechercher...', 'gestiwork'); ?>" />
+                                <div class="gw-checklist-buttons">
+                                    <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-all><?php esc_html_e('Tout sélectionner', 'gestiwork'); ?></button>
+                                    <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-none><?php esc_html_e('Tout désélectionner', 'gestiwork'); ?></button>
+                                </div>
+                                <div class="gw-checklist-items">
+                                    <?php foreach ($financeurs as $financeur) : ?>
+                                        <?php
+                                        $fid = (int) ($financeur['id'] ?? 0);
+                                        $label = trim((string) ($financeur['raison_sociale'] ?? ''));
+                                        if ($label === '') {
+                                            $label = trim(((string) ($financeur['prenom'] ?? '')) . ' ' . ((string) ($financeur['nom'] ?? '')));
+                                        }
+                                        if ($label === '') {
+                                            $label = (string) $fid;
+                                        }
+                                        $labelSearch = function_exists('mb_strtolower') ? mb_strtolower($label) : strtolower($label);
+                                        $inputId = 'gw_tier_create_financeur_' . $fid;
+                                        ?>
+                                        <label data-gw-checklist-item data-gw-checklist-text="<?php echo esc_attr($labelSearch); ?>" for="<?php echo esc_attr($inputId); ?>" class="gw-checklist-item">
+                                            <input id="<?php echo esc_attr($inputId); ?>" type="checkbox" name="financeur_ids[]" value="<?php echo (int) $fid; ?>" form="gw_tier_create_form" />
+                                            <span><?php echo esc_html($label); ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="gw-card">
                             <div class="gw-flex-between-center">
                                 <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
-                                <a href="#" onclick="return false;" data-gw-modal-target="gw-modal-client-contacts" style="text-decoration:none; font-size:13px;">
-                                    <span class="dashicons dashicons-plus" aria-hidden="true"></span>
-                                    <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
-                                </a>
+                                <?php if (! $isCreate && $clientId > 0) : ?>
+                                    <a href="#" data-gw-modal-target="gw-modal-client-contacts" class="gw-link-no-underline">
+                                        <span class="dashicons dashicons-plus" aria-hidden="true"></span>
+                                        <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
+                                    </a>
+                                <?php endif; ?>
                             </div>
                             <?php if (is_array($tierContacts) && count($tierContacts) > 0) : ?>
-                                <div style="margin-top: 10px; display:grid; gap:6px; font-size: 13px;">
+                                <div class="gw-container-list">
                                     <?php foreach ($tierContacts as $index => $contact) : ?>
                                         <?php
                                         $contactNom = isset($contact['nom']) ? (string) $contact['nom'] : '';
@@ -379,25 +478,24 @@ $cancelEditUrl = add_query_arg([
                                         $contactLabel = trim($contactPrenom . ' ' . $contactNom);
                                         $contactMeta = trim($contactFonction) !== '' ? trim($contactFonction) : __('Fonction non renseignée', 'gestiwork');
                                         ?>
-                                        <div style="border:1px solid var(--gw-color-border); border-radius:12px; padding:12px; background:#f6f7f7;">
-                                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-                                                <div style="min-width:0;">
-                                                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                                        <a href="#" onclick="return false;" style="text-decoration:none; font-weight:600; color: var(--gw-color-primary);">
+                                        <div class="gw-info-card">
+                                            <div class="gw-info-card-header">
+                                                <div class="gw-info-card-content">
+                                                    <div class="gw-info-card-title">
+                                                        <a href="#" class="gw-link-no-underline gw-color-primary-text gw-font-weight-600">
                                                             <?php echo esc_html($contactLabel !== '' ? $contactLabel : '-'); ?>
                                                         </a>
                                                     </div>
                                                 </div>
-                                                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-                                                    <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:8px; border:1px solid #c7b9ff; background:#f4f1ff; color:#5b47ff; font-size:12px; font-weight:500; white-space:nowrap;">
+                                                <div class="gw-info-card-actions">
+                                                    <span class="gw-contact-tag">
                                                         <?php echo esc_html($contactMeta); ?>
                                                     </span>
 
-                                                    <div class="gw-contact-actions" style="position:relative;">
+                                                    <div class="gw-contact-actions">
                                                         <button
                                                             type="button"
                                                             class="gw-button gw-button--secondary gw-contact-actions-trigger"
-                                                            style="padding:4px 8px; line-height:1;"
                                                             aria-haspopup="menu"
                                                             aria-expanded="false"
                                                             aria-label="<?php esc_attr_e('Actions', 'gestiwork'); ?>"
@@ -406,8 +504,7 @@ $cancelEditUrl = add_query_arg([
                                                         </button>
                                                         <div
                                                             class="gw-contact-actions-menu"
-                                                            role="menu"
-                                                            style="display:none; position:absolute; right:0; top: calc(100% + 6px); background:#fff; border:1px solid var(--gw-color-border); border-radius:10px; padding:6px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 5;">
+                                                            role="menu">
                                                             <button
                                                                 type="button"
                                                                 role="menuitem"
@@ -474,8 +571,12 @@ $cancelEditUrl = add_query_arg([
                                     <?php endforeach; ?>
                                 </div>
                             <?php else : ?>
-                                <div style="margin-top: 10px; color: var(--gw-color-muted); font-size: 13px;">
-                                    <?php esc_html_e('Cette entreprise n\'a aucun contact client associé.', 'gestiwork'); ?>
+                                <div class="gw-mt-10 gw-color-muted-text gw-button-small">
+                                    <?php if ($isCreate) : ?>
+                                        <?php esc_html_e('Enregistrez d\'abord le client. Vous pourrez ensuite créer ses contacts depuis sa fiche (Clients > ouvrir le client).', 'gestiwork'); ?>
+                                    <?php else : ?>
+                                        <?php esc_html_e('Cette entreprise n\'a aucun contact client associé.', 'gestiwork'); ?>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -485,10 +586,10 @@ $cancelEditUrl = add_query_arg([
                 <div class="gw-tier-info-layout" style="display:grid; gap: 14px; align-items:start;">
                     <div class="gw-settings-group" style="margin:0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Informations générales', 'gestiwork'); ?></h3>
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Informations générales', 'gestiwork'); ?></h3>
                         </div>
 
-                        <form method="post" action="" style="margin-top: 12px;">
+                        <form method="post" action="" style="margin-top: 12px;" id="gw_tier_update_form">
                             <input type="hidden" name="gw_action" value="gw_tier_update" />
                             <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
                             <?php wp_nonce_field('gw_tier_update', 'gw_nonce'); ?>
@@ -581,25 +682,143 @@ $cancelEditUrl = add_query_arg([
                     </div>
 
                     <div style="display:grid; gap:14px;">
-                        <div style="border:1px solid var(--gw-color-border); border-radius: 12px; background:#fff; padding: 12px;">
-                            <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Aucune tâche programmée', 'gestiwork'); ?></h3>
+                        <div class="gw-card gw-display-none" id="gw_tier_view_financeur_entreprises_card">
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Entreprises associées', 'gestiwork'); ?></h3>
+                            <?php if ($isEdit) : ?>
+                                <div class="gw-mt-8 gw-color-muted-text gw-button-small">
+                                    <?php esc_html_e('La sélection remplace les associations existantes lors de l\'enregistrement.', 'gestiwork'); ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($isEdit) : ?>
+                                <div class="gw-checklist-container" data-gw-checklist>
+                                    <input type="text" class="gw-modal-input" data-gw-checklist-search placeholder="<?php echo esc_attr__('Rechercher...', 'gestiwork'); ?>" />
+                                    <div class="gw-checklist-buttons">
+                                        <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-all><?php esc_html_e('Tout sélectionner', 'gestiwork'); ?></button>
+                                        <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-none><?php esc_html_e('Tout désélectionner', 'gestiwork'); ?></button>
+                                    </div>
+                                    <div class="gw-checklist-items">
+                                        <?php foreach ($entreprises as $entreprise) : ?>
+                                            <?php
+                                            $eid = (int) ($entreprise['id'] ?? 0);
+                                            $label = trim((string) ($entreprise['raison_sociale'] ?? ''));
+                                            if ($label === '') {
+                                                $label = trim(((string) ($entreprise['prenom'] ?? '')) . ' ' . ((string) ($entreprise['nom'] ?? '')));
+                                            }
+                                            if ($label === '') {
+                                                $label = (string) $eid;
+                                            }
+                                            $labelSearch = function_exists('mb_strtolower') ? mb_strtolower($label) : strtolower($label);
+                                            $inputId = 'gw_tier_update_entreprise_' . $eid;
+                                            ?>
+                                            <label data-gw-checklist-item data-gw-checklist-text="<?php echo esc_attr($labelSearch); ?>" for="<?php echo esc_attr($inputId); ?>" class="gw-checklist-item">
+                                                <input id="<?php echo esc_attr($inputId); ?>" type="checkbox" name="entreprise_ids[]" value="<?php echo (int) $eid; ?>" form="gw_tier_update_form"<?php echo in_array($eid, $selectedEntrepriseIds, true) ? ' checked' : ''; ?> />
+                                                <span><?php echo esc_html($label); ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php else : ?>
+                                <?php if (is_array($linkedEntreprises) && count($linkedEntreprises) > 0) : ?>
+                                    <div class="gw-container-list">
+                                        <?php foreach ($linkedEntreprises as $entreprise) : ?>
+                                            <?php
+                                            $label = trim((string) ($entreprise['raison_sociale'] ?? ''));
+                                            if ($label === '') {
+                                                $label = trim(((string) ($entreprise['prenom'] ?? '')) . ' ' . ((string) ($entreprise['nom'] ?? '')));
+                                            }
+                                            ?>
+                                            <div class="gw-info-card">
+                                                <?php echo esc_html($label !== '' ? $label : '-'); ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else : ?>
+                                    <div class="gw-mt-10 gw-color-muted-text gw-button-small">
+                                        <?php esc_html_e('Aucune entreprise associée.', 'gestiwork'); ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="gw-card gw-display-none" id="gw_tier_view_entreprise_financeurs_card">
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Financeurs / OPCO associés', 'gestiwork'); ?></h3>
+                            <?php if ($isEdit) : ?>
+                                <div class="gw-mt-8 gw-color-muted-text gw-button-small">
+                                    <?php esc_html_e('La sélection remplace les associations existantes lors de l\'enregistrement.', 'gestiwork'); ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($isEdit) : ?>
+                                <div class="gw-checklist-container" data-gw-checklist>
+                                    <input type="text" class="gw-modal-input" data-gw-checklist-search placeholder="<?php echo esc_attr__('Rechercher...', 'gestiwork'); ?>" />
+                                    <div class="gw-checklist-buttons">
+                                        <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-all><?php esc_html_e('Tout sélectionner', 'gestiwork'); ?></button>
+                                        <button type="button" class="gw-button gw-button--secondary" data-gw-checklist-none><?php esc_html_e('Tout désélectionner', 'gestiwork'); ?></button>
+                                    </div>
+                                    <div class="gw-checklist-items">
+                                        <?php foreach ($financeurs as $financeur) : ?>
+                                            <?php
+                                            $fid = (int) ($financeur['id'] ?? 0);
+                                            $label = trim((string) ($financeur['raison_sociale'] ?? ''));
+                                            if ($label === '') {
+                                                $label = trim(((string) ($financeur['prenom'] ?? '')) . ' ' . ((string) ($financeur['nom'] ?? '')));
+                                            }
+                                            if ($label === '') {
+                                                $label = (string) $fid;
+                                            }
+                                            $labelSearch = function_exists('mb_strtolower') ? mb_strtolower($label) : strtolower($label);
+                                            $inputId = 'gw_tier_update_financeur_' . $fid;
+                                            ?>
+                                            <label data-gw-checklist-item data-gw-checklist-text="<?php echo esc_attr($labelSearch); ?>" for="<?php echo esc_attr($inputId); ?>" class="gw-checklist-item">
+                                                <input id="<?php echo esc_attr($inputId); ?>" type="checkbox" name="financeur_ids[]" value="<?php echo (int) $fid; ?>" form="gw_tier_update_form"<?php echo in_array($fid, $selectedFinanceurIds, true) ? ' checked' : ''; ?> />
+                                                <span><?php echo esc_html($label); ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php else : ?>
+                                <?php if (is_array($linkedFinanceurs) && count($linkedFinanceurs) > 0) : ?>
+                                    <div class="gw-container-list">
+                                        <?php foreach ($linkedFinanceurs as $financeur) : ?>
+                                            <?php
+                                            $label = trim((string) ($financeur['raison_sociale'] ?? ''));
+                                            if ($label === '') {
+                                                $label = trim(((string) ($financeur['prenom'] ?? '')) . ' ' . ((string) ($financeur['nom'] ?? '')));
+                                            }
+                                            ?>
+                                            <div class="gw-info-card">
+                                                <?php echo esc_html($label !== '' ? $label : '-'); ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else : ?>
+                                    <div class="gw-mt-10 gw-color-muted-text gw-button-small">
+                                        <?php esc_html_e('Aucun financeur associé.', 'gestiwork'); ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="gw-card">
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Aucune tâche programmée', 'gestiwork'); ?></h3>
                             <div style="margin-top: 8px;">
-                                <a href="#" onclick="return false;" style="text-decoration:none; font-size:13px;">
+                                <a href="#" class="gw-link-no-underline">
                                     <?php esc_html_e('Voir les tâches', 'gestiwork'); ?>
                                 </a>
                             </div>
                         </div>
 
-                        <div style="border:1px solid var(--gw-color-border); border-radius: 12px; background:#fff; padding: 12px;">
+                        <div class="gw-card">
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                                <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
-                                <a href="#" onclick="return false;" data-gw-modal-target="gw-modal-client-contacts" style="text-decoration:none; font-size:13px;">
-                                    <span class="dashicons dashicons-plus" aria-hidden="true"></span>
-                                    <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
-                                </a>
+                                <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
+                                <?php if (! $isCreate && $clientId > 0) : ?>
+                                    <a href="#" data-gw-modal-target="gw-modal-client-contacts" class="gw-link-no-underline">
+                                        <span class="dashicons dashicons-plus" aria-hidden="true"></span>
+                                        <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
+                                    </a>
+                                <?php endif; ?>
                             </div>
                             <?php if (is_array($tierContacts) && count($tierContacts) > 0) : ?>
-                                <div style="margin-top: 10px; display:grid; gap:6px; font-size: 13px;">
+                                <div class="gw-container-list">
                                     <?php foreach ($tierContacts as $index => $contact) : ?>
                                         <?php
                                         $contactNom = isset($contact['nom']) ? (string) $contact['nom'] : '';
@@ -620,25 +839,24 @@ $cancelEditUrl = add_query_arg([
                                         $contactLabel = trim($contactPrenom . ' ' . $contactNom);
                                         $contactMeta = trim($contactFonction) !== '' ? trim($contactFonction) : __('Fonction non renseignée', 'gestiwork');
                                         ?>
-                                        <div style="border:1px solid var(--gw-color-border); border-radius:12px; padding:12px; background:#f6f7f7;">
-                                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-                                                <div style="min-width:0;">
-                                                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                                        <a href="#" onclick="return false;" style="text-decoration:none; font-weight:600; color: var(--gw-color-primary);">
+                                        <div class="gw-info-card">
+                                            <div class="gw-info-card-header">
+                                                <div class="gw-info-card-content">
+                                                    <div class="gw-info-card-title">
+                                                        <a href="#" class="gw-link-no-underline gw-color-primary-text gw-font-weight-600">
                                                             <?php echo esc_html($contactLabel !== '' ? $contactLabel : '-'); ?>
                                                         </a>
                                                     </div>
                                                 </div>
-                                                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-                                                    <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:8px; border:1px solid #c7b9ff; background:#f4f1ff; color:#5b47ff; font-size:12px; font-weight:500; white-space:nowrap;">
+                                                <div class="gw-info-card-actions">
+                                                    <span class="gw-contact-tag">
                                                         <?php echo esc_html($contactMeta); ?>
                                                     </span>
 
-                                                    <div class="gw-contact-actions" style="position:relative;">
+                                                    <div class="gw-contact-actions">
                                                         <button
                                                             type="button"
                                                             class="gw-button gw-button--secondary gw-contact-actions-trigger"
-                                                            style="padding:4px 8px; line-height:1;"
                                                             aria-haspopup="menu"
                                                             aria-expanded="false"
                                                             aria-label="<?php esc_attr_e('Actions', 'gestiwork'); ?>"
@@ -647,8 +865,7 @@ $cancelEditUrl = add_query_arg([
                                                         </button>
                                                         <div
                                                             class="gw-contact-actions-menu"
-                                                            role="menu"
-                                                            style="display:none; position:absolute; right:0; top: calc(100% + 6px); background:#fff; border:1px solid var(--gw-color-border); border-radius:10px; padding:6px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 5;">
+                                                            role="menu">
                                                             <button
                                                                 type="button"
                                                                 role="menuitem"
@@ -715,8 +932,12 @@ $cancelEditUrl = add_query_arg([
                                     <?php endforeach; ?>
                                 </div>
                             <?php else : ?>
-                                <div style="margin-top: 10px; color: var(--gw-color-muted); font-size: 13px;">
-                                    <?php esc_html_e('Cette entreprise n\'a aucun contact client associé.', 'gestiwork'); ?>
+                                <div class="gw-mt-10 gw-color-muted-text gw-button-small">
+                                    <?php if ($isCreate) : ?>
+                                        <?php esc_html_e('Enregistrez d\'abord le client. Vous pourrez ensuite créer ses contacts depuis sa fiche (Clients > ouvrir le client).', 'gestiwork'); ?>
+                                    <?php else : ?>
+                                        <?php esc_html_e('Cette entreprise n\'a aucun contact client associé.', 'gestiwork'); ?>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -916,7 +1137,7 @@ $cancelEditUrl = add_query_arg([
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px;">
                     <div style="border:1px solid var(--gw-color-border); border-radius: 12px; background:#fff; padding: 12px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                            <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Historique d\'activités', 'gestiwork'); ?></h3>
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Historique d\'activités', 'gestiwork'); ?></h3>
                             <a href="#" onclick="return false;" style="text-decoration:none; font-size:13px;">
                                 <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                 <?php esc_html_e('Ajouter une note', 'gestiwork'); ?>
@@ -945,7 +1166,7 @@ $cancelEditUrl = add_query_arg([
 
                     <div style="border:1px solid var(--gw-color-border); border-radius: 12px; background:#fff; padding: 12px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                            <h3 class="gw-section-subtitle" style="margin:0;"><?php esc_html_e('Tâches à venir', 'gestiwork'); ?></h3>
+                            <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Tâches à venir', 'gestiwork'); ?></h3>
                             <a href="#" onclick="return false;" style="text-decoration:none; font-size:13px;">
                                 <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                 <?php esc_html_e('Ajouter une tâche', 'gestiwork'); ?>
@@ -978,6 +1199,8 @@ $cancelEditUrl = add_query_arg([
         <?php endif; ?>
     </div>
 </section>
+
+<?php if (! $isCreate && $clientId > 0) : ?>
 
 <div class="gw-modal-backdrop" id="gw-modal-client-contacts" aria-hidden="true">
     <div class="gw-modal gw-modal" role="dialog" aria-modal="true" aria-labelledby="gw-modal-client-contacts-title">
@@ -1092,147 +1315,6 @@ $cancelEditUrl = add_query_arg([
     </div>
 </div>
 
-<script>
-    // Logique spécifique page Tiers/Client : gestion URL avec query string 'tab='
-    (function () {
-        var tabs = document.querySelectorAll('.gw-settings-tab');
-        
-        if (!tabs.length) {
-            return;
-        }
-
-        function setActiveTabWithUrl(target) {
-            if (!target) {
-                return;
-            }
-
-            // Le styling des tabs est géré par gw-ui.js, on ne fait que l'URL ici
-            try {
-                if (typeof window !== 'undefined' && window.history && typeof window.history.replaceState === 'function') {
-                    var url = new URL(window.location.href);
-                    url.searchParams.set('tab', target);
-                    window.history.replaceState(null, '', url.toString());
-                }
-            } catch (e) {
-                // ignore
-            }
-        }
-
-        // Override du comportement basic tabs pour ajouter la gestion d'URL
-        tabs.forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                var target = tab.getAttribute('data-gw-tab');
-                setActiveTabWithUrl(target);
-            });
-        });
-    })();
-
-    (function () {
-        function closeAllMenus() {
-            document.querySelectorAll('.gw-contact-actions-menu').forEach(function (menu) {
-                menu.style.display = 'none';
-            });
-            document.querySelectorAll('.gw-contact-actions-trigger').forEach(function (btn) {
-                btn.setAttribute('aria-expanded', 'false');
-            });
-        }
-
-        document.addEventListener('click', function (e) {
-            var trigger = e.target.closest ? e.target.closest('.gw-contact-actions-trigger') : null;
-            if (!trigger) {
-                closeAllMenus();
-                return;
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            var wrapper = trigger.parentElement;
-            if (!wrapper) {
-                return;
-            }
-            var menu = wrapper.querySelector('.gw-contact-actions-menu');
-            if (!menu) {
-                return;
-            }
-
-            var willOpen = menu.style.display === 'none' || menu.style.display === '';
-            closeAllMenus();
-            if (willOpen) {
-                menu.style.display = 'block';
-                trigger.setAttribute('aria-expanded', 'true');
-            }
-        });
-
-        document.querySelectorAll('.gw-contact-delete').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                if (!window.confirm('<?php echo esc_js(__('Supprimer ce contact ?', 'gestiwork')); ?>')) {
-                    e.preventDefault();
-                }
-            });
-        });
-
-        document.querySelectorAll('.gw-tier-delete').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                if (!window.confirm('<?php echo esc_js(__('Supprimer définitivement ce client et tous ses contacts ?', 'gestiwork')); ?>')) {
-                    e.preventDefault();
-                }
-            });
-        });
-
-        function applyEditData(button) {
-            if (!button) {
-                return;
-            }
-            var id = button.getAttribute('data-contact-id') || '0';
-            var civilite = button.getAttribute('data-contact-civilite') || 'non_renseigne';
-            var fonction = button.getAttribute('data-contact-fonction') || '';
-            var nom = button.getAttribute('data-contact-nom') || '';
-            var prenom = button.getAttribute('data-contact-prenom') || '';
-            var mail = button.getAttribute('data-contact-mail') || '';
-            var tel1 = button.getAttribute('data-contact-tel1') || '';
-            var tel2 = button.getAttribute('data-contact-tel2') || '';
-
-            var idInput = document.getElementById('gw_client_contact_edit_id');
-            var civiliteInput = document.getElementById('gw_client_contact_edit_civilite');
-            var fonctionInput = document.getElementById('gw_client_contact_edit_fonction');
-            var nomInput = document.getElementById('gw_client_contact_edit_nom');
-            var prenomInput = document.getElementById('gw_client_contact_edit_prenom');
-            var mailInput = document.getElementById('gw_client_contact_edit_mail');
-            var tel1Input = document.getElementById('gw_client_contact_edit_tel1');
-            var tel2Input = document.getElementById('gw_client_contact_edit_tel2');
-
-            if (idInput) {
-                idInput.value = id;
-            }
-            if (civiliteInput) {
-                civiliteInput.value = civilite;
-            }
-            if (fonctionInput) {
-                fonctionInput.value = fonction;
-            }
-            if (nomInput) {
-                nomInput.value = nom;
-            }
-            if (prenomInput) {
-                prenomInput.value = prenom;
-            }
-            if (mailInput) {
-                mailInput.value = mail;
-            }
-            if (tel1Input) {
-                tel1Input.value = tel1;
-            }
-            if (tel2Input) {
-                tel2Input.value = tel2;
-            }
-        }
-
-        document.querySelectorAll('[data-gw-modal-target="gw-modal-client-contact-edit"]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                applyEditData(btn);
-                closeAllMenus();
-            });
-        });
-    })();
-</script>
+<?php else : ?>
+    <p><?php esc_html_e('Enregistrez d\'abord le client. Vous pourrez ensuite créer ses contacts depuis sa fiche (Clients > ouvrir le client).', 'gestiwork'); ?></p>
+<?php endif; ?>

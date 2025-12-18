@@ -63,6 +63,43 @@ class TierProvider
         return $row;
     }
 
+    public static function listByType(string $type, int $limit = 500): array
+    {
+        global $wpdb;
+
+        $type = trim($type);
+        $limit = max(1, min(5000, $limit));
+
+        if ($type === '') {
+            return [];
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return [];
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tiers';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return [];
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$tableName} WHERE type = %s ORDER BY raison_sociale ASC, nom ASC, prenom ASC LIMIT %d",
+                $type,
+                $limit
+            ),
+            ARRAY_A
+        );
+
+        return is_array($rows) ? $rows : [];
+    }
+
     /**
      * Recherche simple (V1) : filtre par query/type/statut/ville + pagination.
      *

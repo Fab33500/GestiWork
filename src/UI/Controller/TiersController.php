@@ -24,6 +24,7 @@ namespace GestiWork\UI\Controller;
 
 use GestiWork\Domain\Tiers\TierProvider;
 use GestiWork\Domain\Tiers\TierContactProvider;
+use GestiWork\Domain\Tiers\TierFinanceurProvider;
 
 class TiersController
 {
@@ -67,8 +68,10 @@ class TiersController
             return;
         }
 
+        $type = isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier';
+
         $data = [
-            'type' => isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier',
+            'type' => $type,
             'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
             'raison_sociale' => isset($_POST['raison_sociale']) ? sanitize_text_field((string) $_POST['raison_sociale']) : '',
             'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
@@ -86,6 +89,14 @@ class TiersController
 
         $newId = TierProvider::create($data);
         if ($newId > 0) {
+            if ($type === 'financeur') {
+                $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
+                TierFinanceurProvider::setEntreprisesForFinanceur($newId, $entrepriseIds);
+            } elseif ($type === 'entreprise' || $type === 'client_entreprise') {
+                $financeurIds = isset($_POST['financeur_ids']) && is_array($_POST['financeur_ids']) ? array_map('intval', $_POST['financeur_ids']) : [];
+                TierFinanceurProvider::setFinanceursForEntreprise($newId, $financeurIds);
+            }
+
             $redirectUrl = add_query_arg([
                 'gw_view' => 'Client',
                 'gw_tier_id' => $newId,
@@ -111,8 +122,10 @@ class TiersController
             return;
         }
 
+        $type = isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier';
+
         $data = [
-            'type' => isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier',
+            'type' => $type,
             'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
             'raison_sociale' => isset($_POST['raison_sociale']) ? sanitize_text_field((string) $_POST['raison_sociale']) : '',
             'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
@@ -130,6 +143,16 @@ class TiersController
 
         $ok = TierProvider::update($tierId, $data);
         if ($ok) {
+            TierFinanceurProvider::deleteLinksByTierId($tierId);
+
+            if ($type === 'financeur') {
+                $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
+                TierFinanceurProvider::setEntreprisesForFinanceur($tierId, $entrepriseIds);
+            } elseif ($type === 'entreprise' || $type === 'client_entreprise') {
+                $financeurIds = isset($_POST['financeur_ids']) && is_array($_POST['financeur_ids']) ? array_map('intval', $_POST['financeur_ids']) : [];
+                TierFinanceurProvider::setFinanceursForEntreprise($tierId, $financeurIds);
+            }
+
             $redirectUrl = add_query_arg([
                 'gw_view' => 'Client',
                 'gw_tier_id' => $tierId,
@@ -166,6 +189,8 @@ class TiersController
             self::redirectWithError('tier_delete_failed', $tierId);
             return;
         }
+
+        TierFinanceurProvider::deleteLinksByTierId($tierId);
 
         $tierDeletedOk = TierProvider::delete($tierId);
         if ($tierDeletedOk) {
