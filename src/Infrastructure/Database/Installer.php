@@ -41,6 +41,7 @@ class Installer
         $tableOptions      = $wpdb->prefix . 'gw_options';
         $tableTiers        = $wpdb->prefix . 'gw_tiers';
         $tableTierContacts = $wpdb->prefix . 'gw_tier_contacts';
+        $tableTierFinanceurs = $wpdb->prefix . 'gw_tier_financeurs';
         $tablePdfTemplates = $wpdb->prefix . 'gw_pdf_templates';
         $tablePdfShortcodes = $wpdb->prefix . 'gw_pdf_shortcodes';
         $tableApprenants = $wpdb->prefix . 'gw_apprenants';
@@ -156,6 +157,20 @@ KEY mail (mail),
 ) {$charsetCollate};";
 
         dbDelta($sqlTierContacts);
+
+        $sqlTierFinanceurs = "CREATE TABLE {$tableTierFinanceurs} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+financeur_id BIGINT(20) UNSIGNED NOT NULL,
+entreprise_id BIGINT(20) UNSIGNED NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY financeur_entreprise (financeur_id, entreprise_id),
+KEY financeur_id (financeur_id),
+KEY entreprise_id (entreprise_id)
+) {$charsetCollate};";
+
+        dbDelta($sqlTierFinanceurs);
 
         $sqlPdfTemplates = "CREATE TABLE {$tablePdfTemplates} (
 id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -290,6 +305,28 @@ KEY is_active (is_active)
 
         $tiersTable = $wpdb->prefix . 'gw_tiers';
         $tiersContactsTable = $wpdb->prefix . 'gw_tier_contacts';
+        $tiersFinanceursTable = $wpdb->prefix . 'gw_tier_financeurs';
+
+        $tableExistsFinanceurs = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tiersFinanceursTable)
+        );
+
+        if ($tableExistsFinanceurs !== $tiersFinanceursTable) {
+            $charsetCollate = $wpdb->get_charset_collate();
+            $sqlTierFinanceurs = "CREATE TABLE {$tiersFinanceursTable} (
+id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+financeur_id BIGINT(20) UNSIGNED NOT NULL,
+entreprise_id BIGINT(20) UNSIGNED NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY  (id),
+UNIQUE KEY financeur_entreprise (financeur_id, entreprise_id),
+KEY financeur_id (financeur_id),
+KEY entreprise_id (entreprise_id)
+) {$charsetCollate};";
+
+            dbDelta($sqlTierFinanceurs);
+        }
 
         foreach ([$tiersTable, $tiersContactsTable] as $table) {
             $tableExists = $wpdb->get_var(
