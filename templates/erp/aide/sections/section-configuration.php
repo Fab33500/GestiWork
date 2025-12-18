@@ -52,7 +52,7 @@ if (current_user_can('manage_options')) : ?>
             <li><strong>Site Internet</strong><br />
                 Adresse de votre site web (par exemple <code>https://www.monof.fr</code>). Champ facultatif.
             </li>
-            <li><strong>Téléphone fixe * et Téléphone portable *</strong><br />
+            <li><strong>Téléphone fixe et Téléphone portable</strong><br />
                 Vous disposez de deux champs de téléphone. Vous pouvez remplir les deux, mais au minimum l’un des deux doit être renseigné.
                 Le format attendu est guidé : deux chiffres par groupe (ex. <code>01 23 45 67 89</code> ou <code>06 12 34 56 78</code>).
             </li>

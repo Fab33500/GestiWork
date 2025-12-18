@@ -114,6 +114,7 @@
         var mail = button.getAttribute('data-contact-mail') || '';
         var tel1 = button.getAttribute('data-contact-tel1') || '';
         var tel2 = button.getAttribute('data-contact-tel2') || '';
+        var participeFormation = button.getAttribute('data-contact-participe-formation') || '0';
 
         var idInput = document.getElementById('gw_client_contact_edit_id');
         var civiliteInput = document.getElementById('gw_client_contact_edit_civilite');
@@ -123,6 +124,7 @@
         var mailInput = document.getElementById('gw_client_contact_edit_mail');
         var tel1Input = document.getElementById('gw_client_contact_edit_tel1');
         var tel2Input = document.getElementById('gw_client_contact_edit_tel2');
+        var participeFormationInputs = document.querySelectorAll('#gw-modal-client-contact-edit input[name="participe_formation"]');
 
         if (idInput) {
             idInput.value = id;
@@ -148,6 +150,12 @@
         if (tel2Input) {
             tel2Input.value = tel2;
         }
+
+        if (participeFormationInputs && participeFormationInputs.length) {
+            participeFormationInputs.forEach(function (input) {
+                input.checked = input.value === String(participeFormation);
+            });
+        }
     }
 
     function initContactEditModalPrefill() {
@@ -159,10 +167,29 @@
         });
     }
 
+    function initContactCreateModalReset() {
+        var openButtons = document.querySelectorAll('[data-gw-modal-target="gw-modal-client-contacts"]');
+        if (!openButtons.length) {
+            return;
+        }
+
+        openButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var inputs = document.querySelectorAll('#gw-modal-client-contacts input[name="participe_formation"]');
+                if (inputs && inputs.length) {
+                    inputs.forEach(function (input) {
+                        input.checked = false;
+                    });
+                }
+            });
+        });
+    }
+
     onReady(function () {
         initTabsUrlSync();
         initContactActionsMenu();
         initConfirmations();
         initContactEditModalPrefill();
+        initContactCreateModalReset();
     });
 })();

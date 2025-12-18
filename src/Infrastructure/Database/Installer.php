@@ -149,6 +149,8 @@ prenom VARCHAR(190) NOT NULL DEFAULT '',
 mail VARCHAR(190) NOT NULL DEFAULT '',
 tel1 VARCHAR(50) NOT NULL DEFAULT '',
 tel2 VARCHAR(50) NOT NULL DEFAULT '',
+participe_formation TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+apprenant_id BIGINT(20) UNSIGNED NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY  (id),
@@ -326,6 +328,22 @@ KEY entreprise_id (entreprise_id)
 ) {$charsetCollate};";
 
             dbDelta($sqlTierFinanceurs);
+        }
+
+        $tableExistsTierContacts = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tiersContactsTable)
+        );
+
+        if ($tableExistsTierContacts === $tiersContactsTable) {
+            $existingTierContactsColumns = $wpdb->get_col("SHOW COLUMNS FROM {$tiersContactsTable}", 0);
+
+            if (!in_array('participe_formation', $existingTierContactsColumns, true)) {
+                $wpdb->query("ALTER TABLE {$tiersContactsTable} ADD COLUMN participe_formation TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER tel2");
+            }
+
+            if (!in_array('apprenant_id', $existingTierContactsColumns, true)) {
+                $wpdb->query("ALTER TABLE {$tiersContactsTable} ADD COLUMN apprenant_id BIGINT(20) UNSIGNED NULL AFTER participe_formation");
+            }
         }
 
         foreach ([$tiersTable, $tiersContactsTable] as $table) {

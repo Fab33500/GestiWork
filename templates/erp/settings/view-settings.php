@@ -915,7 +915,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             <input type="url" class="gw-modal-input" id="gw_site_internet" name="gw_site_internet" value="<?php echo isset($ofIdentity['site_internet']) ? esc_attr($ofIdentity['site_internet']) : ''; ?>" />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_telephone_fixe"><?php esc_html_e('Téléphone fixe', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
+                            <label for="gw_telephone_fixe"><?php esc_html_e('Téléphone fixe', 'gestiwork'); ?></label>
                             <input
                                 type="text"
                                 class="gw-modal-input"
@@ -928,7 +928,7 @@ if (in_array($gw_section, ['general', 'general-identite', 'general-et-identite']
                             />
                         </div>
                         <div class="gw-modal-field">
-                            <label for="gw_telephone_portable"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?> <span class="gw-required-asterisk" class="gw-color-error">*</span></label>
+                            <label for="gw_telephone_portable"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?></label>
                             <input
                                 type="text"
                                 class="gw-modal-input"

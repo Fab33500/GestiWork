@@ -59,6 +59,51 @@ class TierContactProvider
         return is_array($row) ? $row : null;
     }
 
+    public static function getByEmail(string $email, int $excludeContactId = 0): ?array
+    {
+        global $wpdb;
+
+        $email = trim(strtolower($email));
+        if ($email === '' || !is_email($email)) {
+            return null;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return null;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tier_contacts';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return null;
+        }
+
+        if ($excludeContactId > 0) {
+            $row = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT * FROM {$tableName} WHERE LOWER(mail) = %s AND id <> %d LIMIT 1",
+                    $email,
+                    $excludeContactId
+                ),
+                ARRAY_A
+            );
+        } else {
+            $row = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT * FROM {$tableName} WHERE LOWER(mail) = %s LIMIT 1",
+                    $email
+                ),
+                ARRAY_A
+            );
+        }
+
+        return is_array($row) ? $row : null;
+    }
+
     /**
      * @return array<int,array>
      */
@@ -241,6 +286,8 @@ class TierContactProvider
             'mail' => isset($data['mail']) ? (string) $data['mail'] : '',
             'tel1' => isset($data['tel1']) ? (string) $data['tel1'] : '',
             'tel2' => isset($data['tel2']) ? (string) $data['tel2'] : '',
+            'participe_formation' => isset($data['participe_formation']) && (int) $data['participe_formation'] === 1 ? 1 : 0,
+            'apprenant_id' => isset($data['apprenant_id']) && (int) $data['apprenant_id'] > 0 ? (int) $data['apprenant_id'] : null,
         ];
     }
 }

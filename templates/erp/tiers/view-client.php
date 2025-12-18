@@ -375,12 +375,16 @@ $cancelEditUrl = add_query_arg([
                                     <input type="email" id="gw_tier_create_email" name="email" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['email'] ?? '')); ?>" />
                                 </div>
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_create_phone" name="telephone" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['telephone'] ?? '')); ?>" />
                                 </div>
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone_mobile"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone_mobile"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?></label>
                                     <input type="text" id="gw_tier_create_phone_mobile" name="telephone_portable" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['telephone_portable'] ?? '')); ?>" />
+                                </div>
+
+                                <div class="gw-full-width">
+                                    <p class="gw-section-description gw-section-description--compact"><?php esc_html_e('Merci de renseigner au moins un des deux numéros (fixe ou portable).', 'gestiwork'); ?></p>
                                 </div>
 
                                 <div class="gw-full-width">
@@ -563,7 +567,8 @@ $cancelEditUrl = add_query_arg([
                                                                 data-contact-prenom="<?php echo esc_attr((string) $contactPrenom); ?>"
                                                                 data-contact-mail="<?php echo esc_attr((string) $contactMail); ?>"
                                                                 data-contact-tel1="<?php echo esc_attr((string) $contactTel1); ?>"
-                                                                data-contact-tel2="<?php echo esc_attr((string) $contactTel2); ?>">
+                                                                data-contact-tel2="<?php echo esc_attr((string) $contactTel2); ?>"
+                                                                data-contact-participe-formation="<?php echo (int) ($contact['participe_formation'] ?? 0); ?>">
                                                                 <span class="dashicons dashicons-edit" aria-hidden="true" style="margin-right:6px;"></span>
                                                                 <?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?>
                                                             </button>
@@ -925,7 +930,8 @@ $cancelEditUrl = add_query_arg([
                                                                 data-contact-prenom="<?php echo esc_attr((string) $contactPrenom); ?>"
                                                                 data-contact-mail="<?php echo esc_attr((string) $contactMail); ?>"
                                                                 data-contact-tel1="<?php echo esc_attr((string) $contactTel1); ?>"
-                                                                data-contact-tel2="<?php echo esc_attr((string) $contactTel2); ?>">
+                                                                data-contact-tel2="<?php echo esc_attr((string) $contactTel2); ?>"
+                                                                data-contact-participe-formation="<?php echo (int) ($contact['participe_formation'] ?? 0); ?>">
                                                                 <span class="dashicons dashicons-edit" aria-hidden="true" style="margin-right:6px;"></span>
                                                                 <?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?>
                                                             </button>
@@ -1289,6 +1295,19 @@ $cancelEditUrl = add_query_arg([
             <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
             <div class="gw-modal-body">
                 <div class="gw-modal-grid">
+                    <div class="gw-modal-field gw-full-width">
+                        <label><?php esc_html_e('Ce contact participe à une formation ?', 'gestiwork'); ?></label>
+                        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="radio" name="participe_formation" value="0" required />
+                                <span><?php esc_html_e('Non', 'gestiwork'); ?></span>
+                            </label>
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="radio" name="participe_formation" value="1" />
+                                <span><?php esc_html_e('Oui', 'gestiwork'); ?></span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="gw-modal-field">
                         <label for="gw_client_contact_civilite"><?php esc_html_e('Civilité', 'gestiwork'); ?></label>
                         <select id="gw_client_contact_civilite" name="civilite" class="gw-modal-input">
@@ -1321,6 +1340,9 @@ $cancelEditUrl = add_query_arg([
                         <label for="gw_client_contact_tel2"><?php esc_html_e('Numéro de téléphone 2', 'gestiwork'); ?></label>
                         <input type="text" id="gw_client_contact_tel2" name="tel2" class="gw-modal-input" value="" pattern="[0-9]{2}( [0-9]{2}){4}" placeholder="00 00 00 00 00" />
                     </div>
+                    <div class="gw-modal-field gw-full-width">
+                        <small class="gw-modal-small-info"><?php esc_html_e('Merci de renseigner au moins un des deux numéros de téléphone.', 'gestiwork'); ?></small>
+                    </div>
                 </div>
             </div>
             <p id="gw_client_contact_error" class="gw-modal-error-info gw-display-none"></p>
@@ -1347,6 +1369,19 @@ $cancelEditUrl = add_query_arg([
             <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
             <div class="gw-modal-body">
                 <div class="gw-modal-grid">
+                    <div class="gw-modal-field gw-full-width">
+                        <label><?php esc_html_e('Ce contact participe à une formation ?', 'gestiwork'); ?></label>
+                        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="radio" name="participe_formation" value="0" required />
+                                <span><?php esc_html_e('Non', 'gestiwork'); ?></span>
+                            </label>
+                            <label style="display:inline-flex; gap:6px; align-items:center;">
+                                <input type="radio" name="participe_formation" value="1" required />
+                                <span><?php esc_html_e('Oui', 'gestiwork'); ?></span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="gw-modal-field">
                         <label for="gw_client_contact_edit_civilite"><?php esc_html_e('Civilité', 'gestiwork'); ?></label>
                         <select id="gw_client_contact_edit_civilite" name="civilite" class="gw-modal-input">
@@ -1378,6 +1413,9 @@ $cancelEditUrl = add_query_arg([
                     <div class="gw-modal-field">
                         <label for="gw_client_contact_edit_tel2"><?php esc_html_e('Numéro de téléphone 2', 'gestiwork'); ?></label>
                         <input type="text" id="gw_client_contact_edit_tel2" name="tel2" class="gw-modal-input" value="" pattern="[0-9]{2}( [0-9]{2}){4}" placeholder="00 00 00 00 00" />
+                    </div>
+                    <div class="gw-modal-field gw-full-width">
+                        <small class="gw-modal-small-info"><?php esc_html_e('Merci de renseigner au moins un des deux numéros de téléphone.', 'gestiwork'); ?></small>
                     </div>
                 </div>
             </div>

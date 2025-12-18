@@ -116,6 +116,16 @@ class TiersController
                     self::redirectCreateWithPrefill(sprintf('Ce mail est déjà utilisé par un formateur / responsable pédagogique (%s).', $label), $_POST);
                     return;
                 }
+
+                $existingContact = TierContactProvider::getByEmail($email);
+                if (is_array($existingContact)) {
+                    $label = trim((string) ($existingContact['prenom'] ?? '') . ' ' . (string) ($existingContact['nom'] ?? ''));
+                    if ($label === '') {
+                        $label = (string) ((int) ($existingContact['id'] ?? 0));
+                    }
+                    self::redirectCreateWithPrefill(sprintf('Ce mail est déjà utilisé par un contact (%s).', $label), $_POST);
+                    return;
+                }
             }
         }
 
@@ -141,6 +151,8 @@ class TiersController
             if ($type === 'client_particulier' || $type === 'entreprise_independant') {
                 $apprenantEmail = (string) ($data['email'] ?? '');
                 $apprenant = $apprenantEmail !== '' ? ApprenantProvider::getByEmail($apprenantEmail) : null;
+                $apprenantId = 0;
+                $apprenantCreated = false;
 
                 if (is_array($apprenant)) {
                     $apprenantId = (int) ($apprenant['id'] ?? 0);
@@ -195,11 +207,35 @@ class TiersController
                         'ville' => (string) ($data['ville'] ?? ''),
                     ]);
 
+                    $apprenantCreated = $apprenantId > 0;
+
                     if ($apprenantId <= 0) {
                         TierProvider::delete($newId);
                         self::redirectWithError('apprenant_create_failed', null, 'Erreur lors de la création automatique du stagiaire.');
                         return;
                     }
+                }
+
+                $fonctionContact = $type === 'entreprise_independant' ? 'Dirigeant' : 'Stagiaire';
+                $contactId = TierContactProvider::create($newId, [
+                    'civilite' => 'non_renseigne',
+                    'fonction' => $fonctionContact,
+                    'nom' => (string) ($data['nom'] ?? ''),
+                    'prenom' => (string) ($data['prenom'] ?? ''),
+                    'mail' => (string) ($data['email'] ?? ''),
+                    'tel1' => (string) ($data['telephone'] ?? ''),
+                    'tel2' => (string) ($data['telephone_portable'] ?? ''),
+                    'participe_formation' => 1,
+                    'apprenant_id' => $apprenantId > 0 ? $apprenantId : null,
+                ]);
+
+                if ($contactId <= 0) {
+                    TierProvider::delete($newId);
+                    if ($apprenantCreated) {
+                        ApprenantProvider::delete($apprenantId);
+                    }
+                    self::redirectWithError('contact_create_failed', null, 'Erreur lors de la création automatique du contact principal.');
+                    return;
                 }
             }
 
@@ -451,7 +487,7 @@ class TiersController
             return;
         }
 
-        $validationError = self::validateTierContactPayload($_POST);
+        $validationError = self::validateTierContactPayload($_POST, $tierId);
         if ($validationError !== null) {
             self::redirectWithError('validation', $tierId, $validationError);
             return;
@@ -465,7 +501,19 @@ class TiersController
             'mail' => isset($_POST['mail']) ? sanitize_email((string) $_POST['mail']) : '',
             'tel1' => isset($_POST['tel1']) ? sanitize_text_field((string) $_POST['tel1']) : '',
             'tel2' => isset($_POST['tel2']) ? sanitize_text_field((string) $_POST['tel2']) : '',
+            'participe_formation' => isset($_POST['participe_formation']) && (int) $_POST['participe_formation'] === 1 ? 1 : 0,
         ];
+
+        if (($data['participe_formation'] ?? 0) === 1) {
+            [$apprenantId, $apprenantError] = self::resolveApprenantForTierContact($tierId, $data);
+            if ($apprenantError !== null) {
+                self::redirectWithError('validation', $tierId, $apprenantError);
+                return;
+            }
+            $data['apprenant_id'] = $apprenantId > 0 ? $apprenantId : null;
+        } else {
+            $data['apprenant_id'] = null;
+        }
 
         $newContactId = TierContactProvider::create($tierId, $data);
         if ($newContactId > 0) {
@@ -506,7 +554,7 @@ class TiersController
             return;
         }
 
-        $validationError = self::validateTierContactPayload($_POST);
+        $validationError = self::validateTierContactPayload($_POST, $tierId, $contactId);
         if ($validationError !== null) {
             self::redirectWithError('validation', $tierId, $validationError);
             return;
@@ -520,7 +568,19 @@ class TiersController
             'mail' => isset($_POST['mail']) ? sanitize_email((string) $_POST['mail']) : '',
             'tel1' => isset($_POST['tel1']) ? sanitize_text_field((string) $_POST['tel1']) : '',
             'tel2' => isset($_POST['tel2']) ? sanitize_text_field((string) $_POST['tel2']) : '',
+            'participe_formation' => isset($_POST['participe_formation']) && (int) $_POST['participe_formation'] === 1 ? 1 : 0,
         ];
+
+        if (($data['participe_formation'] ?? 0) === 1) {
+            [$apprenantId, $apprenantError] = self::resolveApprenantForTierContact($tierId, $data);
+            if ($apprenantError !== null) {
+                self::redirectWithError('validation', $tierId, $apprenantError);
+                return;
+            }
+            $data['apprenant_id'] = $apprenantId > 0 ? $apprenantId : null;
+        } else {
+            $data['apprenant_id'] = null;
+        }
 
         $ok = TierContactProvider::update($contactId, $data);
         if ($ok) {
@@ -668,7 +728,7 @@ class TiersController
         return null;
     }
 
-    private static function validateTierContactPayload(array $post): ?string
+    private static function validateTierContactPayload(array $post, int $tierId = 0, int $excludeContactId = 0): ?string
     {
         $civilite = isset($post['civilite']) ? trim((string) $post['civilite']) : 'non_renseigne';
         $fonction = isset($post['fonction']) ? trim((string) $post['fonction']) : '';
@@ -677,6 +737,12 @@ class TiersController
         $mail = isset($post['mail']) ? sanitize_email((string) $post['mail']) : '';
         $tel1 = isset($post['tel1']) ? trim((string) $post['tel1']) : '';
         $tel2 = isset($post['tel2']) ? trim((string) $post['tel2']) : '';
+        $hasParticipeFormation = array_key_exists('participe_formation', $post);
+        $participeFormation = $hasParticipeFormation ? trim((string) $post['participe_formation']) : '';
+
+        if (!$hasParticipeFormation || ($participeFormation !== '0' && $participeFormation !== '1')) {
+            return 'Merci de sélectionner si ce contact participe à une formation.';
+        }
 
         if ($civilite === '' || $civilite === 'non_renseigne') {
             return 'Merci de renseigner la civilité.';
@@ -698,7 +764,112 @@ class TiersController
             return 'Merci de renseigner un numéro de téléphone valide (10 chiffres).';
         }
 
+        $existingContact = TierContactProvider::getByEmail($mail, $excludeContactId);
+        if (is_array($existingContact)) {
+            $label = trim((string) ($existingContact['prenom'] ?? '') . ' ' . (string) ($existingContact['nom'] ?? ''));
+            if ($label === '') {
+                $label = (string) ((int) ($existingContact['id'] ?? 0));
+            }
+            return sprintf('Ce mail est déjà utilisé par un contact (%s).', $label);
+        }
+
+        $existingTier = TierProvider::getByEmail($mail);
+        if (is_array($existingTier)) {
+            $existingTierId = (int) ($existingTier['id'] ?? 0);
+            if ($tierId > 0 && $existingTierId > 0 && $existingTierId === $tierId) {
+                return null;
+            }
+            $label = trim((string) ($existingTier['raison_sociale'] ?? ''));
+            if ($label === '') {
+                $label = trim((string) ($existingTier['prenom'] ?? '') . ' ' . (string) ($existingTier['nom'] ?? ''));
+            }
+            if ($label === '') {
+                $label = (string) ((int) ($existingTier['id'] ?? 0));
+            }
+            return sprintf('Ce mail est déjà utilisé par un tiers (%s).', $label);
+        }
+
+        $existingResponsable = ResponsableFormateurProvider::getByEmail($mail);
+        if (is_array($existingResponsable)) {
+            $label = trim((string) ($existingResponsable['prenom'] ?? '') . ' ' . (string) ($existingResponsable['nom'] ?? ''));
+            if ($label === '') {
+                $label = (string) ((int) ($existingResponsable['id'] ?? 0));
+            }
+            return sprintf('Ce mail est déjà utilisé par un formateur / responsable pédagogique (%s).', $label);
+        }
+
+        if ($participeFormation === '0') {
+            $existingApprenant = ApprenantProvider::getByEmail($mail);
+            if (is_array($existingApprenant)) {
+                $label = trim((string) ($existingApprenant['prenom'] ?? '') . ' ' . (string) ($existingApprenant['nom'] ?? ''));
+                if ($label === '') {
+                    $label = (string) ((int) ($existingApprenant['id'] ?? 0));
+                }
+                return sprintf('Ce mail est déjà utilisé par un apprenant (%s).', $label);
+            }
+        }
+
         return null;
+    }
+
+    private static function resolveApprenantForTierContact(int $tierId, array $contactData): array
+    {
+        $email = isset($contactData['mail']) ? trim(strtolower((string) $contactData['mail'])) : '';
+        if ($email === '' || !is_email($email)) {
+            return [0, 'Merci de renseigner une adresse e-mail valide.'];
+        }
+
+        $apprenant = ApprenantProvider::getByEmail($email);
+        if (is_array($apprenant)) {
+            $existingEntrepriseId = (int) ($apprenant['entreprise_id'] ?? 0);
+            if ($existingEntrepriseId > 0 && $existingEntrepriseId !== $tierId) {
+                return [0, 'Un apprenant existe déjà avec cet email et est rattaché à une autre entreprise.'];
+            }
+
+            if ($existingEntrepriseId <= 0) {
+                ApprenantProvider::update((int) ($apprenant['id'] ?? 0), ['entreprise_id' => $tierId]);
+            }
+
+            return [(int) ($apprenant['id'] ?? 0), null];
+        }
+
+        $tier = TierProvider::getById($tierId);
+        $telephone = '';
+        $tel1 = isset($contactData['tel1']) ? trim((string) $contactData['tel1']) : '';
+        $tel2 = isset($contactData['tel2']) ? trim((string) $contactData['tel2']) : '';
+        if ($tel1 !== '') {
+            $telephone = $tel1;
+        } elseif ($tel2 !== '') {
+            $telephone = $tel2;
+        }
+
+        $civiliteContact = isset($contactData['civilite']) ? trim((string) $contactData['civilite']) : '';
+        $civiliteApprenant = '';
+        if ($civiliteContact === 'madame') {
+            $civiliteApprenant = 'Madame';
+        } elseif ($civiliteContact === 'monsieur') {
+            $civiliteApprenant = 'Monsieur';
+        }
+
+        $apprenantPayload = [
+            'civilite' => $civiliteApprenant,
+            'prenom' => isset($contactData['prenom']) ? (string) $contactData['prenom'] : '',
+            'nom' => isset($contactData['nom']) ? (string) $contactData['nom'] : '',
+            'email' => $email,
+            'telephone' => $telephone,
+            'entreprise_id' => $tierId,
+            'adresse1' => is_array($tier) ? (string) ($tier['adresse1'] ?? '') : '',
+            'adresse2' => is_array($tier) ? (string) ($tier['adresse2'] ?? '') : '',
+            'cp' => is_array($tier) ? (string) ($tier['cp'] ?? '') : '',
+            'ville' => is_array($tier) ? (string) ($tier['ville'] ?? '') : '',
+        ];
+
+        $newApprenantId = ApprenantProvider::create($apprenantPayload);
+        if ($newApprenantId <= 0) {
+            return [0, 'Impossible de créer la fiche apprenant associée à ce contact.'];
+        }
+
+        return [$newApprenantId, null];
     }
 
     private static function redirectWithError(string $errorType, ?int $tierId = null, ?string $errorMessage = null): void
