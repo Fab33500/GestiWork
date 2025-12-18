@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace GestiWork\UI\Controller;
 
+use GestiWork\Domain\Apprenant\ApprenantProvider;
+use GestiWork\Domain\ResponsableFormateur\ResponsableFormateurProvider;
 use GestiWork\Domain\Tiers\TierProvider;
 use GestiWork\Domain\Tiers\TierContactProvider;
 use GestiWork\Domain\Tiers\TierFinanceurProvider;
@@ -52,6 +54,8 @@ class TiersController
             self::handleTierUpdate();
         } elseif ($action === 'gw_tier_delete') {
             self::handleTierDelete();
+        } elseif ($action === 'gw_sync_particuliers_apprenants') {
+            self::handleSyncParticuliersApprenants();
         } elseif ($action === 'gw_tier_contact_create') {
             self::handleTierContactCreate();
         } elseif ($action === 'gw_tier_contact_update') {
@@ -76,6 +80,44 @@ class TiersController
             return;
         }
 
+        if (strtolower(trim($type)) === 'client_particulier') {
+            $email = isset($_POST['email']) ? sanitize_email((string) $_POST['email']) : '';
+            if ($email !== '' && is_email($email)) {
+                $existingTier = TierProvider::getByEmail($email);
+                if (is_array($existingTier)) {
+                    $label = trim((string) ($existingTier['raison_sociale'] ?? ''));
+                    if ($label === '') {
+                        $label = trim((string) ($existingTier['prenom'] ?? '') . ' ' . (string) ($existingTier['nom'] ?? ''));
+                    }
+                    if ($label === '') {
+                        $label = (string) ((int) ($existingTier['id'] ?? 0));
+                    }
+                    self::redirectCreateWithPrefill(sprintf('Ce mail est déjà utilisé par un tiers (%s).', $label), $_POST);
+                    return;
+                }
+
+                $existingApprenant = ApprenantProvider::getByEmail($email);
+                if (is_array($existingApprenant)) {
+                    $label = trim((string) ($existingApprenant['prenom'] ?? '') . ' ' . (string) ($existingApprenant['nom'] ?? ''));
+                    if ($label === '') {
+                        $label = (string) ((int) ($existingApprenant['id'] ?? 0));
+                    }
+                    self::redirectCreateWithPrefill(sprintf('Ce mail est déjà utilisé par un apprenant (%s).', $label), $_POST);
+                    return;
+                }
+
+                $existingResponsable = ResponsableFormateurProvider::getByEmail($email);
+                if (is_array($existingResponsable)) {
+                    $label = trim((string) ($existingResponsable['prenom'] ?? '') . ' ' . (string) ($existingResponsable['nom'] ?? ''));
+                    if ($label === '') {
+                        $label = (string) ((int) ($existingResponsable['id'] ?? 0));
+                    }
+                    self::redirectCreateWithPrefill(sprintf('Ce mail est déjà utilisé par un formateur / responsable pédagogique (%s).', $label), $_POST);
+                    return;
+                }
+            }
+        }
+
         $data = [
             'type' => $type,
             'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
@@ -95,6 +137,71 @@ class TiersController
 
         $newId = TierProvider::create($data);
         if ($newId > 0) {
+            if ($type === 'client_particulier') {
+                $apprenantEmail = (string) ($data['email'] ?? '');
+                $apprenant = $apprenantEmail !== '' ? ApprenantProvider::getByEmail($apprenantEmail) : null;
+
+                if (is_array($apprenant)) {
+                    $apprenantId = (int) ($apprenant['id'] ?? 0);
+                    if ($apprenantId > 0) {
+                        $updates = [];
+
+                        $currentEntrepriseId = isset($apprenant['entreprise_id']) ? (int) $apprenant['entreprise_id'] : 0;
+                        if ($currentEntrepriseId !== $newId) {
+                            $updates['entreprise_id'] = $newId;
+                        }
+
+                        $mapping = [
+                            'prenom' => (string) ($data['prenom'] ?? ''),
+                            'nom' => (string) ($data['nom'] ?? ''),
+                            'telephone' => (string) ($data['telephone'] ?: ($data['telephone_portable'] ?? '')),
+                            'adresse1' => (string) ($data['adresse1'] ?? ''),
+                            'adresse2' => (string) ($data['adresse2'] ?? ''),
+                            'cp' => (string) ($data['cp'] ?? ''),
+                            'ville' => (string) ($data['ville'] ?? ''),
+                            'statut_bpf' => 'stagiaire',
+                        ];
+
+                        foreach ($mapping as $field => $value) {
+                            if ($value === '') {
+                                continue;
+                            }
+                            $current = isset($apprenant[$field]) ? trim((string) $apprenant[$field]) : '';
+                            if ($current === '') {
+                                $updates[$field] = $value;
+                            }
+                        }
+
+                        if (!empty($updates)) {
+                            ApprenantProvider::update($apprenantId, $updates);
+                        }
+                    }
+                } else {
+                    $tel = (string) ($data['telephone'] ?: ($data['telephone_portable'] ?? ''));
+                    $apprenantId = ApprenantProvider::create([
+                        'civilite' => '',
+                        'prenom' => (string) ($data['prenom'] ?? ''),
+                        'nom' => (string) ($data['nom'] ?? ''),
+                        'nom_naissance' => '',
+                        'date_naissance' => null,
+                        'email' => (string) ($data['email'] ?? ''),
+                        'telephone' => $tel,
+                        'entreprise_id' => $newId,
+                        'statut_bpf' => 'stagiaire',
+                        'adresse1' => (string) ($data['adresse1'] ?? ''),
+                        'adresse2' => (string) ($data['adresse2'] ?? ''),
+                        'cp' => (string) ($data['cp'] ?? ''),
+                        'ville' => (string) ($data['ville'] ?? ''),
+                    ]);
+
+                    if ($apprenantId <= 0) {
+                        TierProvider::delete($newId);
+                        self::redirectWithError('apprenant_create_failed', null, 'Erreur lors de la création automatique du stagiaire.');
+                        return;
+                    }
+                }
+            }
+
             if ($type === 'financeur') {
                 $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
                 TierFinanceurProvider::setEntreprisesForFinanceur($newId, $entrepriseIds);
@@ -113,6 +220,122 @@ class TiersController
         }
 
         self::redirectWithError('create_failed');
+    }
+
+    private static function handleSyncParticuliersApprenants(): void
+    {
+        if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_sync_particuliers_apprenants')) {
+            $redirectUrl = add_query_arg([
+                'gw_notice' => 'sync_particuliers_apprenants_failed',
+            ], home_url('/gestiwork/apprenants/'));
+            wp_safe_redirect($redirectUrl);
+            exit;
+        }
+
+        $tiers = TierProvider::listByType('client_particulier', 5000);
+
+        $created = 0;
+        $linked = 0;
+        $skipped = 0;
+        $conflicts = 0;
+
+        foreach ($tiers as $tier) {
+            $tierId = (int) ($tier['id'] ?? 0);
+            if ($tierId <= 0) {
+                continue;
+            }
+
+            $existingByTier = ApprenantProvider::listByEntrepriseId($tierId, 1);
+            if (is_array($existingByTier) && count($existingByTier) > 0) {
+                $skipped++;
+                continue;
+            }
+
+            $email = isset($tier['email']) ? sanitize_email((string) $tier['email']) : '';
+            $apprenant = $email !== '' ? ApprenantProvider::getByEmail($email) : null;
+
+            if (is_array($apprenant)) {
+                $apprenantId = (int) ($apprenant['id'] ?? 0);
+                if ($apprenantId <= 0) {
+                    continue;
+                }
+
+                $currentEntrepriseId = isset($apprenant['entreprise_id']) ? (int) $apprenant['entreprise_id'] : 0;
+                if ($currentEntrepriseId > 0 && $currentEntrepriseId !== $tierId) {
+                    $conflicts++;
+                    continue;
+                }
+
+                $updates = ['entreprise_id' => $tierId];
+
+                $tel = isset($tier['telephone']) ? trim((string) $tier['telephone']) : '';
+                if ($tel === '') {
+                    $tel = isset($tier['telephone_portable']) ? trim((string) $tier['telephone_portable']) : '';
+                }
+
+                $mapping = [
+                    'prenom' => trim((string) ($tier['prenom'] ?? '')),
+                    'nom' => trim((string) ($tier['nom'] ?? '')),
+                    'telephone' => $tel,
+                    'adresse1' => trim((string) ($tier['adresse1'] ?? '')),
+                    'adresse2' => trim((string) ($tier['adresse2'] ?? '')),
+                    'cp' => trim((string) ($tier['cp'] ?? '')),
+                    'ville' => trim((string) ($tier['ville'] ?? '')),
+                    'statut_bpf' => 'stagiaire',
+                ];
+
+                foreach ($mapping as $field => $value) {
+                    if ($value === '') {
+                        continue;
+                    }
+                    $current = isset($apprenant[$field]) ? trim((string) $apprenant[$field]) : '';
+                    if ($current === '') {
+                        $updates[$field] = $value;
+                    }
+                }
+
+                ApprenantProvider::update($apprenantId, $updates);
+                $linked++;
+                continue;
+            }
+
+            $tel = isset($tier['telephone']) ? trim((string) $tier['telephone']) : '';
+            if ($tel === '') {
+                $tel = isset($tier['telephone_portable']) ? trim((string) $tier['telephone_portable']) : '';
+            }
+
+            $newApprenantId = ApprenantProvider::create([
+                'civilite' => '',
+                'prenom' => trim((string) ($tier['prenom'] ?? '')),
+                'nom' => trim((string) ($tier['nom'] ?? '')),
+                'nom_naissance' => '',
+                'date_naissance' => null,
+                'email' => $email,
+                'telephone' => $tel,
+                'entreprise_id' => $tierId,
+                'statut_bpf' => 'stagiaire',
+                'adresse1' => trim((string) ($tier['adresse1'] ?? '')),
+                'adresse2' => trim((string) ($tier['adresse2'] ?? '')),
+                'cp' => trim((string) ($tier['cp'] ?? '')),
+                'ville' => trim((string) ($tier['ville'] ?? '')),
+                'origine' => '',
+            ]);
+
+            if ($newApprenantId > 0) {
+                $created++;
+            }
+        }
+
+        $redirectUrl = add_query_arg([
+            'gw_notice' => 'sync_particuliers_apprenants_done',
+            'gw_sync_created' => $created,
+            'gw_sync_linked' => $linked,
+            'gw_sync_skipped' => $skipped,
+            'gw_sync_conflicts' => $conflicts,
+        ], home_url('/gestiwork/apprenants/'));
+
+        wp_safe_redirect($redirectUrl);
+        exit;
     }
 
     private static function handleTierUpdate(): void
@@ -484,6 +707,35 @@ class TiersController
             $args['gw_view'] = 'Client';
             $args['mode'] = 'create';
         }
+
+        $redirectUrl = add_query_arg($args, home_url('/gestiwork/'));
+        wp_safe_redirect($redirectUrl);
+        exit;
+    }
+
+    private static function redirectCreateWithPrefill(string $errorMessage, array $post): void
+    {
+        $args = [
+            'gw_view' => 'Client',
+            'mode' => 'create',
+            'gw_error' => 'validation',
+            'gw_error_msg' => $errorMessage,
+        ];
+
+        $args['gw_prefill_type'] = isset($post['type']) ? sanitize_text_field((string) $post['type']) : 'client_particulier';
+        $args['gw_prefill_statut'] = isset($post['statut']) ? sanitize_text_field((string) $post['statut']) : 'client';
+        $args['gw_prefill_raison_sociale'] = isset($post['raison_sociale']) ? sanitize_text_field((string) $post['raison_sociale']) : '';
+        $args['gw_prefill_nom'] = isset($post['nom']) ? sanitize_text_field((string) $post['nom']) : '';
+        $args['gw_prefill_prenom'] = isset($post['prenom']) ? sanitize_text_field((string) $post['prenom']) : '';
+        $args['gw_prefill_siret'] = isset($post['siret']) ? sanitize_text_field((string) $post['siret']) : '';
+        $args['gw_prefill_forme_juridique'] = isset($post['forme_juridique']) ? sanitize_text_field((string) $post['forme_juridique']) : '';
+        $args['gw_prefill_email'] = isset($post['email']) ? sanitize_email((string) $post['email']) : '';
+        $args['gw_prefill_telephone'] = isset($post['telephone']) ? sanitize_text_field((string) $post['telephone']) : '';
+        $args['gw_prefill_telephone_portable'] = isset($post['telephone_portable']) ? sanitize_text_field((string) $post['telephone_portable']) : '';
+        $args['gw_prefill_adresse1'] = isset($post['adresse1']) ? sanitize_text_field((string) $post['adresse1']) : '';
+        $args['gw_prefill_adresse2'] = isset($post['adresse2']) ? sanitize_text_field((string) $post['adresse2']) : '';
+        $args['gw_prefill_cp'] = isset($post['cp']) ? sanitize_text_field((string) $post['cp']) : '';
+        $args['gw_prefill_ville'] = isset($post['ville']) ? sanitize_text_field((string) $post['ville']) : '';
 
         $redirectUrl = add_query_arg($args, home_url('/gestiwork/'));
         wp_safe_redirect($redirectUrl);

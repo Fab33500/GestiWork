@@ -96,6 +96,28 @@ class ApprenantProvider
         return $result ?: null;
     }
 
+    public static function getByEmail(string $email): ?array
+    {
+        global $wpdb;
+
+        $email = trim(strtolower($email));
+        if ($email === '' || !is_email($email)) {
+            return null;
+        }
+
+        $table = $wpdb->prefix . 'gw_apprenants';
+
+        $result = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} WHERE LOWER(email) = %s LIMIT 1",
+                $email
+            ),
+            ARRAY_A
+        );
+
+        return $result ?: null;
+    }
+
     /**
      * Met à jour un apprenant.
      */
@@ -159,6 +181,47 @@ class ApprenantProvider
         
         if ($limit > 0) {
             $sql .= $wpdb->prepare(" LIMIT %d OFFSET %d", $limit, $offset);
+        }
+
+        return $wpdb->get_results($sql, ARRAY_A) ?: [];
+    }
+
+    public static function existsForEntrepriseId(int $entrepriseId): bool
+    {
+        global $wpdb;
+
+        if ($entrepriseId <= 0) {
+            return false;
+        }
+
+        $table = $wpdb->prefix . 'gw_apprenants';
+        $count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE entreprise_id = %d",
+                $entrepriseId
+            )
+        );
+
+        return $count > 0;
+    }
+
+    public static function listByEntrepriseId(int $entrepriseId, int $limit = 0, int $offset = 0): array
+    {
+        global $wpdb;
+
+        if ($entrepriseId <= 0) {
+            return [];
+        }
+
+        $table = $wpdb->prefix . 'gw_apprenants';
+
+        $sql = $wpdb->prepare(
+            "SELECT * FROM {$table} WHERE entreprise_id = %d ORDER BY nom, prenom",
+            $entrepriseId
+        );
+
+        if ($limit > 0) {
+            $sql .= $wpdb->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
         }
 
         return $wpdb->get_results($sql, ARRAY_A) ?: [];

@@ -90,13 +90,16 @@ if (is_array($apprenant)) {
     <?php if (isset($_GET['gw_error']) && (string) $_GET['gw_error'] === 'validation') : ?>
         <div class="notice notice-error gw-notice-spacing">
             <p>
-                <?php
-                if (isset($_GET['gw_error_msg']) && $_GET['gw_error_msg'] !== '') {
-                    echo esc_html((string) $_GET['gw_error_msg']);
-                } else {
-                    esc_html_e('Merci de vérifier les champs du formulaire.', 'gestiwork');
-                }
-                ?>
+                <span class="dashicons dashicons-warning" aria-hidden="true"></span>
+                <strong>
+                    <?php
+                    if (isset($_GET['gw_error_msg']) && $_GET['gw_error_msg'] !== '') {
+                        echo esc_html((string) $_GET['gw_error_msg']);
+                    } else {
+                        esc_html_e('Merci de vérifier les champs du formulaire.', 'gestiwork');
+                    }
+                    ?>
+                </strong>
             </p>
         </div>
     <?php elseif (isset($_GET['gw_error']) && $_GET['gw_error'] !== '') : ?>
@@ -176,7 +179,7 @@ if (is_array($apprenant)) {
 
                             <div class="gw-grid-2">
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_civilite"><?php esc_html_e('Civilité', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_civilite"><?php esc_html_e('Civilité', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <select id="gw_apprenant_civilite" name="civilite" class="gw-modal-input"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?>>
                                         <?php $civilite = isset($apprenant['civilite']) ? (string) $apprenant['civilite'] : ''; ?>
                                         <option value=""<?php echo $civilite === '' ? ' selected' : ''; ?>><?php esc_html_e('Non renseigné', 'gestiwork'); ?></option>
@@ -186,32 +189,32 @@ if (is_array($apprenant)) {
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="text" id="gw_apprenant_prenom" name="prenom" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['prenom'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_nom"><?php esc_html_e('Nom', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_nom"><?php esc_html_e('Nom', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="text" id="gw_apprenant_nom" name="nom" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['nom'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_nom_naissance"><?php esc_html_e('Nom de naissance', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_nom_naissance"><?php esc_html_e('Nom de naissance', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="text" id="gw_apprenant_nom_naissance" name="nom_naissance" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['nom_naissance'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_date_naissance"><?php esc_html_e('Date de naissance', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_date_naissance"><?php esc_html_e('Date de naissance', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="date" id="gw_apprenant_date_naissance" name="date_naissance" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['date_naissance'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_telephone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_telephone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="tel" id="gw_apprenant_telephone" name="telephone" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['telephone'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_email"><?php esc_html_e('Adresse e-mail', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_email"><?php esc_html_e('Adresse e-mail', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="email" id="gw_apprenant_email" name="email" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['email'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
@@ -243,7 +246,7 @@ if (is_array($apprenant)) {
                                 </div>
 
                                 <div class="gw-full-width">
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_adresse1"><?php esc_html_e('Adresse (ligne 1)', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_adresse1"><?php esc_html_e('Adresse (ligne 1)', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="text" id="gw_apprenant_adresse1" name="adresse1" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['adresse1'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
@@ -253,12 +256,12 @@ if (is_array($apprenant)) {
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_cp"><?php esc_html_e('Code postal', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_cp"><?php esc_html_e('Code postal', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="text" id="gw_apprenant_cp" name="cp" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['cp'] ?? '')); ?>" maxlength="5" pattern="[0-9]{5}" inputmode="numeric"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_apprenant_ville"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
+                                    <label class="gw-settings-placeholder" for="gw_apprenant_ville"><?php esc_html_e('Ville', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
                                     <input type="text" id="gw_apprenant_ville" name="ville" class="gw-modal-input" value="<?php echo esc_attr((string) ($apprenant['ville'] ?? '')); ?>"<?php echo ($isCreate || $isEdit) ? '' : ' disabled'; ?> />
                                 </div>
 

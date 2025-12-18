@@ -94,6 +94,28 @@ class ResponsableFormateurProvider
         return $result ?: null;
     }
 
+    public static function getByEmail(string $email): ?array
+    {
+        global $wpdb;
+
+        $email = trim(strtolower($email));
+        if ($email === '' || !is_email($email)) {
+            return null;
+        }
+
+        $table = $wpdb->prefix . 'gw_responsables_formateurs';
+
+        $result = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} WHERE LOWER(email) = %s LIMIT 1",
+                $email
+            ),
+            ARRAY_A
+        );
+
+        return is_array($result) ? $result : null;
+    }
+
     /**
      * Met à jour un responsable/formateur.
      */

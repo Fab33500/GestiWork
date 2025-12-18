@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace GestiWork\UI\Controller;
 
 use GestiWork\Domain\Apprenant\ApprenantProvider;
+use GestiWork\Domain\Tiers\TierProvider;
 
 class ApprenantController
 {
@@ -89,15 +90,46 @@ class ApprenantController
             exit;
         }
 
+        $email = sanitize_email($_POST['email'] ?? '');
+        $existing = $email !== '' ? ApprenantProvider::getByEmail($email) : null;
+        if (is_array($existing)) {
+            $prenomExisting = isset($existing['prenom']) ? trim((string) $existing['prenom']) : '';
+            $nomExisting = isset($existing['nom']) ? trim((string) $existing['nom']) : '';
+            $labelExisting = trim($prenomExisting . ' ' . $nomExisting);
+            if ($labelExisting === '') {
+                $existingId = isset($existing['id']) ? (int) $existing['id'] : 0;
+                $labelExisting = $existingId > 0 ? (string) $existingId : __('un apprenant existant', 'gestiwork');
+            }
+
+            $redirectUrl = add_query_arg([
+                'gw_view' => 'apprenant',
+                'mode' => 'create',
+                'gw_error' => 'validation',
+                'gw_error_msg' => sprintf('Cet e-mail est déjà utilisé par %s. L\'apprenant n\'a pas été créé.', $labelExisting),
+            ], home_url('/gestiwork/'));
+
+            wp_safe_redirect($redirectUrl);
+            exit;
+        }
+
+        $tierParticulierId = null;
+        $tierParticulier = $email !== '' ? TierProvider::getClientParticulierByEmail($email) : null;
+        if (is_array($tierParticulier)) {
+            $tierId = (int) ($tierParticulier['id'] ?? 0);
+            if ($tierId > 0) {
+                $tierParticulierId = $tierId;
+            }
+        }
+
         $data = [
             'civilite' => sanitize_text_field($_POST['civilite'] ?? ''),
             'prenom' => sanitize_text_field($_POST['prenom'] ?? ''),
             'nom' => sanitize_text_field($_POST['nom'] ?? ''),
             'nom_naissance' => sanitize_text_field($_POST['nom_naissance'] ?? ''),
             'date_naissance' => sanitize_text_field($_POST['date_naissance'] ?? '') ?: null,
-            'email' => sanitize_email($_POST['email'] ?? ''),
+            'email' => $email,
             'telephone' => sanitize_text_field($_POST['telephone'] ?? ''),
-            'entreprise_id' => !empty($_POST['entreprise_id']) ? (int) $_POST['entreprise_id'] : null,
+            'entreprise_id' => $tierParticulierId !== null ? $tierParticulierId : (!empty($_POST['entreprise_id']) ? (int) $_POST['entreprise_id'] : null),
             'origine' => sanitize_text_field($_POST['origine'] ?? ''),
             'statut_bpf' => sanitize_text_field($_POST['statut_bpf'] ?? ''),
             'adresse1' => sanitize_text_field($_POST['adresse1'] ?? ''),

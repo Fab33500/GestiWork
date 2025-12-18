@@ -9,6 +9,8 @@ if (! current_user_can('manage_options')) {
     wp_die(esc_html__('Accès non autorisé.', 'gestiwork'), 403);
 }
 
+$notice = isset($_GET['gw_notice']) ? strtolower(trim((string) $_GET['gw_notice'])) : '';
+
 // Récupérer les filtres de recherche
 $searchFilters = [];
 if (!empty($_GET['gw_apprenants_query'])) {
@@ -64,12 +66,38 @@ $gw_search_fields = [
 ?>
 
 <section class="gw-section gw-section-dashboard">
+    <?php if ($notice === 'sync_particuliers_apprenants_done') : ?>
+        <div class="notice notice-success gw-notice-spacing">
+            <p>
+                <?php
+                $created = isset($_GET['gw_sync_created']) ? (int) $_GET['gw_sync_created'] : 0;
+                $linked = isset($_GET['gw_sync_linked']) ? (int) $_GET['gw_sync_linked'] : 0;
+                $skipped = isset($_GET['gw_sync_skipped']) ? (int) $_GET['gw_sync_skipped'] : 0;
+                $conflicts = isset($_GET['gw_sync_conflicts']) ? (int) $_GET['gw_sync_conflicts'] : 0;
+
+                echo esc_html(sprintf('Synchronisation terminée. Créés: %d, rattachés: %d, déjà OK: %d, conflits: %d.', $created, $linked, $skipped, $conflicts));
+                ?>
+            </p>
+        </div>
+    <?php elseif ($notice === 'sync_particuliers_apprenants_failed') : ?>
+        <div class="notice notice-error gw-notice-spacing">
+            <p><?php esc_html_e('Erreur lors de la synchronisation des clients particuliers.', 'gestiwork'); ?></p>
+        </div>
+    <?php endif; ?>
+
     <div class="gw-flex-header">
         <div>
             <h2 class="gw-section-title"><?php esc_html_e('Apprenants', 'gestiwork'); ?></h2>
             <p class="gw-section-description"><?php esc_html_e('Gérez vos apprenants : création, recherche et suivi.', 'gestiwork'); ?></p>
         </div>
         <div class="gw-flex-end">
+            <form method="post" action="" class="gw-form-inline">
+                <input type="hidden" name="gw_action" value="gw_sync_particuliers_apprenants" />
+                <?php wp_nonce_field('gw_sync_particuliers_apprenants', 'gw_nonce'); ?>
+                <button type="submit" class="gw-button gw-button--secondary" title="<?php echo esc_attr__('Synchroniser les clients particuliers', 'gestiwork'); ?>">
+                    <?php esc_html_e('Synchroniser clients particuliers', 'gestiwork'); ?>
+                </button>
+            </form>
             <a class="gw-button gw-button--secondary gw-button--cta" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Apprenant', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
                 <?php esc_html_e('Créer un nouvel apprenant', 'gestiwork'); ?>
             </a>

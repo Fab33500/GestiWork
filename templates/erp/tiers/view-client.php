@@ -20,6 +20,7 @@
 
 declare(strict_types=1);
 
+use GestiWork\Domain\Apprenant\ApprenantProvider;
 use GestiWork\Domain\Tiers\TierProvider;
 use GestiWork\Domain\Tiers\TierContactProvider;
 use GestiWork\Domain\Tiers\TierFinanceurProvider;
@@ -33,6 +34,26 @@ $mode = isset($_GET['mode']) ? (string) $_GET['mode'] : '';
 
 $isCreate = ($mode === 'create');
 $isEdit = ($mode === 'edit');
+
+$prefill = [];
+if ($isCreate) {
+    $prefill = [
+        'type' => isset($_GET['gw_prefill_type']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_type'])) : '',
+        'statut' => isset($_GET['gw_prefill_statut']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_statut'])) : '',
+        'raison_sociale' => isset($_GET['gw_prefill_raison_sociale']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_raison_sociale'])) : '',
+        'nom' => isset($_GET['gw_prefill_nom']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_nom'])) : '',
+        'prenom' => isset($_GET['gw_prefill_prenom']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_prenom'])) : '',
+        'siret' => isset($_GET['gw_prefill_siret']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_siret'])) : '',
+        'forme_juridique' => isset($_GET['gw_prefill_forme_juridique']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_forme_juridique'])) : '',
+        'email' => isset($_GET['gw_prefill_email']) ? sanitize_email(wp_unslash((string) $_GET['gw_prefill_email'])) : '',
+        'telephone' => isset($_GET['gw_prefill_telephone']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_telephone'])) : '',
+        'telephone_portable' => isset($_GET['gw_prefill_telephone_portable']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_telephone_portable'])) : '',
+        'adresse1' => isset($_GET['gw_prefill_adresse1']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_adresse1'])) : '',
+        'adresse2' => isset($_GET['gw_prefill_adresse2']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_adresse2'])) : '',
+        'cp' => isset($_GET['gw_prefill_cp']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_cp'])) : '',
+        'ville' => isset($_GET['gw_prefill_ville']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_ville'])) : '',
+    ];
+}
 
 $activeTab = isset($_GET['tab']) ? (string) $_GET['tab'] : '';
 $activeTab = strtolower(trim($activeTab));
@@ -90,6 +111,12 @@ $tierContacts = [];
 if (is_array($dbClientData) && $clientId > 0) {
     $tierContacts = TierContactProvider::listByTierId($clientId);
 }
+
+$clientApprenants = [];
+if (!$isCreate && $clientId > 0) {
+    $clientApprenants = ApprenantProvider::listByEntrepriseId($clientId);
+}
+$clientApprenantsCount = is_array($clientApprenants) ? count($clientApprenants) : 0;
 
 $entreprises = array_merge(
     TierProvider::listByType('entreprise', 2000),
@@ -165,6 +192,9 @@ $cancelEditUrl = add_query_arg([
             switch ($errorType) {
                 case 'nonce':
                     esc_html_e('Erreur de sécurité : veuillez recharger la page et réessayer.', 'gestiwork');
+                    break;
+                case 'apprenant_create_failed':
+                    esc_html_e('Erreur lors de la création automatique du stagiaire. Veuillez réessayer.', 'gestiwork');
                     break;
                 case 'validation':
                     if (isset($_GET['gw_error_msg']) && $_GET['gw_error_msg'] !== '') {
@@ -301,74 +331,76 @@ $cancelEditUrl = add_query_arg([
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_type"><?php esc_html_e('Catégorie', 'gestiwork'); ?></label>
                                     <select id="gw_tier_create_type" name="type" class="gw-modal-input">
-                                        <option value="entreprise"><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
-                                        <option value="client_particulier" selected><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
-                                        <option value="financeur"><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
-                                        <option value="of_donneur_ordre"><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
+                                        <?php $prefillType = isset($prefill['type']) && $prefill['type'] !== '' ? (string) $prefill['type'] : 'client_particulier'; ?>
+                                        <option value="entreprise"<?php echo $prefillType === 'entreprise' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
+                                        <option value="client_particulier"<?php echo $prefillType === 'client_particulier' ? ' selected' : ''; ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
+                                        <option value="financeur"<?php echo $prefillType === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
+                                        <option value="of_donneur_ordre"<?php echo $prefillType === 'of_donneur_ordre' ? ' selected' : ''; ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
                                     </select>
                                 </div>
 
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_statut"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
                                     <select id="gw_tier_create_statut" name="statut" class="gw-modal-input">
-                                        <option value="prospect"><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
-                                        <option value="client" selected><?php esc_html_e('Client', 'gestiwork'); ?></option>
+                                        <?php $prefillStatut = isset($prefill['statut']) && $prefill['statut'] !== '' ? (string) $prefill['statut'] : 'client'; ?>
+                                        <option value="prospect"<?php echo $prefillStatut === 'prospect' ? ' selected' : ''; ?>><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
+                                        <option value="client"<?php echo $prefillStatut === 'client' ? ' selected' : ''; ?>><?php esc_html_e('Client', 'gestiwork'); ?></option>
                                     </select>
                                 </div>
 
                                 <div id="gw_tier_create_field_raison_sociale" class="gw-full-width">
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_raison_sociale"><?php esc_html_e('Nom / Raison sociale', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_raison_sociale" name="raison_sociale" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_raison_sociale"><?php esc_html_e('Nom / Raison sociale', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_raison_sociale" name="raison_sociale" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['raison_sociale'] ?? '')); ?>" />
                                 </div>
 
                                 <div id="gw_tier_create_field_nom">
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_nom"><?php esc_html_e('Nom', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_nom" name="nom" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_nom"><?php esc_html_e('Nom', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_nom" name="nom" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['nom'] ?? '')); ?>" />
                                 </div>
 
                                 <div id="gw_tier_create_field_prenom">
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_prenom" name="prenom" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_prenom"><?php esc_html_e('Prénom', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_prenom" name="prenom" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['prenom'] ?? '')); ?>" />
                                 </div>
 
                                 <div id="gw_tier_create_field_siret" class="gw-full-width">
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_siret" name="siret" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_siret"><?php esc_html_e('SIRET / SIREN', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_siret" name="siret" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['siret'] ?? '')); ?>" />
                                 </div>
 
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_email"><?php esc_html_e('Adresse e-mail', 'gestiwork'); ?></label>
-                                    <input type="email" id="gw_tier_create_email" name="email" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_email"><?php esc_html_e('Adresse e-mail', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="email" id="gw_tier_create_email" name="email" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['email'] ?? '')); ?>" />
                                 </div>
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_phone" name="telephone" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone"><?php esc_html_e('Numéro de téléphone', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_phone" name="telephone" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['telephone'] ?? '')); ?>" />
                                 </div>
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone_mobile"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_phone_mobile" name="telephone_portable" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_phone_mobile"><?php esc_html_e('Téléphone portable', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_phone_mobile" name="telephone_portable" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['telephone_portable'] ?? '')); ?>" />
                                 </div>
 
                                 <div class="gw-full-width">
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_adresse1"><?php esc_html_e('Numéro de rue et rue', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_adresse1" name="adresse1" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_adresse1"><?php esc_html_e('Numéro de rue et rue', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_adresse1" name="adresse1" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['adresse1'] ?? '')); ?>" />
                                 </div>
                                 <div class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_adresse2"><?php esc_html_e('Complément d\'adresse', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_adresse2" name="adresse2" class="gw-modal-input" />
+                                    <input type="text" id="gw_tier_create_adresse2" name="adresse2" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['adresse2'] ?? '')); ?>" />
                                 </div>
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_cp"><?php esc_html_e('Code postal', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_cp" name="cp" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_cp"><?php esc_html_e('Code postal', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_cp" name="cp" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['cp'] ?? '')); ?>" />
                                 </div>
                                 <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_ville"><?php esc_html_e('Ville', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_ville" name="ville" class="gw-modal-input" />
+                                    <label class="gw-settings-placeholder" for="gw_tier_create_ville"><?php esc_html_e('Ville', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
+                                    <input type="text" id="gw_tier_create_ville" name="ville" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['ville'] ?? '')); ?>" />
                                 </div>
 
                                 <div id="gw_tier_create_field_forme_juridique">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_forme_juridique"><?php esc_html_e('Forme juridique', 'gestiwork'); ?></label>
-                                    <input type="text" id="gw_tier_create_forme_juridique" name="forme_juridique" class="gw-modal-input" />
+                                    <input type="text" id="gw_tier_create_forme_juridique" name="forme_juridique" class="gw-modal-input" value="<?php echo esc_attr((string) ($prefill['forme_juridique'] ?? '')); ?>" />
                                 </div>
 
                                 <div class="gw-full-width">
@@ -1053,20 +1085,43 @@ $cancelEditUrl = add_query_arg([
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>APP-004</td>
-                                <td>Patricia DUMONT</td>
-                                <td>dumont.patou@gmail.com</td>
-                                <td>06 45 02 65 00</td>
-                                <td style="text-align:right;"><a href="#" onclick="return false;">Actions</a></td>
-                            </tr>
-                            <tr>
-                                <td>APP-005</td>
-                                <td>Sylvain ELMAHRI</td>
-                                <td>sylvain.elmahri@toto.fr</td>
-                                <td>06 45 02 65 00</td>
-                                <td style="text-align:right;"><a href="#" onclick="return false;">Actions</a></td>
-                            </tr>
+                            <?php if ($clientApprenantsCount === 0) : ?>
+                                <tr>
+                                    <td colspan="5" style="color: var(--gw-color-muted); font-style: italic;">
+                                        <?php esc_html_e('Aucun apprenant enregistré', 'gestiwork'); ?>
+                                    </td>
+                                </tr>
+                            <?php else : ?>
+                                <?php foreach ($clientApprenants as $apprenantRow) : ?>
+                                    <?php
+                                    $apprenantIdRow = (int) ($apprenantRow['id'] ?? 0);
+                                    $apprenantLabelId = $apprenantIdRow > 0 ? ('APP-' . str_pad((string) $apprenantIdRow, 3, '0', STR_PAD_LEFT)) : '';
+                                    $apprenantNom = trim((string) ($apprenantRow['nom'] ?? ''));
+                                    $apprenantPrenom = trim((string) ($apprenantRow['prenom'] ?? ''));
+                                    $apprenantLabel = trim($apprenantPrenom . ' ' . $apprenantNom);
+                                    $apprenantEmail = (string) ($apprenantRow['email'] ?? '');
+                                    $apprenantTelephone = (string) ($apprenantRow['telephone'] ?? '');
+
+                                    $apprenantViewUrl = add_query_arg([
+                                        'gw_view' => 'Apprenant',
+                                        'gw_apprenant_id' => $apprenantIdRow,
+                                    ], home_url('/gestiwork/'));
+                                    ?>
+                                    <tr>
+                                        <td><?php echo esc_html($apprenantLabelId); ?></td>
+                                        <td><?php echo esc_html($apprenantLabel); ?></td>
+                                        <td><?php echo esc_html($apprenantEmail); ?></td>
+                                        <td><?php echo esc_html($apprenantTelephone); ?></td>
+                                        <td style="text-align:right;">
+                                            <?php if ($apprenantIdRow > 0) : ?>
+                                                <a href="<?php echo esc_url($apprenantViewUrl); ?>"><?php esc_html_e('Voir', 'gestiwork'); ?></a>
+                                            <?php else : ?>
+                                                <a href="#" onclick="return false;">-</a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -1080,7 +1135,13 @@ $cancelEditUrl = add_query_arg([
                         <button type="button" class="gw-button gw-button--secondary" disabled>&raquo;</button>
                     </div>
                     <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end;">
-                        <span><?php esc_html_e('Montrer 1 à 2 de 2 lignes', 'gestiwork'); ?></span>
+                        <span>
+                            <?php
+                            $from = $clientApprenantsCount > 0 ? 1 : 0;
+                            $to = $clientApprenantsCount;
+                            echo esc_html(sprintf('Montrer %d à %d de %d lignes', $from, $to, $clientApprenantsCount));
+                            ?>
+                        </span>
                         <select class="gw-modal-input" style="width:auto;">
                             <option selected>15</option>
                             <option>30</option>
