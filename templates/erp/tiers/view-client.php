@@ -36,6 +36,9 @@ $isCreate = ($mode === 'create');
 $isEdit = ($mode === 'edit');
 
 $prefill = [];
+$isFinanceurMode = false;
+$isOpcoMode = false;
+$isFinanceurOrOpcoMode = false;
 if ($isCreate) {
     $prefill = [
         'type' => isset($_GET['gw_prefill_type']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_type'])) : '',
@@ -53,6 +56,18 @@ if ($isCreate) {
         'cp' => isset($_GET['gw_prefill_cp']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_cp'])) : '',
         'ville' => isset($_GET['gw_prefill_ville']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_prefill_ville'])) : '',
     ];
+
+    $isFinanceurMode = isset($_GET['gw_financeur_mode']) && (string) $_GET['gw_financeur_mode'] === '1';
+    if ($isFinanceurMode) {
+        $prefill['type'] = 'financeur';
+    }
+
+    $isOpcoMode = isset($_GET['gw_opco_mode']) && (string) $_GET['gw_opco_mode'] === '1';
+    if ($isOpcoMode) {
+        $prefill['type'] = 'opco';
+    }
+
+    $isFinanceurOrOpcoMode = $isFinanceurMode || $isOpcoMode;
 }
 
 $activeTab = isset($_GET['tab']) ? (string) $_GET['tab'] : '';
@@ -112,6 +127,8 @@ if (is_array($dbClientData) && $clientId > 0) {
     $tierContacts = TierContactProvider::listByTierId($clientId);
 }
 
+$isContactLockedTier = (($clientData['type'] ?? '') === 'client_particulier' || ($clientData['type'] ?? '') === 'entreprise_independant');
+
 $clientApprenants = [];
 if (!$isCreate && $clientId > 0) {
     $clientApprenants = ApprenantProvider::listByEntrepriseId($clientId);
@@ -121,16 +138,20 @@ $clientApprenantsCount = is_array($clientApprenants) ? count($clientApprenants) 
 $entreprises = array_merge(
     TierProvider::listByType('entreprise', 2000),
     TierProvider::listByType('client_entreprise', 2000),
-    TierProvider::listByType('entreprise_independant', 2000)
+    TierProvider::listByType('entreprise_independant', 2000),
+    TierProvider::listByType('of_donneur_ordre', 2000)
 );
-$financeurs = TierProvider::listByType('financeur', 2000);
+$financeurs = array_merge(
+    TierProvider::listByType('financeur', 2000),
+    TierProvider::listByType('opco', 2000)
+);
 
 $linkedEntreprises = [];
 $linkedFinanceurs = [];
 if (!$isCreate && $clientId > 0) {
-    if (($clientData['type'] ?? '') === 'financeur') {
+    if (($clientData['type'] ?? '') === 'financeur' || ($clientData['type'] ?? '') === 'opco') {
         $linkedEntreprises = TierFinanceurProvider::getEntreprisesByFinanceurId($clientId);
-    } elseif (($clientData['type'] ?? '') === 'entreprise' || ($clientData['type'] ?? '') === 'client_entreprise' || ($clientData['type'] ?? '') === 'entreprise_independant') {
+    } elseif (($clientData['type'] ?? '') === 'entreprise' || ($clientData['type'] ?? '') === 'client_entreprise' || ($clientData['type'] ?? '') === 'entreprise_independant' || ($clientData['type'] ?? '') === 'of_donneur_ordre') {
         $linkedFinanceurs = TierFinanceurProvider::getFinanceursByEntrepriseId($clientId);
     }
 }
@@ -181,9 +202,33 @@ $cancelEditUrl = add_query_arg([
         <div class="notice notice-success gw-notice-spacing">
             <p><?php esc_html_e('Contact modifié avec succès.', 'gestiwork'); ?></p>
         </div>
+    <?php elseif ($tierNotice === 'contact_participation_updated') : ?>
+        <div class="notice notice-success gw-notice-spacing">
+            <p>
+                <?php
+                $participates = isset($_GET['gw_participe_formation']) ? (int) $_GET['gw_participe_formation'] : 0;
+                echo $participates === 1
+                    ? esc_html__('Le contact est désormais marqué comme participant à une formation.', 'gestiwork')
+                    : esc_html__('Le contact est désormais marqué comme ne participant pas à une formation.', 'gestiwork');
+                ?>
+            </p>
+        </div>
     <?php elseif ($tierNotice === 'contact_deleted') : ?>
         <div class="notice notice-success gw-notice-spacing">
             <p><?php esc_html_e('Contact supprimé avec succès.', 'gestiwork'); ?></p>
+        </div>
+    <?php elseif ($tierNotice === 'apprenant_associated_deleted') : ?>
+        <div class="notice notice-success gw-notice-spacing">
+            <p>
+                <?php
+                $detached = isset($_GET['gw_detached_contacts']) ? (int) $_GET['gw_detached_contacts'] : 0;
+                if ($detached > 0) {
+                    echo esc_html(sprintf('Stagiaire associé supprimé. %d contact(s) ont été détaché(s).', $detached));
+                } else {
+                    esc_html_e('Stagiaire associé supprimé.', 'gestiwork');
+                }
+                ?>
+            </p>
         </div>
     <?php elseif (isset($_GET['gw_error']) && $_GET['gw_error'] !== '') : ?>
         <div class="notice notice-error gw-notice-spacing">
@@ -222,6 +267,9 @@ $cancelEditUrl = add_query_arg([
                 case 'contact_delete_failed':
                     esc_html_e('Erreur lors de la suppression du contact. Veuillez réessayer.', 'gestiwork');
                     break;
+                case 'apprenant_associated_delete_failed':
+                    esc_html_e('Erreur lors de la suppression du stagiaire associé. Veuillez réessayer.', 'gestiwork');
+                    break;
                 case 'tier_delete_failed':
                     esc_html_e('Erreur lors de la suppression du tiers. Veuillez réessayer.', 'gestiwork');
                     break;
@@ -237,7 +285,11 @@ $cancelEditUrl = add_query_arg([
     <div class="gw-flex-between">
         <div>
             <?php if ($isCreate) : ?>
-                <h2 class="gw-section-title"><?php esc_html_e('Création Tiers', 'gestiwork'); ?></h2>
+                <?php if ($isFinanceurOrOpcoMode) : ?>
+                    <h2 class="gw-section-title"><?php esc_html_e('Création OPCO/FINANCEUR', 'gestiwork'); ?></h2>
+                <?php else : ?>
+                    <h2 class="gw-section-title"><?php esc_html_e('Création Tiers', 'gestiwork'); ?></h2>
+                <?php endif; ?>
             <?php else : ?>
                 <h2 class="gw-section-title"><?php esc_html_e('Fiche client', 'gestiwork'); ?></h2>
                 <p class="gw-section-description">
@@ -331,24 +383,35 @@ $cancelEditUrl = add_query_arg([
                             <div class="gw-grid-2">
                                 <div>
                                     <label class="gw-settings-placeholder" for="gw_tier_create_type"><?php esc_html_e('Catégorie', 'gestiwork'); ?></label>
+                                    <?php $prefillType = isset($prefill['type']) && $prefill['type'] !== '' ? (string) $prefill['type'] : 'client_particulier'; ?>
                                     <select id="gw_tier_create_type" name="type" class="gw-modal-input">
-                                        <?php $prefillType = isset($prefill['type']) && $prefill['type'] !== '' ? (string) $prefill['type'] : 'client_particulier'; ?>
-                                        <option value="entreprise"<?php echo $prefillType === 'entreprise' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
-                                        <option value="entreprise_independant"<?php echo $prefillType === 'entreprise_independant' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise (sans salarié)', 'gestiwork'); ?></option>
-                                        <option value="client_particulier"<?php echo $prefillType === 'client_particulier' ? ' selected' : ''; ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
-                                        <option value="financeur"<?php echo $prefillType === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
-                                        <option value="of_donneur_ordre"<?php echo $prefillType === 'of_donneur_ordre' ? ' selected' : ''; ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
+                                        <?php if ($isFinanceurOrOpcoMode) : ?>
+                                            <option value="opco"<?php echo $prefillType === 'opco' ? ' selected' : ''; ?>><?php esc_html_e('OPCO', 'gestiwork'); ?></option>
+                                            <option value="financeur"<?php echo $prefillType === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur', 'gestiwork'); ?></option>
+                                        <?php else : ?>
+                                            <option value="entreprise"<?php echo $prefillType === 'entreprise' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
+                                            <option value="entreprise_independant"<?php echo $prefillType === 'entreprise_independant' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise (sans salarié)', 'gestiwork'); ?></option>
+                                            <option value="client_particulier"<?php echo $prefillType === 'client_particulier' ? ' selected' : ''; ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
+                                            <option value="of_donneur_ordre"<?php echo $prefillType === 'of_donneur_ordre' ? ' selected' : ''; ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
+                                        <?php endif; ?>
                                     </select>
+                                    <?php if ($isOpcoMode) : ?>
+                                        <input type="hidden" name="gw_opco_mode" value="1" />
+                                    <?php elseif ($isFinanceurMode) : ?>
+                                        <input type="hidden" name="gw_financeur_mode" value="1" />
+                                    <?php endif; ?>
                                 </div>
 
-                                <div>
-                                    <label class="gw-settings-placeholder" for="gw_tier_create_statut"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
-                                    <select id="gw_tier_create_statut" name="statut" class="gw-modal-input">
-                                        <?php $prefillStatut = isset($prefill['statut']) && $prefill['statut'] !== '' ? (string) $prefill['statut'] : 'client'; ?>
-                                        <option value="prospect"<?php echo $prefillStatut === 'prospect' ? ' selected' : ''; ?>><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
-                                        <option value="client"<?php echo $prefillStatut === 'client' ? ' selected' : ''; ?>><?php esc_html_e('Client', 'gestiwork'); ?></option>
-                                    </select>
-                                </div>
+                                <?php if (!$isFinanceurOrOpcoMode) : ?>
+                                    <div id="gw_tier_create_field_statut">
+                                        <label class="gw-settings-placeholder" for="gw_tier_create_statut"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
+                                        <select id="gw_tier_create_statut" name="statut" class="gw-modal-input">
+                                            <?php $prefillStatut = isset($prefill['statut']) && $prefill['statut'] !== '' ? (string) $prefill['statut'] : 'client'; ?>
+                                            <option value="prospect"<?php echo $prefillStatut === 'prospect' ? ' selected' : ''; ?>><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
+                                            <option value="client"<?php echo $prefillStatut === 'client' ? ' selected' : ''; ?>><?php esc_html_e('Client', 'gestiwork'); ?></option>
+                                        </select>
+                                    </div>
+                                <?php endif; ?>
 
                                 <div id="gw_tier_create_field_raison_sociale" class="gw-full-width">
                                     <label class="gw-settings-placeholder" for="gw_tier_create_raison_sociale"><?php esc_html_e('Nom / Raison sociale', 'gestiwork'); ?> <span class="gw-required-asterisk">*</span></label>
@@ -498,7 +561,7 @@ $cancelEditUrl = add_query_arg([
                         <div class="gw-card">
                             <div class="gw-flex-between-center">
                                 <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
-                                <?php if (! $isCreate && $clientId > 0) : ?>
+                                <?php if (! $isCreate && $clientId > 0 && ! $isContactLockedTier) : ?>
                                     <a href="#" data-gw-modal-target="gw-modal-client-contacts" class="gw-link-no-underline">
                                         <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                         <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
@@ -516,6 +579,7 @@ $cancelEditUrl = add_query_arg([
                                         $contactTel1 = isset($contact['tel1']) ? (string) $contact['tel1'] : '';
                                         $contactTel2 = isset($contact['tel2']) ? (string) $contact['tel2'] : '';
                                         $contactIdRow = isset($contact['id']) ? (int) $contact['id'] : 0;
+                                        $contactParticipates = (int) ($contact['participe_formation'] ?? 0);
                                         $phones = [];
                                         if (trim($contactTel1) !== '') {
                                             $phones[] = trim($contactTel1);
@@ -572,22 +636,51 @@ $cancelEditUrl = add_query_arg([
                                                                 <span class="dashicons dashicons-edit" aria-hidden="true" style="margin-right:6px;"></span>
                                                                 <?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?>
                                                             </button>
-                                                            <form method="post" action="" style="margin:0;">
-                                                                <input type="hidden" name="gw_action" value="gw_tier_contact_delete" />
-                                                                <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
-                                                                <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
-                                                                <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
-                                                                <button type="submit" role="menuitem" class="gw-link-button gw-contact-delete" style="width:100%; text-align:left; padding:8px 10px; border-radius:8px; color:#d63638;">
-                                                                    <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:6px;"></span>
-                                                                    <?php esc_html_e('Supprimer le contact', 'gestiwork'); ?>
-                                                                </button>
-                                                            </form>
+                                                            <?php if (! $isContactLockedTier) : ?>
+                                                                <form method="post" action="" style="margin:0;">
+                                                                    <?php
+                                                                    $hasLinkedApprenant = (int) ($contact['apprenant_id'] ?? 0) > 0;
+                                                                    $canDeleteAssociatedApprenant = $hasLinkedApprenant;
+                                                                    ?>
+                                                                    <input type="hidden" name="gw_action" value="<?php echo $canDeleteAssociatedApprenant ? 'gw_tier_contact_delete_apprenant' : 'gw_tier_contact_delete'; ?>" />
+                                                                    <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                                                                    <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
+                                                                    <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+                                                                    <button type="submit" role="menuitem" class="gw-link-button gw-contact-delete" style="width:100%; text-align:left; padding:8px 10px; border-radius:8px; color:#d63638;">
+                                                                        <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:6px;"></span>
+                                                                        <?php echo $canDeleteAssociatedApprenant ? esc_html__('Supprimer le stagiaire associé', 'gestiwork') : esc_html__('Supprimer le contact', 'gestiwork'); ?>
+                                                                    </button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div style="margin-top: 8px; display:grid; gap:6px; color: var(--gw-color-text);">
+                                            <div class="gw-contact-info-grid">
+                                                <div class="gw-contact-participation-row">
+                                                    <div class="gw-contact-participation-info">
+                                                        <span class="dashicons dashicons-welcome-learn-more" aria-hidden="true"></span>
+                                                        <span><?php esc_html_e('Participe à une formation :', 'gestiwork'); ?></span>
+                                                    </div>
+                                                    <form method="post" action="" class="gw-contact-participation-form">
+                                                        <input type="hidden" name="gw_action" value="gw_tier_contact_toggle_participation" />
+                                                        <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                                                        <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
+                                                        <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+                                                        <fieldset class="gw-contact-participation-options">
+                                                            <legend class="screen-reader-text"><?php esc_html_e('Ce contact participe-t-il à une formation ?', 'gestiwork'); ?></legend>
+                                                            <label class="gw-contact-participation-option">
+                                                                <input type="radio" name="participe_formation" value="0" <?php checked($contactParticipates !== 1); ?> />
+                                                                <span><?php esc_html_e('Non', 'gestiwork'); ?></span>
+                                                            </label>
+                                                            <label class="gw-contact-participation-option">
+                                                                <input type="radio" name="participe_formation" value="1" <?php checked($contactParticipates === 1); ?> />
+                                                                <span><?php esc_html_e('Oui', 'gestiwork'); ?></span>
+                                                            </label>
+                                                        </fieldset>
+                                                    </form>
+                                                </div>
                                                 <?php if ($contactTel !== '') : ?>
                                                     <?php if (trim($contactTel1) !== '' && trim($contactTel2) !== '') : ?>
                                                         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
@@ -650,12 +743,13 @@ $cancelEditUrl = add_query_arg([
                                         <option value="entreprise"<?php echo $clientData['type'] === 'entreprise' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise', 'gestiwork'); ?></option>
                                         <option value="entreprise_independant"<?php echo $clientData['type'] === 'entreprise_independant' ? ' selected' : ''; ?>><?php esc_html_e('Entreprise (sans salarié)', 'gestiwork'); ?></option>
                                         <option value="client_particulier"<?php echo $clientData['type'] === 'client_particulier' ? ' selected' : ''; ?>><?php esc_html_e('Particulier', 'gestiwork'); ?></option>
-                                        <option value="financeur"<?php echo $clientData['type'] === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur / OPCO', 'gestiwork'); ?></option>
+                                        <option value="financeur"<?php echo $clientData['type'] === 'financeur' ? ' selected' : ''; ?>><?php esc_html_e('Financeur', 'gestiwork'); ?></option>
+                                        <option value="opco"<?php echo $clientData['type'] === 'opco' ? ' selected' : ''; ?>><?php esc_html_e('OPCO', 'gestiwork'); ?></option>
                                         <option value="of_donneur_ordre"<?php echo $clientData['type'] === 'of_donneur_ordre' ? ' selected' : ''; ?>><?php esc_html_e('OF donneur d\'ordre', 'gestiwork'); ?></option>
                                     </select>
                                 </div>
 
-                                <div>
+                                <div id="gw_tier_view_field_statut">
                                     <label class="gw-settings-placeholder" for="gw_tier_view_statut"><?php esc_html_e('Statut', 'gestiwork'); ?></label>
                                     <select id="gw_tier_view_statut" name="statut" class="gw-modal-input"<?php echo $isEdit ? '' : ' disabled'; ?>>
                                         <option value="prospect"<?php echo $clientData['statut'] === 'prospect' ? ' selected' : ''; ?>><?php esc_html_e('Prospect', 'gestiwork'); ?></option>
@@ -861,7 +955,7 @@ $cancelEditUrl = add_query_arg([
                         <div class="gw-card">
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
                                 <h3 class="gw-section-subtitle gw-m-0"><?php esc_html_e('Contacts clients', 'gestiwork'); ?></h3>
-                                <?php if (! $isCreate && $clientId > 0) : ?>
+                                <?php if (! $isCreate && $clientId > 0 && ! $isContactLockedTier) : ?>
                                     <a href="#" data-gw-modal-target="gw-modal-client-contacts" class="gw-link-no-underline">
                                         <span class="dashicons dashicons-plus" aria-hidden="true"></span>
                                         <?php esc_html_e('Associer des contacts clients', 'gestiwork'); ?>
@@ -879,6 +973,7 @@ $cancelEditUrl = add_query_arg([
                                         $contactTel1 = isset($contact['tel1']) ? (string) $contact['tel1'] : '';
                                         $contactTel2 = isset($contact['tel2']) ? (string) $contact['tel2'] : '';
                                         $contactIdRow = isset($contact['id']) ? (int) $contact['id'] : 0;
+                                        $contactParticipates = (int) ($contact['participe_formation'] ?? 0);
                                         $phones = [];
                                         if (trim($contactTel1) !== '') {
                                             $phones[] = trim($contactTel1);
@@ -935,22 +1030,52 @@ $cancelEditUrl = add_query_arg([
                                                                 <span class="dashicons dashicons-edit" aria-hidden="true" style="margin-right:6px;"></span>
                                                                 <?php esc_html_e('Voir et modifier le contact', 'gestiwork'); ?>
                                                             </button>
-                                                            <form method="post" action="" style="margin:0;">
-                                                                <input type="hidden" name="gw_action" value="gw_tier_contact_delete" />
-                                                                <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
-                                                                <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
-                                                                <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
-                                                                <button type="submit" role="menuitem" class="gw-link-button gw-contact-delete" style="width:100%; text-align:left; padding:8px 10px; border-radius:8px; color:#d63638;">
-                                                                    <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:6px;"></span>
-                                                                    <?php esc_html_e('Supprimer le contact', 'gestiwork'); ?>
-                                                                </button>
-                                                            </form>
+                                                            <?php if (! $isContactLockedTier) : ?>
+                                                                <form method="post" action="" style="margin:0;">
+                                                                    <?php
+                                                                    $hasLinkedApprenant = (int) ($contact['apprenant_id'] ?? 0) > 0;
+                                                                    $canDeleteAssociatedApprenant = $hasLinkedApprenant;
+                                                                    ?>
+                                                                    <input type="hidden" name="gw_action" value="<?php echo $canDeleteAssociatedApprenant ? 'gw_tier_contact_delete_apprenant' : 'gw_tier_contact_delete'; ?>" />
+                                                                    <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                                                                    <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
+                                                                    <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+                                                                    <button type="submit" role="menuitem" class="gw-link-button gw-contact-delete" style="width:100%; text-align:left; padding:8px 10px; border-radius:8px; color:#d63638;">
+                                                                        <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-right:6px;"></span>
+                                                                        <?php echo $canDeleteAssociatedApprenant ? esc_html__('Supprimer le stagiaire associé', 'gestiwork') : esc_html__('Supprimer le contact', 'gestiwork'); ?>
+                                                                    </button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div style="margin-top: 8px; display:grid; gap:6px; color: var(--gw-color-text);">
+                                            <div class="gw-contact-info-grid">
+                                                <div class="gw-contact-participation-row">
+                                                    <div class="gw-contact-participation-info">
+                                                        <span class="dashicons dashicons-welcome-learn-more" aria-hidden="true"></span>
+                                                        <span><?php esc_html_e('Participe à une formation :', 'gestiwork'); ?></span>
+                                                    </div>
+                                                    <form method="post" action="" class="gw-contact-participation-form">
+                                                        <input type="hidden" name="gw_action" value="gw_tier_contact_toggle_participation" />
+                                                        <input type="hidden" name="tier_id" value="<?php echo (int) $clientId; ?>" />
+                                                        <input type="hidden" name="contact_id" value="<?php echo (int) $contactIdRow; ?>" />
+                                                        <?php wp_nonce_field('gw_tier_contact_manage', 'gw_nonce'); ?>
+                                                        <fieldset class="gw-contact-participation-options">
+                                                            <legend class="screen-reader-text"><?php esc_html_e('Ce contact participe-t-il à une formation ?', 'gestiwork'); ?></legend>
+                                                            <label class="gw-contact-participation-option">
+                                                                <input type="radio" name="participe_formation" value="0" <?php checked($contactParticipates !== 1); ?> />
+                                                                <span><?php esc_html_e('Non', 'gestiwork'); ?></span>
+                                                            </label>
+                                                            <label class="gw-contact-participation-option">
+                                                                <input type="radio" name="participe_formation" value="1" <?php checked($contactParticipates === 1); ?> />
+                                                                <span><?php esc_html_e('Oui', 'gestiwork'); ?></span>
+                                                            </label>
+                                                        </fieldset>
+                                                    </form>
+                                                </div>
+
                                                 <?php if ($contactTel !== '') : ?>
                                                     <?php if (trim($contactTel1) !== '' && trim($contactTel2) !== '') : ?>
                                                         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
@@ -1299,7 +1424,7 @@ $cancelEditUrl = add_query_arg([
                         <label><?php esc_html_e('Ce contact participe à une formation ?', 'gestiwork'); ?></label>
                         <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                             <label style="display:inline-flex; gap:6px; align-items:center;">
-                                <input type="radio" name="participe_formation" value="0" required />
+                                <input type="radio" name="participe_formation" value="0" required checked />
                                 <span><?php esc_html_e('Non', 'gestiwork'); ?></span>
                             </label>
                             <label style="display:inline-flex; gap:6px; align-items:center;">
@@ -1373,7 +1498,7 @@ $cancelEditUrl = add_query_arg([
                         <label><?php esc_html_e('Ce contact participe à une formation ?', 'gestiwork'); ?></label>
                         <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                             <label style="display:inline-flex; gap:6px; align-items:center;">
-                                <input type="radio" name="participe_formation" value="0" required />
+                                <input type="radio" name="participe_formation" value="0" required checked />
                                 <span><?php esc_html_e('Non', 'gestiwork'); ?></span>
                             </label>
                             <label style="display:inline-flex; gap:6px; align-items:center;">

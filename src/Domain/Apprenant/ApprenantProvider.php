@@ -165,7 +165,7 @@ class ApprenantProvider
             ['%d']
         );
 
-        return $result !== false;
+        return $result !== false && $result > 0;
     }
 
     /**

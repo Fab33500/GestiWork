@@ -79,6 +79,22 @@ $gw_search_fields = [
                 ?>
             </p>
         </div>
+    <?php elseif ($notice === 'apprenant_deleted') : ?>
+        <div class="notice notice-success gw-notice-spacing">
+            <p>
+                <?php
+                $detached = isset($_GET['gw_detached_contacts']) ? (int) $_GET['gw_detached_contacts'] : 0;
+                if ($detached > 0) {
+                    echo esc_html(sprintf(
+                        'Apprenant supprimé. %d contact(s) ont été détaché(s). Si un contact participe à une formation, repassez-le à Oui pour recréer/rattacher un apprenant.',
+                        $detached
+                    ));
+                } else {
+                    esc_html_e('Apprenant supprimé.', 'gestiwork');
+                }
+                ?>
+            </p>
+        </div>
     <?php elseif ($notice === 'sync_particuliers_apprenants_failed') : ?>
         <div class="notice notice-error gw-notice-spacing">
             <p><?php esc_html_e('Erreur lors de la synchronisation des clients particuliers.', 'gestiwork'); ?></p>

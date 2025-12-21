@@ -211,6 +211,38 @@ class TierContactProvider
         return $ok !== false;
     }
 
+    public static function detachApprenant(int $apprenantId): int
+    {
+        global $wpdb;
+
+        if ($apprenantId <= 0) {
+            return 0;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return 0;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tier_contacts';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return 0;
+        }
+
+        $result = $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE {$tableName} SET apprenant_id = NULL, participe_formation = 0 WHERE apprenant_id = %d",
+                $apprenantId
+            )
+        );
+
+        return $result !== false ? (int) $result : 0;
+    }
+
     public static function delete(int $contactId): bool
     {
         global $wpdb;

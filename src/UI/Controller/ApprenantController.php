@@ -24,6 +24,7 @@ namespace GestiWork\UI\Controller;
 
 use GestiWork\Domain\Apprenant\ApprenantProvider;
 use GestiWork\Domain\Tiers\TierProvider;
+use GestiWork\Domain\Tiers\TierContactProvider;
 
 class ApprenantController
 {
@@ -303,11 +304,14 @@ class ApprenantController
             wp_die(__('ID de l\'apprenant manquant.', 'gestiwork'));
         }
 
+        $detachedContactsCount = TierContactProvider::detachApprenant($apprenantId);
+
         $success = ApprenantProvider::delete($apprenantId);
 
         if ($success) {
             $redirectUrl = add_query_arg([
-                'gw_deleted' => '1',
+                'gw_notice' => 'apprenant_deleted',
+                'gw_detached_contacts' => (string) $detachedContactsCount,
             ], home_url('/gestiwork/apprenants/'));
         } else {
             $redirectUrl = add_query_arg([

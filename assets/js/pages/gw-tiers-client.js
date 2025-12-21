@@ -178,8 +178,23 @@
                 var inputs = document.querySelectorAll('#gw-modal-client-contacts input[name="participe_formation"]');
                 if (inputs && inputs.length) {
                     inputs.forEach(function (input) {
-                        input.checked = false;
+                        input.checked = input.value === '0';
                     });
+                }
+            });
+        });
+    }
+
+    function initContactParticipationRadios() {
+        var inputs = document.querySelectorAll('.gw-contact-participation-form input[type="radio"]');
+        if (!inputs.length) {
+            return;
+        }
+
+        inputs.forEach(function (input) {
+            input.addEventListener('change', function () {
+                if (input.form) {
+                    input.form.submit();
                 }
             });
         });
@@ -191,5 +206,6 @@
         initConfirmations();
         initContactEditModalPrefill();
         initContactCreateModalReset();
+        initContactParticipationRadios();
     });
 })();

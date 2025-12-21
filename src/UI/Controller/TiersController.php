@@ -62,6 +62,10 @@ class TiersController
             self::handleTierContactUpdate();
         } elseif ($action === 'gw_tier_contact_delete') {
             self::handleTierContactDelete();
+        } elseif ($action === 'gw_tier_contact_delete_apprenant') {
+            self::handleTierContactDeleteApprenant();
+        } elseif ($action === 'gw_tier_contact_toggle_participation') {
+            self::handleTierContactToggleParticipation();
         }
     }
 
@@ -74,10 +78,36 @@ class TiersController
 
         $type = isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier';
 
+        $isFinanceurType = ($type === 'financeur' || $type === 'opco');
+        $formeJuridiqueInput = isset($_POST['forme_juridique']) ? sanitize_text_field((string) $_POST['forme_juridique']) : '';
+        if (
+            ($type === 'entreprise' || $type === 'client_entreprise')
+            && strcasecmp($formeJuridiqueInput, 'Entrepreneur individuel') === 0
+        ) {
+            $type = 'entreprise_independant';
+            $_POST['type'] = 'entreprise_independant';
+        }
+
         $validationError = self::validateTierPayload($type, $_POST);
         if ($validationError !== null) {
-            self::redirectWithError('validation', null, $validationError);
+            self::redirectCreateWithPrefill($validationError, $_POST);
             return;
+        }
+
+        $rawSiret = isset($_POST['siret']) ? trim((string) $_POST['siret']) : '';
+        if ($rawSiret !== '') {
+            $existingBySiret = TierProvider::getBySiret($rawSiret);
+            if (is_array($existingBySiret)) {
+                $label = trim((string) ($existingBySiret['raison_sociale'] ?? ''));
+                if ($label === '') {
+                    $label = trim((string) ($existingBySiret['prenom'] ?? '') . ' ' . (string) ($existingBySiret['nom'] ?? ''));
+                }
+                if ($label === '') {
+                    $label = (string) ((int) ($existingBySiret['id'] ?? 0));
+                }
+                self::redirectCreateWithPrefill(sprintf('Ce SIRET/SIREN est déjà utilisé par un tiers (%s).', $label), $_POST);
+                return;
+            }
         }
 
         $normalizedType = strtolower(trim($type));
@@ -129,9 +159,11 @@ class TiersController
             }
         }
 
+        $isFinanceurType = ($type === 'financeur' || $type === 'opco');
+
         $data = [
             'type' => $type,
-            'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
+            'statut' => $isFinanceurType ? 'client' : (isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client'),
             'raison_sociale' => isset($_POST['raison_sociale']) ? sanitize_text_field((string) $_POST['raison_sociale']) : '',
             'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
             'prenom' => isset($_POST['prenom']) ? sanitize_text_field((string) $_POST['prenom']) : '',
@@ -149,74 +181,7 @@ class TiersController
         $newId = TierProvider::create($data);
         if ($newId > 0) {
             if ($type === 'client_particulier' || $type === 'entreprise_independant') {
-                $apprenantEmail = (string) ($data['email'] ?? '');
-                $apprenant = $apprenantEmail !== '' ? ApprenantProvider::getByEmail($apprenantEmail) : null;
-                $apprenantId = 0;
-                $apprenantCreated = false;
-
-                if (is_array($apprenant)) {
-                    $apprenantId = (int) ($apprenant['id'] ?? 0);
-                    if ($apprenantId > 0) {
-                        $updates = [];
-
-                        $currentEntrepriseId = isset($apprenant['entreprise_id']) ? (int) $apprenant['entreprise_id'] : 0;
-                        if ($currentEntrepriseId !== $newId) {
-                            $updates['entreprise_id'] = $newId;
-                        }
-
-                        $mapping = [
-                            'prenom' => (string) ($data['prenom'] ?? ''),
-                            'nom' => (string) ($data['nom'] ?? ''),
-                            'telephone' => (string) ($data['telephone'] ?: ($data['telephone_portable'] ?? '')),
-                            'adresse1' => (string) ($data['adresse1'] ?? ''),
-                            'adresse2' => (string) ($data['adresse2'] ?? ''),
-                            'cp' => (string) ($data['cp'] ?? ''),
-                            'ville' => (string) ($data['ville'] ?? ''),
-                            'statut_bpf' => 'stagiaire',
-                        ];
-
-                        foreach ($mapping as $field => $value) {
-                            if ($value === '') {
-                                continue;
-                            }
-                            $current = isset($apprenant[$field]) ? trim((string) $apprenant[$field]) : '';
-                            if ($current === '') {
-                                $updates[$field] = $value;
-                            }
-                        }
-
-                        if (!empty($updates)) {
-                            ApprenantProvider::update($apprenantId, $updates);
-                        }
-                    }
-                } else {
-                    $tel = (string) ($data['telephone'] ?: ($data['telephone_portable'] ?? ''));
-                    $apprenantId = ApprenantProvider::create([
-                        'civilite' => '',
-                        'prenom' => (string) ($data['prenom'] ?? ''),
-                        'nom' => (string) ($data['nom'] ?? ''),
-                        'nom_naissance' => '',
-                        'date_naissance' => null,
-                        'email' => (string) ($data['email'] ?? ''),
-                        'telephone' => $tel,
-                        'entreprise_id' => $newId,
-                        'statut_bpf' => 'stagiaire',
-                        'adresse1' => (string) ($data['adresse1'] ?? ''),
-                        'adresse2' => (string) ($data['adresse2'] ?? ''),
-                        'cp' => (string) ($data['cp'] ?? ''),
-                        'ville' => (string) ($data['ville'] ?? ''),
-                    ]);
-
-                    $apprenantCreated = $apprenantId > 0;
-
-                    if ($apprenantId <= 0) {
-                        TierProvider::delete($newId);
-                        self::redirectWithError('apprenant_create_failed', null, 'Erreur lors de la création automatique du stagiaire.');
-                        return;
-                    }
-                }
-
-                $fonctionContact = $type === 'entreprise_independant' ? 'Dirigeant' : 'Stagiaire';
+                $fonctionContact = $type === 'entreprise_independant' ? 'Dirigeant' : ($type === 'client_particulier' ? 'Particulier' : 'Stagiaire');
                 $contactId = TierContactProvider::create($newId, [
                     'civilite' => 'non_renseigne',
                     'fonction' => $fonctionContact,
@@ -225,24 +190,21 @@ class TiersController
                     'mail' => (string) ($data['email'] ?? ''),
                     'tel1' => (string) ($data['telephone'] ?? ''),
                     'tel2' => (string) ($data['telephone_portable'] ?? ''),
-                    'participe_formation' => 1,
-                    'apprenant_id' => $apprenantId > 0 ? $apprenantId : null,
+                    'participe_formation' => 0,
+                    'apprenant_id' => null,
                 ]);
 
                 if ($contactId <= 0) {
                     TierProvider::delete($newId);
-                    if ($apprenantCreated) {
-                        ApprenantProvider::delete($apprenantId);
-                    }
                     self::redirectWithError('contact_create_failed', null, 'Erreur lors de la création automatique du contact principal.');
                     return;
                 }
             }
 
-            if ($type === 'financeur') {
+            if ($isFinanceurType) {
                 $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
                 TierFinanceurProvider::setEntreprisesForFinanceur($newId, $entrepriseIds);
-            } elseif ($type === 'entreprise' || $type === 'client_entreprise' || $type === 'entreprise_independant') {
+            } elseif ($type === 'entreprise' || $type === 'client_entreprise' || $type === 'entreprise_independant' || $type === 'of_donneur_ordre') {
                 $financeurIds = isset($_POST['financeur_ids']) && is_array($_POST['financeur_ids']) ? array_map('intval', $_POST['financeur_ids']) : [];
                 TierFinanceurProvider::setFinanceursForEntreprise($newId, $financeurIds);
             }
@@ -375,6 +337,75 @@ class TiersController
         exit;
     }
 
+    private static function handleTierContactToggleParticipation(): void
+    {
+        if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_tier_contact_manage')) {
+            self::redirectWithError('nonce');
+            return;
+        }
+
+        $tierId = isset($_POST['tier_id']) ? (int) $_POST['tier_id'] : 0;
+        if ($tierId <= 0) {
+            self::redirectWithError('invalid_id');
+            return;
+        }
+
+        $contactId = isset($_POST['contact_id']) ? (int) $_POST['contact_id'] : 0;
+        if ($contactId <= 0) {
+            self::redirectWithError('invalid_id', $tierId);
+            return;
+        }
+
+        $existing = TierContactProvider::getById($contactId);
+        if (!is_array($existing) || (int) ($existing['tier_id'] ?? 0) !== $tierId) {
+            self::redirectWithError('invalid_id', $tierId);
+            return;
+        }
+
+        $requested = isset($_POST['participe_formation']) ? (int) $_POST['participe_formation'] : -1;
+        if ($requested !== 0 && $requested !== 1) {
+            self::redirectWithError('validation', $tierId, 'Valeur invalide.');
+            return;
+        }
+
+        $update = [
+            'civilite' => (string) ($existing['civilite'] ?? 'non_renseigne'),
+            'fonction' => (string) ($existing['fonction'] ?? ''),
+            'nom' => (string) ($existing['nom'] ?? ''),
+            'prenom' => (string) ($existing['prenom'] ?? ''),
+            'mail' => (string) ($existing['mail'] ?? ''),
+            'tel1' => (string) ($existing['tel1'] ?? ''),
+            'tel2' => (string) ($existing['tel2'] ?? ''),
+            'participe_formation' => $requested,
+        ];
+
+        if ($requested === 1) {
+            [$apprenantId, $apprenantError] = self::resolveApprenantForTierContact($tierId, $update);
+            if ($apprenantError !== null) {
+                self::redirectWithError('validation', $tierId, $apprenantError);
+                return;
+            }
+            $update['apprenant_id'] = $apprenantId > 0 ? $apprenantId : null;
+        } else {
+            $update['apprenant_id'] = null;
+        }
+
+        $ok = TierContactProvider::update($contactId, $update);
+        if (!$ok) {
+            self::redirectWithError('contact_update_failed', $tierId);
+            return;
+        }
+
+        $redirectUrl = add_query_arg([
+            'gw_view' => 'Client',
+            'gw_tier_id' => $tierId,
+            'gw_notice' => 'contact_participation_updated',
+            'gw_participe_formation' => (string) $requested,
+        ], home_url('/gestiwork/'));
+        wp_safe_redirect($redirectUrl);
+        exit;
+    }
+
     private static function handleTierUpdate(): void
     {
         if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_tier_update')) {
@@ -390,6 +421,8 @@ class TiersController
 
         $type = isset($_POST['type']) ? sanitize_text_field((string) $_POST['type']) : 'client_particulier';
 
+        $isFinanceurType = ($type === 'financeur' || $type === 'opco');
+
         $validationError = self::validateTierPayload($type, $_POST);
         if ($validationError !== null) {
             self::redirectWithError('validation', $tierId, $validationError);
@@ -398,7 +431,7 @@ class TiersController
 
         $data = [
             'type' => $type,
-            'statut' => isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client',
+            'statut' => $isFinanceurType ? 'client' : (isset($_POST['statut']) ? sanitize_text_field((string) $_POST['statut']) : 'client'),
             'raison_sociale' => isset($_POST['raison_sociale']) ? sanitize_text_field((string) $_POST['raison_sociale']) : '',
             'nom' => isset($_POST['nom']) ? sanitize_text_field((string) $_POST['nom']) : '',
             'prenom' => isset($_POST['prenom']) ? sanitize_text_field((string) $_POST['prenom']) : '',
@@ -417,10 +450,10 @@ class TiersController
         if ($ok) {
             TierFinanceurProvider::deleteLinksByTierId($tierId);
 
-            if ($type === 'financeur') {
+            if ($isFinanceurType) {
                 $entrepriseIds = isset($_POST['entreprise_ids']) && is_array($_POST['entreprise_ids']) ? array_map('intval', $_POST['entreprise_ids']) : [];
                 TierFinanceurProvider::setEntreprisesForFinanceur($tierId, $entrepriseIds);
-            } elseif ($type === 'entreprise' || $type === 'client_entreprise' || $type === 'entreprise_independant') {
+            } elseif ($type === 'entreprise' || $type === 'client_entreprise' || $type === 'entreprise_independant' || $type === 'of_donneur_ordre') {
                 $financeurIds = isset($_POST['financeur_ids']) && is_array($_POST['financeur_ids']) ? array_map('intval', $_POST['financeur_ids']) : [];
                 TierFinanceurProvider::setFinanceursForEntreprise($tierId, $financeurIds);
             }
@@ -456,6 +489,8 @@ class TiersController
             return;
         }
 
+        $apprenants = ApprenantProvider::listByEntrepriseId($tierId);
+
         $contactsDeletedOk = TierContactProvider::deleteByTierId($tierId);
         if (!$contactsDeletedOk) {
             self::redirectWithError('tier_delete_failed', $tierId);
@@ -463,6 +498,19 @@ class TiersController
         }
 
         TierFinanceurProvider::deleteLinksByTierId($tierId);
+
+        foreach ($apprenants as $apprenant) {
+            $apprenantId = isset($apprenant['id']) ? (int) $apprenant['id'] : 0;
+            if ($apprenantId <= 0) {
+                continue;
+            }
+
+            $deleted = ApprenantProvider::delete($apprenantId);
+            if (!$deleted) {
+                self::redirectWithError('tier_delete_failed', $tierId, 'Erreur lors de la suppression des apprenants liés.');
+                return;
+            }
+        }
 
         $tierDeletedOk = TierProvider::delete($tierId);
         if ($tierDeletedOk) {
@@ -485,6 +533,16 @@ class TiersController
         if ($tierId <= 0) {
             self::redirectWithError('invalid_id');
             return;
+        }
+
+        $tier = TierProvider::getById($tierId);
+        $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
+        if ($tierType === 'client_particulier' || $tierType === 'entreprise_independant') {
+            $existingContacts = TierContactProvider::listByTierId($tierId);
+            if (is_array($existingContacts) && count($existingContacts) > 0) {
+                self::redirectWithError('validation', $tierId, 'Impossible d\'ajouter un contact supplémentaire pour ce type de tiers.');
+                return;
+            }
         }
 
         $validationError = self::validateTierContactPayload($_POST, $tierId);
@@ -609,6 +667,13 @@ class TiersController
             return;
         }
 
+        $tier = TierProvider::getById($tierId);
+        $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
+        if ($tierType === 'client_particulier' || $tierType === 'entreprise_independant') {
+            self::redirectWithError('validation', $tierId, 'Impossible de supprimer le contact pour ce type de tiers.');
+            return;
+        }
+
         $contactId = isset($_POST['contact_id']) ? (int) $_POST['contact_id'] : 0;
         if ($contactId <= 0) {
             self::redirectWithError('invalid_id', $tierId);
@@ -633,6 +698,62 @@ class TiersController
         }
 
         self::redirectWithError('contact_delete_failed', $tierId);
+    }
+
+    private static function handleTierContactDeleteApprenant(): void
+    {
+        if (!isset($_POST['gw_nonce']) || !wp_verify_nonce((string) $_POST['gw_nonce'], 'gw_tier_contact_manage')) {
+            self::redirectWithError('nonce');
+            return;
+        }
+
+        $tierId = isset($_POST['tier_id']) ? (int) $_POST['tier_id'] : 0;
+        if ($tierId <= 0) {
+            self::redirectWithError('invalid_id');
+            return;
+        }
+
+        $contactId = isset($_POST['contact_id']) ? (int) $_POST['contact_id'] : 0;
+        if ($contactId <= 0) {
+            self::redirectWithError('invalid_id', $tierId);
+            return;
+        }
+
+        $existing = TierContactProvider::getById($contactId);
+        if (!is_array($existing) || (int) ($existing['tier_id'] ?? 0) !== $tierId) {
+            self::redirectWithError('invalid_id', $tierId);
+            return;
+        }
+
+        $apprenantId = (int) ($existing['apprenant_id'] ?? 0);
+        if ($apprenantId <= 0) {
+            self::redirectWithError('apprenant_associated_delete_failed', $tierId);
+            return;
+        }
+
+        $tier = TierProvider::getById($tierId);
+        $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
+        if ($tierType === 'client_particulier' || $tierType === 'entreprise_independant') {
+            self::redirectWithError('validation', $tierId, 'Impossible de supprimer un contact pour ce type de tiers.');
+            return;
+        }
+
+        $detachedContactsCount = TierContactProvider::detachApprenant($apprenantId);
+
+        $deleted = ApprenantProvider::delete($apprenantId);
+        if (!$deleted) {
+            self::redirectWithError('apprenant_associated_delete_failed', $tierId);
+            return;
+        }
+
+        $redirectUrl = add_query_arg([
+            'gw_view' => 'Client',
+            'gw_tier_id' => $tierId,
+            'gw_notice' => 'apprenant_associated_deleted',
+            'gw_detached_contacts' => (string) $detachedContactsCount,
+        ], home_url('/gestiwork/'));
+        wp_safe_redirect($redirectUrl);
+        exit;
     }
 
     private static function validatePhone(?string $value): bool
@@ -671,6 +792,7 @@ class TiersController
 
         $isParticulier = ($type === 'client_particulier');
         $isIndependant = ($type === 'entreprise_independant');
+        $isFinanceur = ($type === 'financeur' || $type === 'opco');
 
         $nom = isset($post['nom']) ? trim((string) $post['nom']) : '';
         $prenom = isset($post['prenom']) ? trim((string) $post['prenom']) : '';
@@ -695,8 +817,12 @@ class TiersController
             if ($nom === '' || $prenom === '') {
                 return 'Merci de renseigner le nom et le prénom.';
             }
+        } elseif ($isFinanceur) {
+            if ($raisonSociale === '') {
+                return 'Merci de renseigner la raison sociale.';
+            }
         } else {
-            if ($raisonSociale === '' || $siret === '') {
+            if ($raisonSociale === '' || (!$isFinanceur && $siret === '')) {
                 return 'Merci de renseigner la raison sociale et le SIRET/SIREN.';
             }
         }
@@ -721,7 +847,7 @@ class TiersController
             return 'Merci de renseigner un numéro de téléphone valide (10 chiffres).';
         }
 
-        if (!$isParticulier && !self::validateSiretOrSiren($siret)) {
+        if (!$isParticulier && !$isFinanceur && !self::validateSiretOrSiren($siret)) {
             return 'Merci de renseigner un SIRET/SIREN valide (9 ou 14 chiffres).';
         }
 
@@ -801,11 +927,25 @@ class TiersController
         if ($participeFormation === '0') {
             $existingApprenant = ApprenantProvider::getByEmail($mail);
             if (is_array($existingApprenant)) {
-                $label = trim((string) ($existingApprenant['prenom'] ?? '') . ' ' . (string) ($existingApprenant['nom'] ?? ''));
-                if ($label === '') {
-                    $label = (string) ((int) ($existingApprenant['id'] ?? 0));
+                $allowDetach = false;
+                if ($excludeContactId > 0) {
+                    $currentContact = TierContactProvider::getById($excludeContactId);
+                    if (is_array($currentContact)) {
+                        $contactApprenantId = (int) ($currentContact['apprenant_id'] ?? 0);
+                        $existingApprenantId = (int) ($existingApprenant['id'] ?? 0);
+                        if ($contactApprenantId > 0 && $contactApprenantId === $existingApprenantId) {
+                            $allowDetach = true;
+                        }
+                    }
                 }
-                return sprintf('Ce mail est déjà utilisé par un apprenant (%s).', $label);
+
+                if (!$allowDetach) {
+                    $label = trim((string) ($existingApprenant['prenom'] ?? '') . ' ' . (string) ($existingApprenant['nom'] ?? ''));
+                    if ($label === '') {
+                        $label = (string) ((int) ($existingApprenant['id'] ?? 0));
+                    }
+                    return sprintf('Ce mail est déjà utilisé par un apprenant (%s).', $label);
+                }
             }
         }
 
@@ -858,10 +998,10 @@ class TiersController
             'email' => $email,
             'telephone' => $telephone,
             'entreprise_id' => $tierId,
-            'adresse1' => is_array($tier) ? (string) ($tier['adresse1'] ?? '') : '',
-            'adresse2' => is_array($tier) ? (string) ($tier['adresse2'] ?? '') : '',
-            'cp' => is_array($tier) ? (string) ($tier['cp'] ?? '') : '',
-            'ville' => is_array($tier) ? (string) ($tier['ville'] ?? '') : '',
+            'adresse1' => $shouldCopyAddress && is_array($tier) ? (string) ($tier['adresse1'] ?? '') : '',
+            'adresse2' => $shouldCopyAddress && is_array($tier) ? (string) ($tier['adresse2'] ?? '') : '',
+            'cp' => $shouldCopyAddress && is_array($tier) ? (string) ($tier['cp'] ?? '') : '',
+            'ville' => $shouldCopyAddress && is_array($tier) ? (string) ($tier['ville'] ?? '') : '',
         ];
 
         $newApprenantId = ApprenantProvider::create($apprenantPayload);
@@ -901,6 +1041,13 @@ class TiersController
             'gw_error' => 'validation',
             'gw_error_msg' => $errorMessage,
         ];
+
+        if (isset($post['gw_opco_mode']) && (string) $post['gw_opco_mode'] === '1') {
+            $args['gw_opco_mode'] = '1';
+        }
+        if (isset($post['gw_financeur_mode']) && (string) $post['gw_financeur_mode'] === '1') {
+            $args['gw_financeur_mode'] = '1';
+        }
 
         $args['gw_prefill_type'] = isset($post['type']) ? sanitize_text_field((string) $post['type']) : 'client_particulier';
         $args['gw_prefill_statut'] = isset($post['statut']) ? sanitize_text_field((string) $post['statut']) : 'client';

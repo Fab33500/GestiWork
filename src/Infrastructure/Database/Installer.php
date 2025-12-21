@@ -233,6 +233,10 @@ KEY is_active (is_active)
 
         // Migrations pour ajouter les colonnes manquantes
         self::runMigrations($wpdb);
+
+        if (class_exists(\GestiWork\Infrastructure\Database\FinanceurSeeder::class)) {
+            \GestiWork\Infrastructure\Database\FinanceurSeeder::seed();
+        }
     }
 
     /**
