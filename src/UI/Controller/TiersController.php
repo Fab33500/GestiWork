@@ -362,6 +362,13 @@ class TiersController
             return;
         }
 
+        $tier = TierProvider::getById($tierId);
+        $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
+        if ($tierType === 'financeur' || $tierType === 'opco') {
+            self::redirectWithError('validation', $tierId, 'Impossible de lier un apprenant pour ce type de tiers.');
+            return;
+        }
+
         $requested = isset($_POST['participe_formation']) ? (int) $_POST['participe_formation'] : -1;
         if ($requested !== 0 && $requested !== 1) {
             self::redirectWithError('validation', $tierId, 'Valeur invalide.');
@@ -537,6 +544,7 @@ class TiersController
 
         $tier = TierProvider::getById($tierId);
         $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
+        $isOpcoFinanceurTier = ($tierType === 'opco' || $tierType === 'financeur');
         if ($tierType === 'client_particulier' || $tierType === 'entreprise_independant') {
             $existingContacts = TierContactProvider::listByTierId($tierId);
             if (is_array($existingContacts) && count($existingContacts) > 0) {
@@ -545,7 +553,7 @@ class TiersController
             }
         }
 
-        $validationError = self::validateTierContactPayload($_POST, $tierId);
+        $validationError = self::validateTierContactPayload($_POST, $tierId, 0, $tierType);
         if ($validationError !== null) {
             self::redirectWithError('validation', $tierId, $validationError);
             return;
@@ -559,10 +567,10 @@ class TiersController
             'mail' => isset($_POST['mail']) ? sanitize_email((string) $_POST['mail']) : '',
             'tel1' => isset($_POST['tel1']) ? sanitize_text_field((string) $_POST['tel1']) : '',
             'tel2' => isset($_POST['tel2']) ? sanitize_text_field((string) $_POST['tel2']) : '',
-            'participe_formation' => isset($_POST['participe_formation']) && (int) $_POST['participe_formation'] === 1 ? 1 : 0,
+            'participe_formation' => $isOpcoFinanceurTier ? 0 : (isset($_POST['participe_formation']) && (int) $_POST['participe_formation'] === 1 ? 1 : 0),
         ];
 
-        if (($data['participe_formation'] ?? 0) === 1) {
+        if (!$isOpcoFinanceurTier && ($data['participe_formation'] ?? 0) === 1) {
             [$apprenantId, $apprenantError] = self::resolveApprenantForTierContact($tierId, $data);
             if ($apprenantError !== null) {
                 self::redirectWithError('validation', $tierId, $apprenantError);
@@ -612,7 +620,11 @@ class TiersController
             return;
         }
 
-        $validationError = self::validateTierContactPayload($_POST, $tierId, $contactId);
+        $tier = TierProvider::getById($tierId);
+        $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
+        $isOpcoFinanceurTier = ($tierType === 'opco' || $tierType === 'financeur');
+
+        $validationError = self::validateTierContactPayload($_POST, $tierId, $contactId, $tierType);
         if ($validationError !== null) {
             self::redirectWithError('validation', $tierId, $validationError);
             return;
@@ -626,10 +638,10 @@ class TiersController
             'mail' => isset($_POST['mail']) ? sanitize_email((string) $_POST['mail']) : '',
             'tel1' => isset($_POST['tel1']) ? sanitize_text_field((string) $_POST['tel1']) : '',
             'tel2' => isset($_POST['tel2']) ? sanitize_text_field((string) $_POST['tel2']) : '',
-            'participe_formation' => isset($_POST['participe_formation']) && (int) $_POST['participe_formation'] === 1 ? 1 : 0,
+            'participe_formation' => $isOpcoFinanceurTier ? 0 : (isset($_POST['participe_formation']) && (int) $_POST['participe_formation'] === 1 ? 1 : 0),
         ];
 
-        if (($data['participe_formation'] ?? 0) === 1) {
+        if (!$isOpcoFinanceurTier && ($data['participe_formation'] ?? 0) === 1) {
             [$apprenantId, $apprenantError] = self::resolveApprenantForTierContact($tierId, $data);
             if ($apprenantError !== null) {
                 self::redirectWithError('validation', $tierId, $apprenantError);
@@ -733,7 +745,7 @@ class TiersController
 
         $tier = TierProvider::getById($tierId);
         $tierType = strtolower(trim((string) ($tier['type'] ?? '')));
-        if ($tierType === 'client_particulier' || $tierType === 'entreprise_independant') {
+        if ($tierType === 'client_particulier' || $tierType === 'entreprise_independant' || $tierType === 'financeur' || $tierType === 'opco') {
             self::redirectWithError('validation', $tierId, 'Impossible de supprimer un contact pour ce type de tiers.');
             return;
         }
@@ -854,7 +866,7 @@ class TiersController
         return null;
     }
 
-    private static function validateTierContactPayload(array $post, int $tierId = 0, int $excludeContactId = 0): ?string
+    private static function validateTierContactPayload(array $post, int $tierId = 0, int $excludeContactId = 0, string $tierType = ''): ?string
     {
         $civilite = isset($post['civilite']) ? trim((string) $post['civilite']) : 'non_renseigne';
         $fonction = isset($post['fonction']) ? trim((string) $post['fonction']) : '';
@@ -863,10 +875,16 @@ class TiersController
         $mail = isset($post['mail']) ? sanitize_email((string) $post['mail']) : '';
         $tel1 = isset($post['tel1']) ? trim((string) $post['tel1']) : '';
         $tel2 = isset($post['tel2']) ? trim((string) $post['tel2']) : '';
+        $tierType = strtolower(trim($tierType));
+        $isOpcoFinanceurTier = ($tierType === 'financeur' || $tierType === 'opco');
+
         $hasParticipeFormation = array_key_exists('participe_formation', $post);
         $participeFormation = $hasParticipeFormation ? trim((string) $post['participe_formation']) : '';
 
-        if (!$hasParticipeFormation || ($participeFormation !== '0' && $participeFormation !== '1')) {
+        if ($isOpcoFinanceurTier) {
+            $hasParticipeFormation = true;
+            $participeFormation = '0';
+        } elseif (!$hasParticipeFormation || ($participeFormation !== '0' && $participeFormation !== '1')) {
             return 'Merci de sélectionner si ce contact participe à une formation.';
         }
 
@@ -916,7 +934,7 @@ class TiersController
         }
 
         $existingResponsable = ResponsableFormateurProvider::getByEmail($mail);
-        if (is_array($existingResponsable)) {
+        if (!$isOpcoFinanceurTier && is_array($existingResponsable)) {
             $label = trim((string) ($existingResponsable['prenom'] ?? '') . ' ' . (string) ($existingResponsable['nom'] ?? ''));
             if ($label === '') {
                 $label = (string) ((int) ($existingResponsable['id'] ?? 0));
@@ -924,7 +942,7 @@ class TiersController
             return sprintf('Ce mail est déjà utilisé par un formateur / responsable pédagogique (%s).', $label);
         }
 
-        if ($participeFormation === '0') {
+        if (!$isOpcoFinanceurTier && $participeFormation === '0') {
             $existingApprenant = ApprenantProvider::getByEmail($mail);
             if (is_array($existingApprenant)) {
                 $allowDetach = false;
