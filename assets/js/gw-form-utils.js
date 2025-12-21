@@ -142,12 +142,13 @@
     function setTierRequiredByType(typeValue, fields) {
         var isParticulier = typeValue === 'client_particulier';
         var isIndependant = typeValue === 'entreprise_independant';
+        var isFinanceur = typeValue === 'financeur' || typeValue === 'opco';
 
         if (fields.raisonSocialeInput) {
             fields.raisonSocialeInput.required = !isParticulier;
         }
         if (fields.siretInput) {
-            fields.siretInput.required = !isParticulier;
+            fields.siretInput.required = !isParticulier && !isFinanceur;
         }
         if (fields.nomInput) {
             fields.nomInput.required = isParticulier || isIndependant;
@@ -179,6 +180,12 @@
     function bindTierClient() {
         var tierCreateType = document.getElementById('gw_tier_create_type');
         var tierViewType = document.getElementById('gw_tier_view_type');
+
+        var tierCreateStatut = document.getElementById('gw_tier_create_statut');
+        var tierViewStatut = document.getElementById('gw_tier_view_statut');
+
+        var tierCreateStatutField = document.getElementById('gw_tier_create_field_statut');
+        var tierViewStatutField = document.getElementById('gw_tier_view_field_statut');
 
         var createFinanceurEntreprisesCard = document.getElementById('gw_tier_create_financeur_entreprises_card');
         var createEntrepriseFinanceursCard = document.getElementById('gw_tier_create_entreprise_financeurs_card');
@@ -213,13 +220,24 @@
             var updateCreate = function () {
                 setTierRequiredByType(tierCreateType.value, createFields);
 
+                var isFinanceur = tierCreateType.value === 'financeur' || tierCreateType.value === 'opco';
+                if (tierCreateStatutField) {
+                    tierCreateStatutField.style.display = isFinanceur ? 'none' : '';
+                }
+                if (tierCreateStatut) {
+                    tierCreateStatut.disabled = isFinanceur;
+                    if (isFinanceur) {
+                        tierCreateStatut.value = 'client';
+                    }
+                }
+
                 if (createFinanceurEntreprisesCard) {
-                    createFinanceurEntreprisesCard.classList.toggle('gw-display-none', tierCreateType.value !== 'financeur');
+                    createFinanceurEntreprisesCard.classList.toggle('gw-display-none', !isFinanceur);
                 }
                 if (createEntrepriseFinanceursCard) {
                     createEntrepriseFinanceursCard.classList.toggle(
                         'gw-display-none',
-                        !(tierCreateType.value === 'entreprise' || tierCreateType.value === 'client_entreprise' || tierCreateType.value === 'entreprise_independant')
+                        !(tierCreateType.value === 'entreprise' || tierCreateType.value === 'client_entreprise' || tierCreateType.value === 'entreprise_independant' || tierCreateType.value === 'of_donneur_ordre')
                     );
                 }
             };
@@ -249,13 +267,24 @@
             var updateView = function () {
                 setTierRequiredByType(tierViewType.value, viewFields);
 
+                var isFinanceurView = tierViewType.value === 'financeur' || tierViewType.value === 'opco';
+                if (tierViewStatutField) {
+                    tierViewStatutField.style.display = isFinanceurView ? 'none' : '';
+                }
+                if (tierViewStatut) {
+                    tierViewStatut.disabled = (!tierViewType || tierViewType.disabled) || isFinanceurView;
+                    if (isFinanceurView) {
+                        tierViewStatut.value = 'client';
+                    }
+                }
+
                 if (viewFinanceurEntreprisesCard) {
-                    viewFinanceurEntreprisesCard.classList.toggle('gw-display-none', tierViewType.value !== 'financeur');
+                    viewFinanceurEntreprisesCard.classList.toggle('gw-display-none', !isFinanceurView);
                 }
                 if (viewEntrepriseFinanceursCard) {
                     viewEntrepriseFinanceursCard.classList.toggle(
                         'gw-display-none',
-                        !(tierViewType.value === 'entreprise' || tierViewType.value === 'client_entreprise' || tierViewType.value === 'entreprise_independant')
+                        !(tierViewType.value === 'entreprise' || tierViewType.value === 'client_entreprise' || tierViewType.value === 'entreprise_independant' || tierViewType.value === 'of_donneur_ordre')
                     );
                 }
             };

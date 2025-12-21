@@ -33,12 +33,25 @@ $requestStatut = isset($_GET['gw_tiers_statut']) ? sanitize_text_field(wp_unslas
 $requestVille = isset($_GET['gw_tiers_ville']) ? sanitize_text_field(wp_unslash((string) $_GET['gw_tiers_ville'])) : '';
 $requestPage = isset($_GET['gw_tiers_page']) ? (int) $_GET['gw_tiers_page'] : 1;
 
+$isOpcoView = isset($_GET['gw_opco']) && (string) $_GET['gw_opco'] === '1';
+
 $tiersFilters = [
     'query' => $requestQuery,
     'type' => $requestType,
     'statut' => $requestStatut,
     'ville' => $requestVille,
 ];
+
+if ($isOpcoView) {
+    if ($requestType === 'opco' || $requestType === 'financeur') {
+        $tiersFilters['type'] = $requestType;
+    } else {
+        $tiersFilters['type'] = '';
+        $tiersFilters['types'] = ['opco', 'financeur'];
+    }
+} else {
+    $tiersFilters['exclude_types'] = ['opco', 'financeur'];
+}
 
 $tiersSearchResult = TierProvider::search($tiersFilters, max(1, $requestPage), 15);
 $tiersItems = $tiersSearchResult['items'] ?? [];
@@ -49,32 +62,105 @@ $tiersPageSize = isset($tiersSearchResult['page_size']) ? (int) $tiersSearchResu
 $tiersTotalPages = $tiersPageSize > 0 ? (int) ceil($tiersTotal / $tiersPageSize) : 1;
 
 $currentResetUrl = home_url('/gestiwork/Tiers/');
+
+$tierTypeBadges = [
+    'client_particulier' => [
+        'label' => __('Particulier', 'gestiwork'),
+        'class' => 'gw-tier-badge--particulier',
+    ],
+    'entreprise' => [
+        'label' => __('Entreprise', 'gestiwork'),
+        'class' => 'gw-tier-badge--entreprise',
+    ],
+    'entreprise_independant' => [
+        'label' => __('Entreprise (sans salarié)', 'gestiwork'),
+        'class' => 'gw-tier-badge--entreprise-independant',
+    ],
+    'financeur' => [
+        'label' => __('Financeur', 'gestiwork'),
+        'class' => 'gw-tier-badge--financeur',
+    ],
+    'opco' => [
+        'label' => __('OPCO', 'gestiwork'),
+        'class' => 'gw-tier-badge--opco',
+    ],
+    'of_donneur_ordre' => [
+        'label' => __('OF donneur d\'ordre', 'gestiwork'),
+        'class' => 'gw-tier-badge--of',
+    ],
+];
 ?>
 
 <section class="gw-section gw-section-dashboard">
     <div class="gw-flex-header">
         <div>
-            <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises,  particuliers, financeurs, OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
+            <?php if ($isOpcoView) : ?>
+                <h2 class="gw-section-title"><?php esc_html_e('OPCO/Financeur', 'gestiwork'); ?></h2>
+            <?php else : ?>
+                <h2 class="gw-section-title"><?php esc_html_e('Tiers (Entreprises, particuliers,  OF donneurs d\'ordre)', 'gestiwork'); ?></h2>
+            <?php endif; ?>
             <p class="gw-section-description">
-                <?php esc_html_e(
-                    'Gérez vos tiers : entreprises clientes, financeurs, et organismes donneurs d\'ordre.',
-                    'gestiwork'
-                ); ?>
+                <?php if ($isOpcoView) : ?>
+                    <?php esc_html_e(
+                        'Consultez la liste des OPCO/Financeurs préconfigurés dans GestiWork.',
+                        'gestiwork'
+                    ); ?>
+                <?php else : ?>
+                    <?php esc_html_e(
+                        'Gérez vos tiers : entreprises clientes et organismes donneurs d\'ordre.',
+                        'gestiwork'
+                    ); ?>
+                <?php endif; ?>
             </p>
         </div>
         <div class="gw-flex-end">
-            <a class="gw-button gw-button--secondary gw-button--cta" href="<?php echo esc_url(add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'))); ?>">
-                <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
-            </a>
+            <?php if ($isOpcoView) : ?>
+                <a class="gw-button gw-button--secondary" href="<?php echo esc_url($currentResetUrl); ?>">
+                    <?php esc_html_e('Tiers', 'gestiwork'); ?>
+                </a>
+            <?php else : ?>
+                <a class="gw-button gw-button--secondary" href="<?php echo esc_url(add_query_arg(['gw_opco' => '1'], $currentResetUrl)); ?>">
+                    <?php esc_html_e('OPCO/Financeur', 'gestiwork'); ?>
+                </a>
+            <?php endif; ?>
+            <?php
+            if ($isOpcoView) {
+                $createUrl = add_query_arg([
+                    'gw_view' => 'Client',
+                    'mode' => 'create',
+                    'gw_prefill_type' => 'opco',
+                    'gw_opco_mode' => '1',
+                ], home_url('/gestiwork/'));
+                ?>
+                <a class="gw-button gw-button--secondary gw-button--cta" href="<?php echo esc_url($createUrl); ?>">
+                    <?php esc_html_e('Créer un nouvel OPCO/Financeur', 'gestiwork'); ?>
+                </a>
+                <?php
+            } else {
+                $createUrl = add_query_arg(['gw_view' => 'Client', 'mode' => 'create'], home_url('/gestiwork/'));
+                ?>
+                <a class="gw-button gw-button--secondary gw-button--cta" href="<?php echo esc_url($createUrl); ?>">
+                    <?php esc_html_e('Créer un nouveau tiers', 'gestiwork'); ?>
+                </a>
+                <?php
+            }
+            ?>
         </div>
     </div>
 
     <div class="gw-settings-group">
         <p class="gw-section-description">
-            <?php esc_html_e(
-                'Consultez la liste des tiers et affinez les résultats grâce à la recherche avancée.',
-                'gestiwork'
-            ); ?>
+            <?php if ($isOpcoView) : ?>
+                <?php esc_html_e(
+                    'Consultez la liste des OPCO/Financeurs et utilisez la recherche avancée si besoin.',
+                    'gestiwork'
+                ); ?>
+            <?php else : ?>
+                <?php esc_html_e(
+                    'Consultez la liste des tiers et affinez les résultats grâce à la recherche avancée.',
+                    'gestiwork'
+                ); ?>
+            <?php endif; ?>
         </p>
 
         <div class="gw-settings-grid">
@@ -82,7 +168,7 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                 <p class="gw-settings-label"><?php esc_html_e('Recherche avancée', 'gestiwork'); ?></p>
                 <?php
                 $gw_search_action_url = '';
-                $gw_search_reset_url = $currentResetUrl;
+                $gw_search_reset_url = $isOpcoView ? add_query_arg(['gw_opco' => '1'], $currentResetUrl) : $currentResetUrl;
                 $gw_search_submit_label = __('Rechercher', 'gestiwork');
                 $gw_search_fields = [
                     [
@@ -93,33 +179,50 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                         'value' => $requestQuery,
                         'placeholder' => __('Entreprise, Dupont...', 'gestiwork'),
                     ],
+                    $isOpcoView
+                        ? [
+                            'type' => 'hidden',
+                            'id' => 'gw_tiers_search_opco',
+                            'name' => 'gw_opco',
+                            'label' => '',
+                            'value' => '1',
+                            'placeholder' => '',
+                        ]
+                        : null,
                     [
                         'type' => 'select',
                         'id' => 'gw_tiers_search_type',
                         'name' => 'gw_tiers_type',
                         'label' => __('Type de tiers', 'gestiwork'),
                         'value' => $requestType,
-                        'options' => [
-                            '' => __('Tous', 'gestiwork'),
-                            'client_particulier' => __('Particulier', 'gestiwork'),
-                            'entreprise' => __('Entreprise', 'gestiwork'),
-                            'entreprise_independant' => __('Entreprise (sans salarié)', 'gestiwork'),
-                            'financeur' => __('Financeur / OPCO', 'gestiwork'),
-                            'of_donneur_ordre' => __('OF donneur d\'ordre', 'gestiwork'),
-                        ],
+                        'options' => $isOpcoView
+                            ? [
+                                '' => __('Tous', 'gestiwork'),
+                                'opco' => __('OPCO', 'gestiwork'),
+                                'financeur' => __('Financeur', 'gestiwork'),
+                            ]
+                            : [
+                                '' => __('Tous', 'gestiwork'),
+                                'client_particulier' => __('Particulier', 'gestiwork'),
+                                'entreprise' => __('Entreprise', 'gestiwork'),
+                                'entreprise_independant' => __('Entreprise (sans salarié)', 'gestiwork'),
+                                'of_donneur_ordre' => __('OF donneur d\'ordre', 'gestiwork'),
+                            ],
                     ],
-                    [
-                        'type' => 'select',
-                        'id' => 'gw_tiers_search_status',
-                        'name' => 'gw_tiers_statut',
-                        'label' => __('Statut', 'gestiwork'),
-                        'value' => $requestStatut,
-                        'options' => [
-                            '' => __('Tous', 'gestiwork'),
-                            'prospect' => __('Prospect', 'gestiwork'),
-                            'client' => __('Client', 'gestiwork'),
+                    $isOpcoView
+                        ? null
+                        : [
+                            'type' => 'select',
+                            'id' => 'gw_tiers_search_status',
+                            'name' => 'gw_tiers_statut',
+                            'label' => __('Statut', 'gestiwork'),
+                            'value' => $requestStatut,
+                            'options' => [
+                                '' => __('Tous', 'gestiwork'),
+                                'prospect' => __('Prospect', 'gestiwork'),
+                                'client' => __('Client', 'gestiwork'),
+                            ],
                         ],
-                    ],
                     [
                         'type' => 'text',
                         'id' => 'gw_tiers_search_city',
@@ -130,6 +233,8 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                     ],
                 ];
 
+                $gw_search_fields = array_values(array_filter($gw_search_fields));
+
                 $partial = GW_PLUGIN_DIR . 'templates/erp/partials/advanced-search.php';
                 if (is_readable($partial)) {
                     require $partial;
@@ -137,7 +242,7 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                 ?>
             </div>
             <div class="gw-settings-field gw-settings-field--full">
-                <p class="gw-settings-label"><?php esc_html_e('Liste des Tiers', 'gestiwork'); ?></p>
+                <p class="gw-settings-label"><?php echo esc_html($isOpcoView ? __('Liste des OPCO/Financeurs', 'gestiwork') : __('Liste des Tiers', 'gestiwork')); ?></p>
                 <?php if ($tiersTotalPages > 1) : ?>
                     <p class="gw-section-description gw-section-description--compact">
                         <?php echo esc_html(sprintf(__('Page %d sur %d — %d résultat(s).', 'gestiwork'), $tiersPage, $tiersTotalPages, $tiersTotal)); ?>
@@ -180,18 +285,12 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                                         $contactPrincipal = '-';
                                     }
 
-                                    $typeLabel = $tierType;
-                                    if ($tierType === 'client_particulier') {
-                                        $typeLabel = __('Particulier', 'gestiwork');
-                                    } elseif ($tierType === 'entreprise') {
-                                        $typeLabel = __('Entreprise', 'gestiwork');
-                                    } elseif ($tierType === 'entreprise_independant') {
-                                        $typeLabel = __('Entreprise (sans salarié)', 'gestiwork');
-                                    } elseif ($tierType === 'financeur') {
-                                        $typeLabel = __('Financeur', 'gestiwork');
-                                    } elseif ($tierType === 'of_donneur_ordre') {
-                                        $typeLabel = __('OF donneur d\'ordre', 'gestiwork');
-                                    }
+                                    $typeConfig = $tierTypeBadges[$tierType] ?? [
+                                        'label' => ucfirst(str_replace('_', ' ', $tierType)),
+                                        'class' => 'gw-tier-badge--default',
+                                    ];
+                                    $typeLabel = $typeConfig['label'];
+                                    $typeBadgeClass = $typeConfig['class'];
 
                                     $telephoneDisplay = $tierTel !== '' ? $tierTel : $tierTelMobile;
                                     if ($telephoneDisplay === '') {
@@ -204,7 +303,11 @@ $currentResetUrl = home_url('/gestiwork/Tiers/');
                                                 <?php echo esc_html($displayName !== '' ? $displayName : ('#' . $tierId)); ?>
                                             </a>
                                         </td>
-                                        <td><?php echo esc_html($typeLabel); ?></td>
+                                        <td>
+                                            <span class="gw-tier-badge <?php echo esc_attr($typeBadgeClass); ?>">
+                                                <?php echo esc_html($typeLabel); ?>
+                                            </span>
+                                        </td>
                                         <td><?php echo esc_html($contactPrincipal); ?></td>
                                         <td>
                                             <?php if ($tierEmail !== '') : ?>

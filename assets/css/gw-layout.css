@@ -258,6 +258,51 @@
     color: rgba(180, 83, 9, 1);
 }
 
+.gw-tier-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: var(--gw-font-weight-medium);
+    letter-spacing: 0.2px;
+}
+
+.gw-tier-badge--particulier {
+    background: rgba(251, 191, 36, 0.2);
+    color: #9a3412;
+}
+
+.gw-tier-badge--entreprise {
+    background: rgba(59, 130, 246, 0.18);
+    color: #1d4ed8;
+}
+
+.gw-tier-badge--entreprise-independant {
+    background: rgba(16, 185, 129, 0.2);
+    color: #047857;
+}
+
+.gw-tier-badge--financeur {
+    background: rgba(14, 165, 233, 0.2);
+    color: #0369a1;
+}
+
+ .gw-tier-badge--opco {
+     background: rgba(99, 102, 241, 0.18);
+     color: #3730a3;
+ }
+
+.gw-tier-badge--of {
+    background: rgba(236, 72, 153, 0.18);
+    color: #be185d;
+}
+
+.gw-tier-badge--default {
+    background: rgba(107, 114, 128, 0.18);
+    color: #374151;
+}
+
 /* === Settings: styles génériques (titres, listes, tabs) === */
 .gw-section-subtitle {
     margin: 18px 0 6px;
@@ -537,6 +582,58 @@
     margin-bottom: 8px;
     border-bottom: 1px solid var(--gw-color-border, #e0e0e0);
     padding-bottom: 8px;
+}
+
+.gw-contact-info-grid {
+    margin-top: 8px;
+    display: grid;
+    gap: 6px;
+    color: var(--gw-color-text);
+}
+
+/* === Contact participation toggle === */
+
+.gw-contact-participation-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.gw-contact-participation-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gw-color-muted);
+    font-size: 12px;
+}
+
+.gw-contact-participation-info .dashicons {
+    color: var(--gw-color-muted);
+}
+
+.gw-contact-participation-form {
+    margin: 0;
+}
+
+.gw-contact-participation-options {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gw-contact-participation-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--gw-color-text);
+}
+
+.gw-contact-participation-option input[type="radio"] {
+    margin: 0;
 }
 
 .gw-pdf-shortcodes-group:last-child {

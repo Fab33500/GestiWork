@@ -21,23 +21,27 @@ $gw_search_reset_label = isset($gw_search_reset_label) ? (string) $gw_search_res
         $placeholder = isset($field['placeholder']) ? (string) $field['placeholder'] : '';
         $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : [];
         ?>
-        <div>
-            <?php if ($label !== '' && $id !== '') : ?>
-                <label class="gw-settings-placeholder" for="<?php echo esc_attr($id); ?>"><?php echo esc_html($label); ?></label>
-            <?php endif; ?>
+        <?php if ($type === 'hidden') : ?>
+            <input type="hidden" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($value); ?>" />
+        <?php else : ?>
+            <div>
+                <?php if ($label !== '' && $id !== '') : ?>
+                    <label class="gw-settings-placeholder" for="<?php echo esc_attr($id); ?>"><?php echo esc_html($label); ?></label>
+                <?php endif; ?>
 
-            <?php if ($type === 'select') : ?>
-                <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="gw-modal-input">
-                    <?php foreach ($options as $optionValue => $optionLabel) : ?>
-                        <option value="<?php echo esc_attr((string) $optionValue); ?>" <?php selected($value, (string) $optionValue); ?>>
-                            <?php echo esc_html((string) $optionLabel); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            <?php else : ?>
-                <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="gw-modal-input" value="<?php echo esc_attr($value); ?>" placeholder="<?php echo esc_attr($placeholder); ?>" />
-            <?php endif; ?>
-        </div>
+                <?php if ($type === 'select') : ?>
+                    <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="gw-modal-input">
+                        <?php foreach ($options as $optionValue => $optionLabel) : ?>
+                            <option value="<?php echo esc_attr((string) $optionValue); ?>" <?php selected($value, (string) $optionValue); ?>>
+                                <?php echo esc_html((string) $optionLabel); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php else : ?>
+                    <input type="<?php echo esc_attr($type); ?>" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="gw-modal-input" value="<?php echo esc_attr($value); ?>" placeholder="<?php echo esc_attr($placeholder); ?>" />
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     <?php endforeach; ?>
 
     <div class="gw-advanced-search-actions">

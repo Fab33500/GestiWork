@@ -97,6 +97,42 @@ class TierProvider
         return is_array($row) ? $row : null;
     }
 
+    public static function getBySiret(string $siret): ?array
+    {
+        global $wpdb;
+
+        $siretDigits = preg_replace('/\D+/', '', $siret);
+        if (!is_string($siretDigits) || $siretDigits === '') {
+            return null;
+        }
+
+        if (!($wpdb instanceof wpdb)) {
+            return null;
+        }
+
+        $tableName = $wpdb->prefix . 'gw_tiers';
+
+        $tableExists = $wpdb->get_var(
+            $wpdb->prepare('SHOW TABLES LIKE %s', $tableName)
+        );
+
+        if ($tableExists !== $tableName) {
+            return null;
+        }
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$tableName}
+                WHERE REPLACE(REPLACE(REPLACE(REPLACE(siret, ' ', ''), '.', ''), '-', ''), '/', '') = %s
+                LIMIT 1",
+                $siretDigits
+            ),
+            ARRAY_A
+        );
+
+        return is_array($row) ? $row : null;
+    }
+
     public static function getClientParticulierByEmail(string $email): ?array
     {
         global $wpdb;
@@ -256,6 +292,28 @@ class TierProvider
         if ($type !== '') {
             $where[] = 'type = %s';
             $params[] = $type;
+        } else {
+            $types = isset($filters['types']) && is_array($filters['types'])
+                ? array_values(array_unique(array_filter(array_map('strval', $filters['types']))))
+                : [];
+            if (count($types) > 0) {
+                $placeholders = implode(',', array_fill(0, count($types), '%s'));
+                $where[] = "type IN ({$placeholders})";
+                foreach ($types as $t) {
+                    $params[] = $t;
+                }
+            }
+        }
+
+        $excludeTypes = isset($filters['exclude_types']) && is_array($filters['exclude_types'])
+            ? array_values(array_unique(array_filter(array_map('strval', $filters['exclude_types']))))
+            : [];
+        if (count($excludeTypes) > 0) {
+            $placeholders = implode(',', array_fill(0, count($excludeTypes), '%s'));
+            $where[] = "type NOT IN ({$placeholders})";
+            foreach ($excludeTypes as $t) {
+                $params[] = $t;
+            }
         }
 
         $statut = isset($filters['statut']) ? trim((string) $filters['statut']) : '';
@@ -268,6 +326,28 @@ class TierProvider
         if ($ville !== '') {
             $where[] = 'ville LIKE %s';
             $params[] = '%' . $wpdb->esc_like($ville) . '%';
+        }
+
+        $includeRaisonSociales = isset($filters['include_raison_sociales']) && is_array($filters['include_raison_sociales'])
+            ? array_values(array_filter(array_map('strval', $filters['include_raison_sociales'])))
+            : [];
+        if (count($includeRaisonSociales) > 0) {
+            $placeholders = implode(',', array_fill(0, count($includeRaisonSociales), '%s'));
+            $where[] = "raison_sociale IN ({$placeholders})";
+            foreach ($includeRaisonSociales as $value) {
+                $params[] = $value;
+            }
+        }
+
+        $excludeRaisonSociales = isset($filters['exclude_raison_sociales']) && is_array($filters['exclude_raison_sociales'])
+            ? array_values(array_filter(array_map('strval', $filters['exclude_raison_sociales'])))
+            : [];
+        if (count($excludeRaisonSociales) > 0) {
+            $placeholders = implode(',', array_fill(0, count($excludeRaisonSociales), '%s'));
+            $where[] = "raison_sociale NOT IN ({$placeholders})";
+            foreach ($excludeRaisonSociales as $value) {
+                $params[] = $value;
+            }
         }
 
         $whereSql = 'WHERE ' . implode(' AND ', $where);
@@ -402,6 +482,10 @@ class TierProvider
     {
         $type = isset($data['type']) ? (string) $data['type'] : 'entreprise';
         $statut = isset($data['statut']) ? (string) $data['statut'] : 'client';
+
+        if ($type === 'financeur' || $type === 'opco') {
+            $statut = 'client';
+        }
 
         $normalized = [
             'type' => $type,
