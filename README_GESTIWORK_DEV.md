@@ -18,6 +18,7 @@
 - **8. Modèle d’en-tête de licence pour les fichiers PHP**
 - **9. Stratégie Produit : Core vs Pro & Capabilities**
 - **10. État actuel (v0.5.0) – UI / Router / Aide / Paramètres / PDF**
+- **11. Sécurité & Autorisations (GwAuth)**
 
 # 0. Objectifs du document
 Ce fichier est la **référence unique** pour développer GestiWork.  
@@ -134,6 +135,7 @@ Contrairement aux plugins WordPress classiques, GestiWork fonctionne comme un **
 - Namespace racine : `GestiWork\`  
 - Préfixe CSS : `.gw-`  
 - Interface isolée via router interne `/gestiwork/`
+- Helper d’autorisations centralisé `GestiWork\Infrastructure\Security\GwAuth` (mode admin-only pour l’instant, base pour futur RBAC)
 
 ### Conventions de nommage
 
@@ -485,7 +487,7 @@ Fichiers principaux :
 - Un champ `custom_css` (type `LONGTEXT`) est disponible et éditable via **« Feuille de style personnalisée (CSS) »** :
   - stocké dans `gw_pdf_templates.custom_css` ;
   - injecté tel quel en fin de `<style>` dans `buildPdfHtml()` ;
-  - permet de gérer finement la mise en page (par ex. alignement du logo, entête 3 zones, etc.).
+  - permet de contrôler finement la mise en page (par ex. alignement du logo, entête 3 zones, etc.).
 
 ### 10.5.3 En-tête & pied de page (3.3) – Gabarits et shortcodes
 
@@ -544,3 +546,42 @@ Fichiers principaux :
 - [ ] Génération PDF finale des documents métier (propositions, conventions, convocations, attestations).
 
 Cette sous-section doit continuer à être complétée au fil des itérations (nouveaux types de documents PDF, options de layout, shortcodes supplémentaires, etc.) pour rester fidèle à l’état réel de la génération PDF et de l’UI associée.
+
+## 10.6 Tiers, contacts & OPCO/Financeurs
+
+### 10.6.1 Règles métier actées
+- Les tiers de type **`opco`** ou **`financeur`** peuvent avoir plusieurs contacts, mais **aucun de ces contacts ne doit être traité comme apprenant**.
+- Conséquence UI : sur ces fiches, on masque automatiquement :
+  - le toggle « Ce contact participe à une formation ? »
+  - le bouton « Supprimer le stagiaire associé » (seule la suppression simple du contact reste affichée).
+- Conséquence serveur :
+  - `TiersController::handleTierContactCreate()` et `handleTierContactUpdate()` forcent `participe_formation = 0` et `apprenant_id = null` pour ces types.
+  - `handleTierContactToggleParticipation()` et `handleTierContactDeleteApprenant()` refusent l’action avec un message explicite.
+
+### 10.6.2 Gestion des doublons e-mail
+- Objectif : autoriser qu’une même adresse existe côté **Apprenant** et côté **Responsable/Formateur** ou **Contact OPCO/Financeur** (unicité maintenue par table).
+- `validateTierContactPayload()` a été ajusté pour ne plus bloquer un contact OPCO/Financeur si l’email est déjà utilisé par un apprenant (et vice-versa).
+- Même logique pour la création Responsable/Formateur ↔ Apprenant (option B validée).
+
+### 10.6.3 Checklist
+- [x] UI contact OPCO/Financeur sans toggle participation ni bouton « stagiaire associé ».
+- [x] Blocage serveur des actions de participation/suppression apprenant pour ces types.
+- [x] Assouplissement validation email (contacts ↔ apprenants ↔ responsables/formateurs).
+- [ ] Politique de suppression apprenants conditionnée (ex : ne pas supprimer si apprenant a des sessions).
+- [ ] Règles RBAC sur les actions contacts (quand GwAuth passera en mode multi-rôles).
+
+---
+
+# 11. Sécurité & Autorisations (GwAuth)
+
+## 11.1 Helper centralisé
+- Nouvelle classe `GestiWork\Infrastructure\Security\GwAuth`.
+- Méthodes :
+  - `GwAuth::can($permission, array $context = [])` → retourne `true` uniquement si l’utilisateur est connecté **et** `current_user_can('manage_options')`.
+  - `GwAuth::enforce($permission, array $context = [], int $statusCode = 403)` → appelle `wp_die()` (403) si `can()` est `false`.
+- Aucun écran existant n’a encore été migré : **option A** adoptée (on utilise GwAuth d’abord dans les nouveaux modules, puis on envisagera une migration globale quand les rôles formateur/responsable seront prêts).
+
+## 11.2 Roadmap RBAC (à venir)
+- Étape suivante : exposer de vraies capabilities (ex. `gw_manage_sessions`, `gw_manage_tiers`, `gw_view_pedago`) et brancher les futurs rôles WordPress (`gw_formateur`, `gw_responsable_pedagogique`, `gw_responsable_formateur`).
+- Gestion du périmètre : `GwAuth::can('sessions.edit', ['session_id' => …])` décidera si un formateur peut modifier la session qui lui est affectée, tandis qu’un responsable ou un admin aura un accès élargi.
+- Tant que les modules Sessions / Extranet ne sont pas implémentés, GwAuth reste en mode **“admin only”**, mais l’intégration progressive évite de dupliquer des `current_user_can('manage_options')` partout.
