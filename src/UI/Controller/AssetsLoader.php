@@ -287,6 +287,38 @@ class AssetsLoader
                 'legalForms' => LegalFormCatalog::labels(),
             ]);
         }
+
+        if ($currentView === 'planing') {
+            wp_enqueue_style(
+                'gestiwork-planing-css',
+                GW_PLUGIN_URL . 'assets/css/gw-planing.css',
+                ['gestiwork-layout'],
+                GW_VERSION
+            );
+
+            wp_enqueue_style(
+                'gestiwork-fullcalendar',
+                'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css',
+                [],
+                '6.1.10'
+            );
+
+            wp_enqueue_script(
+                'gestiwork-fullcalendar',
+                'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js',
+                [],
+                '6.1.10',
+                true
+            );
+
+            wp_enqueue_script(
+                'gestiwork-planing',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-planing.js',
+                ['gestiwork-fullcalendar', 'gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+        }
     }
 
     private static function getCurrentView(): string
@@ -304,8 +336,20 @@ class AssetsLoader
             case 'client':
             case 'tiers':
             case 'aide':
+            case 'apprenants':
             case 'apprenant':
+            case 'equipe-pedagogique':
             case 'responsable':
+            case 'planing':
+            case 'sessions':
+            case 'catalogue':
+            case 'questionnaires':
+            case 'enquetes':
+            case 'rapports':
+            case 'bpf':
+            case 'veille':
+            case 'ged':
+            case 'systeme':
                 return $view;
             default:
                 return 'dashboard';

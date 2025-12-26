@@ -1,0 +1,309 @@
+
+
+.gw-planing-view-switch-buttons {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.gw-planing-month-picker {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.gw-planing-month-picker__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+}
+
+.gw-planing-month-picker__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gw-color-text, #0b1f2e);
+}
+
+.gw-planing-month-picker__select {
+    min-width: 140px;
+}
+
+.gw-planing-view-button {
+    border: 1px solid var(--gw-color-border, #d0d7df);
+    background: #fff;
+    color: var(--gw-color-text, #0b1f2e);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.gw-planing-view-button--active {
+    background: var(--gw-color-primary, #023047);
+    color: #fff;
+    border-color: var(--gw-color-primary, #023047);
+}
+
+.gw-planing-view-button:not(.gw-planing-view-button--active):hover {
+    background: var(--gw-color-accent, #fb8500);
+    color: #fff;
+    border-color: var(--gw-color-accent, #fb8500);
+}
+
+.gw-button-icon {
+    border: none;
+    background: transparent;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.gw-button-icon .dashicons {
+    font-size: 18px;
+    color: var(--gw-color-primary, #023047);
+}
+
+.gw-planing-year-view {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(180px, 1fr));
+    gap: 5px;
+    overflow-x: auto;
+}
+
+.gw-planing-year-column {
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gw-planing-year-column.is-current-month {
+    border: 3px solid var(--gw-color-primary, #023047);
+}
+
+.gw-planing-year-column__header, .fc-col-header  {
+    padding: 12px;
+    background: var(--gw-color-primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+}
+
+.fc .fc-col-header .fc-col-header-cell .fc-col-header-cell-cushion {
+    text-decoration: none !important;
+    color: #fff !important;
+}
+
+.gw-planing-year-days {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px 12px;
+    max-height: 540px;
+    overflow-y: auto;
+}
+
+.gw-planing-year-day {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding-inline: 6px;
+}
+
+.gw-planing-year-day:last-child {
+    border-bottom: none;
+}
+
+.gw-planing-year-day.is-weekend {
+    background: #8f8f8f;
+    color: #fff;
+}
+
+.gw-planing-year-day.is-weekend .gw-planing-year-day__label,
+.gw-planing-year-day.is-weekend .gw-planing-year-day__label strong {
+    color: #fff;
+}
+
+#gw_planing_semester_nav{
+    display: flex;
+        justify-content: space-between;
+}
+
+.gw-planing-nav-label{
+    font-weight: 600;
+}
+
+.gw-planing-week-nav{
+    display: flex;
+    justify-content: space-between;
+}
+
+.gw-planing-year-day__label {
+    font-size: 13px;
+    color: #1e293b;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.gw-planing-year-day__label strong {
+    font-size: 11px;
+    color: #475569;
+}
+
+.gw-planing-year-day__label.is-weekend {
+    background: #b41b1b;
+    color: #fff;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: 600;
+}
+
+.gw-planing-year-day__label.is-weekend strong {
+    color: #fff;
+}
+
+.gw-planing-year-day__label.is-holiday {
+    color: #c30000;
+    font-weight: 700;
+}
+
+.gw-planing-year-day__label.is-holiday strong {
+    color: #c30000;
+}
+
+.gw-planing-year-day__dots {
+    display: flex;
+    gap: 6px;
+    min-width: 48px;
+    justify-content: flex-end;
+}
+
+.gw-planing-year-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #cbd5f5;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.15);
+}
+
+.gw-planing-year-dot.is-inter { background: #34d399; }
+.gw-planing-year-dot.is-intra { background: #facc15; }
+.gw-planing-year-dot.is-dist { background: #a5b4fc; }
+.gw-planing-year-dot.is-cpf { background: #fda4af; }
+.gw-planing-year-dot.is-na { background: #cbd5f5; }
+
+@media (max-width: 1024px) {
+    #gw_planing_calendar .fc-col-header {
+        display: none !important;
+    }
+
+    #gw_planing_calendar .fc-daygrid-body,
+    #gw_planing_calendar .fc-daygrid-body > table,
+    #gw_planing_calendar .fc-daygrid-body > table > tbody,
+    #gw_planing_calendar .fc-daygrid-body > table > tbody > tr {
+        display: block !important;
+        width: 100%;
+        height: auto !important;
+    }
+
+    #gw_planing_calendar .fc-daygrid-body > table > tbody > tr > td {
+        width: 100% !important;
+        display: block !important;
+        margin-bottom: 12px;
+    }
+
+    #gw_planing_calendar .fc-daygrid-day {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 10px;
+        margin-bottom: 0;
+        overflow: hidden;
+    }
+
+    #gw_planing_calendar .fc-daygrid-day-frame {
+        min-height: 120px;
+    }
+
+    #gw_planing_calendar .gw-planing-mobile-day-header {
+        background: var(--gw-color-primary, #023047);
+        color: #fff;
+        padding: 8px 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+}
+
+.fc .fc-daygrid-day-number {
+    font-weight: 600;
+    color: #475467;
+}
+
+.fc .gw-planing-cell--weekend {
+    background: #8f8f8f;
+}
+
+.fc .gw-planing-cell--weekend .fc-daygrid-day-number {
+    color: #fff;
+    font-weight: 600;
+}
+
+.gw-planing-header--weekend {
+    background: var(--gw-color-primary, #023047);
+    color: #fff;
+    font-weight: 600;
+}
+
+.gw-planing-header--weekend .fc-col-header-cell-cushion {
+    color: #fff;
+}
+
+.fc .gw-planing-cell--holiday .fc-daygrid-day-number {
+    color: #c30000;
+    font-weight: 700;
+}
+
+.gw-planing-header--holiday {
+    color: #c30000;
+    font-weight: 700;
+}
+
+
+.fc .fc-daygrid-block-event .fc-event-main {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.gw-planing-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.gw-planing-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.gw-planing-badge--inter { background: #d1fae5; }
+.gw-planing-badge--intra { background: #fde68a; }
+.gw-planing-badge--dist { background: #e0e7ff; }
+.gw-planing-badge--cpf { background: #fcdada; }
+.gw-planing-badge--na { background: #e5e7eb; }
+
