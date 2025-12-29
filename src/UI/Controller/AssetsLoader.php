@@ -75,7 +75,7 @@ class AssetsLoader
         // Assets conditionnels selon la vue active
         $currentView = self::getCurrentView();
         
-        $viewsWithForms = ['settings', 'client', 'apprenant', 'responsable'];
+        $viewsWithForms = ['settings', 'client', 'apprenant', 'responsable', 'lieux'];
 
         // Assets spécifiques à la vue Aide
         if ($currentView === 'aide') {
@@ -223,6 +223,10 @@ class AssetsLoader
                     'cp' => '#gw_responsable_code_postal',
                     'ville' => '#gw_responsable_ville',
                 ],
+                'lieu_create' => [
+                    'cp' => '#gw_lieu_code_postal',
+                    'ville' => '#gw_lieu_ville',
+                ],
             ];
 
             wp_localize_script('gestiwork-geo-cp-ville', 'GWGeoCpVille', [
@@ -319,6 +323,16 @@ class AssetsLoader
                 true
             );
         }
+
+        if ($currentView === 'lieux') {
+            wp_enqueue_script(
+                'gestiwork-lieux',
+                GW_PLUGIN_URL . 'assets/js/pages/gw-lieux.js',
+                ['gestiwork-ui'],
+                GW_VERSION,
+                true
+            );
+        }
     }
 
     private static function getCurrentView(): string
@@ -350,6 +364,7 @@ class AssetsLoader
             case 'veille':
             case 'ged':
             case 'systeme':
+            case 'lieux':
                 return $view;
             default:
                 return 'dashboard';

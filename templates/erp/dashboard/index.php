@@ -56,6 +56,8 @@ if ($gw_view_normalized === 'aide') {
     $active_view = 'sessions';
 } elseif ($is_admin && $gw_view_normalized === 'planing') {
     $active_view = 'planing';
+} elseif ($is_admin && $gw_view_normalized === 'lieux') {
+    $active_view = 'lieux';
 } elseif ($is_admin && $gw_view_normalized === 'rapports') {
     $active_view = 'rapports';
 } elseif ($is_admin && $gw_view_normalized === 'bpf') {
@@ -79,6 +81,7 @@ $questionnaires_url = $is_admin ? home_url('/gestiwork/questionnaires/') : $dash
 $enquetes_url = $is_admin ? home_url('/gestiwork/enquetes/') : $dashboard_url;
 $sessions_url = $is_admin ? home_url('/gestiwork/sessions/') : $dashboard_url;
 $planing_url = $is_admin ? home_url('/gestiwork/planing/') : $dashboard_url;
+$lieux_url = $is_admin ? home_url('/gestiwork/lieux/') : $dashboard_url;
 $rapports_url = $is_admin ? home_url('/gestiwork/rapports/') : $dashboard_url;
 $bpf_url = $is_admin ? home_url('/gestiwork/bpf/') : $dashboard_url;
 $veille_url = $is_admin ? home_url('/gestiwork/veille/') : $dashboard_url;
@@ -87,12 +90,16 @@ $systeme_url = $is_admin ? home_url('/gestiwork/systeme/') : $dashboard_url;
 
 $nav_items = [
     [
-        'label' => __('Dashboard', 'gestiwork'),
+        'type'  => 'link',
+        'label' => '🏠 ' . __('Dashboard', 'gestiwork'),
         'url'   => $dashboard_url,
         'active'=> $active_view === 'dashboard',
     ],
+];
+
+$utilitaires_items = [
     [
-        'label' => __('Aide', 'gestiwork'),
+        'label' => '❓ ' . __('Aide', 'gestiwork'),
         'url'   => $help_url,
         'active'=> $active_view === 'aide',
     ],
@@ -100,89 +107,115 @@ $nav_items = [
 
 if ($is_admin) {
     $nav_items[] = [
-        'label' => __('Paramètres', 'gestiwork'),
+        'type'  => 'group',
+        'label' => __('Gestion des contacts', 'gestiwork'),
+        'items' => [
+            [
+                'label' => '👤 ' . __('Tiers', 'gestiwork'),
+                'url'   => $tiers_url,
+                'active'=> $active_view === 'tiers',
+            ],
+            [
+                'label' => '🧑‍🎓 ' . __('Stagiaires', 'gestiwork'),
+                'url'   => $apprenants_url,
+                'active'=> $active_view === 'apprenants',
+            ],
+            [
+                'label' => '🧑‍🏫 ' . __('Équipe pédagogique', 'gestiwork'),
+                'url'   => $equipe_pedagogique_url,
+                'active'=> $active_view === 'equipe_pedagogique',
+            ],
+        ],
+    ];
+
+    $nav_items[] = [
+        'type'  => 'group',
+        'label' => __('Gestion des sessions', 'gestiwork'),
+        'items' => [
+            [
+                'label' => '🎓 ' . __('Sessions', 'gestiwork'),
+                'url'   => $sessions_url,
+                'active'=> $active_view === 'sessions',
+            ],
+            [
+                'label' => '📅 ' . __('Planning', 'gestiwork'),
+                'url'   => $planing_url,
+                'active'=> $active_view === 'planing',
+            ],
+            [
+                'label' => '📍 ' . __('Lieux', 'gestiwork'),
+                'url'   => $lieux_url,
+                'active'=> $active_view === 'lieux',
+            ],
+        ],
+    ];
+
+    $nav_items[] = [
+        'type'  => 'group',
+        'label' => __('Parcours & programmes', 'gestiwork'),
+        'items' => [
+            [
+                'label' => '🗂️ ' . __('Catalogue Formations', 'gestiwork'),
+                'url'   => $catalogue_url,
+                'active'=> $active_view === 'catalogue',
+            ],
+        ],
+    ];
+
+    $nav_items[] = [
+        'type'  => 'group',
+        'label' => __('Suivi opérationnel', 'gestiwork'),
+        'items' => [
+            [
+                'label' => '📝 ' . __('Questionnaires', 'gestiwork'),
+                'url'   => $questionnaires_url,
+                'active'=> $active_view === 'questionnaires',
+            ],
+            [
+                'label' => '📣 ' . __('Enquêtes satisfactions', 'gestiwork'),
+                'url'   => $enquetes_url,
+                'active'=> $active_view === 'enquetes',
+            ],
+            [
+                'label' => '📈 ' . __('Rapports', 'gestiwork'),
+                'url'   => $rapports_url,
+                'active'=> $active_view === 'rapports',
+            ],
+            [
+                'label' => '🧾 ' . __('BPF', 'gestiwork'),
+                'url'   => $bpf_url,
+                'active'=> $active_view === 'bpf',
+            ],
+            [
+                'label' => '🔎 ' . __('Veille', 'gestiwork'),
+                'url'   => $veille_url,
+                'active'=> $active_view === 'veille',
+            ],
+        ],
+    ];
+
+    $utilitaires_items[] = [
+        'label' => '⚙️ ' . __('Paramètres', 'gestiwork'),
         'url'   => $settings_url,
         'active'=> $active_view === 'settings',
     ];
-
-    $nav_items[] = [
-        'label' => __('Tiers', 'gestiwork'),
-        'url'   => $tiers_url,
-        'active'=> $active_view === 'tiers',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Stagiaires', 'gestiwork'),
-        'url'   => $apprenants_url,
-        'active'=> $active_view === 'apprenants',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Équipe pédagogique', 'gestiwork'),
-        'url'   => $equipe_pedagogique_url,
-        'active'=> $active_view === 'equipe_pedagogique',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Catalogue Formations', 'gestiwork'),
-        'url'   => $catalogue_url,
-        'active'=> $active_view === 'catalogue',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Questionnaires', 'gestiwork'),
-        'url'   => $questionnaires_url,
-        'active'=> $active_view === 'questionnaires',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Enquêtes satisfactions', 'gestiwork'),
-        'url'   => $enquetes_url,
-        'active'=> $active_view === 'enquetes',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Sessions', 'gestiwork'),
-        'url'   => $sessions_url,
-        'active'=> $active_view === 'sessions',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Planing', 'gestiwork'),
-        'url'   => $planing_url,
-        'active'=> $active_view === 'planing',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Rapports', 'gestiwork'),
-        'url'   => $rapports_url,
-        'active'=> $active_view === 'rapports',
-    ];
-
-    $nav_items[] = [
-        'label' => __('BPF', 'gestiwork'),
-        'url'   => $bpf_url,
-        'active'=> $active_view === 'bpf',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Veille', 'gestiwork'),
-        'url'   => $veille_url,
-        'active'=> $active_view === 'veille',
-    ];
-
-    $nav_items[] = [
-        'label' => __('GED', 'gestiwork'),
-        'url'   => $ged_url,
-        'active'=> $active_view === 'ged',
-    ];
-
-    $nav_items[] = [
-        'label' => __('Système', 'gestiwork'),
+    $utilitaires_items[] = [
+        'label' => '🖥️ ' . __('Système', 'gestiwork'),
         'url'   => $systeme_url,
         'active'=> $active_view === 'systeme',
     ];
+    $utilitaires_items[] = [
+        'label' => '📁 ' . __('GED', 'gestiwork'),
+        'url'   => $ged_url,
+        'active'=> $active_view === 'ged',
+    ];
 }
+
+$nav_items[] = [
+    'type'  => 'group',
+    'label' => __('Utilitaires', 'gestiwork'),
+    'items' => $utilitaires_items,
+];
 
 $layout_mode = $is_admin ? 'gw-layout--with-nav' : 'gw-layout--full';
 
@@ -212,6 +245,8 @@ if ($active_view === 'settings' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/academic/view-sessions.php';
 } elseif ($active_view === 'planing' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/academic/view-planing.php';
+} elseif ($active_view === 'lieux' && $is_admin) {
+    $content_template = GW_PLUGIN_DIR . 'templates/erp/academic/view-lieux.php';
 } elseif ($active_view === 'rapports' && $is_admin) {
     $content_template = GW_PLUGIN_DIR . 'templates/erp/suivi-activite/view-rapports.php';
 } elseif ($active_view === 'bpf' && $is_admin) {

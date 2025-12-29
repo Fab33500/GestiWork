@@ -146,19 +146,54 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    display: grid;
-    gap: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gw-nav-item {
+    list-style: none;
+}
+
+.gw-nav-item--group {
+    padding: 4px 0 0;
+    border-top: 1px solid var(--gw-color-border);
+}
+
+.gw-nav-item--group:first-child {
+    border-top: none;
+}
+
+.gw-nav-group-label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gw-color-muted);
+    margin-bottom: 4px;
+    font-weight: var(--gw-font-weight-medium);
+}
+
+.gw-nav-sub-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .gw-nav-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     background-color: var(--gw-color-accent);
-    padding: 3px 12px;
-    border-radius: 5px;
+    padding: 4px 12px;
+    border-radius: 6px;
     text-decoration: none;
     color: var(--gw-color-surface);
     font-weight: var(--gw-font-weight-medium);
-    font-size: 0.8em;
+    font-size: 13px;
     transition: all 0.2s ease;
 }
 
@@ -231,6 +266,72 @@
     text-align: left;
     background: #f0f4fa;
     font-weight: var(--gw-font-weight-medium);
+}
+
+.gw-table--stackable td[data-label]::before {
+    content: attr(data-label);
+    font-weight: var(--gw-font-weight-medium);
+    color: var(--gw-color-muted);
+    display: none;
+    margin-right: 12px;
+}
+
+@media (max-width: 960px) {
+    .gw-flex-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .gw-search-form {
+        width: 100%;
+    }
+
+    .gw-search-form__fieldset {
+        width: 100%;
+    }
+
+    .gw-search-form__fieldset .gw-input {
+        width: 100%;
+    }
+
+    .gw-table--stackable thead {
+        display: none;
+    }
+
+    .gw-table--stackable tbody,
+    .gw-table--stackable tr,
+    .gw-table--stackable td {
+        display: block;
+        width: 100%;
+    }
+
+    .gw-table--stackable tr {
+        margin-bottom: 16px;
+        border: 1px solid var(--gw-color-border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .gw-table--stackable td {
+        border-bottom: 1px solid var(--gw-color-border);
+        padding: 10px 12px;
+        white-space: normal;
+    }
+
+    .gw-table--stackable td:last-child {
+        border-bottom: none;
+    }
+
+    .gw-table--stackable td[data-label]::before {
+        display: inline-block;
+    }
+
+    .gw-pagination {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
 }
 
 /* Pastilles (origines, compétences, rôles) */

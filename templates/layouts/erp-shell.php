@@ -75,12 +75,34 @@ declare(strict_types=1);
                 </div>
                 <ul class="gw-nav-list">
                     <?php foreach ($nav_items as $item) : ?>
-                        <li class="gw-nav-item">
-                            <a href="<?php echo esc_url($item['url']); ?>"
-                               class="gw-nav-link <?php echo ! empty($item['active']) ? 'gw-nav-link--active' : ''; ?>">
-                                <?php echo esc_html($item['label']); ?>
-                            </a>
-                        </li>
+                        <?php
+                        $itemType = isset($item['type']) ? (string) $item['type'] : 'link';
+                        if ($itemType === 'group') :
+                            $groupItems = isset($item['items']) && is_array($item['items']) ? $item['items'] : [];
+                            ?>
+                            <li class="gw-nav-item gw-nav-item--group">
+                                <span class="gw-nav-group-label"><?php echo esc_html($item['label']); ?></span>
+                                <?php if (! empty($groupItems)) : ?>
+                                    <ul class="gw-nav-sub-list">
+                                        <?php foreach ($groupItems as $subItem) : ?>
+                                            <li class="gw-nav-sub-item">
+                                                <a href="<?php echo esc_url($subItem['url']); ?>"
+                                                   class="gw-nav-link <?php echo ! empty($subItem['active']) ? 'gw-nav-link--active' : ''; ?>">
+                                                    <?php echo esc_html($subItem['label']); ?>
+                                                </a>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php endif; ?>
+                            </li>
+                        <?php else : ?>
+                            <li class="gw-nav-item">
+                                <a href="<?php echo esc_url($item['url']); ?>"
+                                   class="gw-nav-link <?php echo ! empty($item['active']) ? 'gw-nav-link--active' : ''; ?>">
+                                    <?php echo esc_html($item['label']); ?>
+                                </a>
+                            </li>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </ul>
             </nav>
